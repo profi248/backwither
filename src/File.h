@@ -9,12 +9,7 @@
 class File : public FilesystemEntity {
     ~File() override = default;
 public:
-    FilesystemEntityType Type () override {
-        return FilesystemEntity::FILE;
-    }
-
     bool IsFileModified ();
-
 };
 
 

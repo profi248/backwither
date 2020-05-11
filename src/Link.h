@@ -10,9 +10,6 @@ class Link : public FilesystemEntity {
     FilesystemEntity* m_LinkedFilesystemEntity;
     ~Link() override = default;
 public:
-    FilesystemEntityType Type () override {
-        return FilesystemEntity::LINK;
-    }
     /**
      * Return linked filesystem entity.
      * @return Linked filesystem entity.

@@ -15,11 +15,6 @@ class Directory : public FilesystemEntity {
 
 public:
     ~Directory() override = default;
-
-    FilesystemEntityType Type () override {
-        return FilesystemEntity::FOLDER;
-    }
-
 };
 
 
