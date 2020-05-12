@@ -14,7 +14,9 @@ class Directory : public FilesystemEntity {
     std::vector<FilesystemEntity*> m_Contents;
 
 public:
+    Directory(std::string path);
     ~Directory() override = default;
+    void AddFilesystemEntity(FilesystemEntity*);
 };
 
 

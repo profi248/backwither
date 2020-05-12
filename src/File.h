@@ -7,8 +7,9 @@
  */
 
 class File : public FilesystemEntity {
-    ~File() override = default;
 public:
+    File(std::string path);
+    ~File() override = default;
     bool IsFileModified ();
 };
 
