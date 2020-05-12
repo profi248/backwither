@@ -7,13 +7,14 @@
  * Class for browsing filesystem.
  */
 class FilesystemBrowser {
+public:
     /**
      * Builds a recursive tree of a filesystem path.
-     * @param path Path to scan.
+     * @param path_str Path to scan.
      * @return Directory structure.
      */
 
-    Directory BrowseFolderRecursive (std::string path);
+    static Directory BrowseFolderRecursive (std::string path_str);
 };
 
 
