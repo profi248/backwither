@@ -1,12 +1,12 @@
 CXX=g++
 LD=g++
-CXXFLAGS=-std=c++17 -Wall -pedantic
+CXXFLAGS=-std=c++17 -Wall -pedantic -fsanitize=address
 FILES=src/bin/intermediate/main.o src/bin/intermediate/FilesystemEntity.o src/bin/intermediate/File.o src/bin/intermediate/Directory.o \
 	src/bin/intermediate/Link.o src/bin/intermediate/BackupJob.o src/bin/intermediate/BackupPlan.o src/bin/intermediate/TimedBackupJob.o \
 	src/bin/intermediate/ConfigProvider.o src/bin/intermediate/SQLiteConfigProvider.o src/bin/intermediate/FilesystemBrowser.o \
 	src/bin/intermediate/Backup.o src/bin/intermediate/BackupStorageProvider.o src/bin/intermediate/IncrementalFilesystemBackupStorageProvider.o \
 	src/bin/intermediate/FilesystemBackupStorageProvider.o src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o
-LIBS=-lstdc++fs
+LIBS=-lstdc++fs -lasan
 
 .PHONY: all clean run doc
 
