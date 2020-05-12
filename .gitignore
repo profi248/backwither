@@ -1,3 +1,6 @@
 .idea
-docs
+doc
 src/cmake-build-debug
+src/bin/*
+!src/bin/intermediate/.gitkeep
+kostada2
