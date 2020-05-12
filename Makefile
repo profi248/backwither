@@ -8,7 +8,7 @@ FILES=src/bin/intermediate/main.o src/bin/intermediate/FilesystemEntity.o src/bi
 	src/bin/intermediate/FilesystemBackupStorageProvider.o src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o
 LIBS=-lstdc++fs
 
-.PHONY: all clean run
+.PHONY: all clean run doc
 
 all: compile doc
 
