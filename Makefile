@@ -5,7 +5,8 @@ FILES=src/bin/intermediate/main.o src/bin/intermediate/FilesystemEntity.o src/bi
 	src/bin/intermediate/Link.o src/bin/intermediate/BackupJob.o src/bin/intermediate/BackupPlan.o src/bin/intermediate/TimedBackupJob.o \
 	src/bin/intermediate/ConfigProvider.o src/bin/intermediate/SQLiteConfigProvider.o src/bin/intermediate/FilesystemBrowser.o \
 	src/bin/intermediate/Backup.o src/bin/intermediate/BackupStorageProvider.o src/bin/intermediate/IncrementalFilesystemBackupStorageProvider.o \
-	src/bin/intermediate/FilesystemBackupStorageProvider.o src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o
+	src/bin/intermediate/FilesystemBackupStorageProvider.o src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o \
+	src/bin/intermediate/FileComparator.o src/bin/intermediate/HashFileComparator.o src/bin/intermediate/TimeFileComparator.o
 LIBS=-lstdc++fs -lasan
 
 .PHONY: all clean run doc
