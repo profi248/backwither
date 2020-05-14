@@ -4,6 +4,7 @@
 
 int main (int argc, char** argv) {
     // use getopt for parsing arguments
+    // getopt(argc, argv, "");
     FilesystemBrowser::BrowseFolderRecursive("testfiles");
     return 0;
 }
