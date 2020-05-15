@@ -1,3 +1,4 @@
+# based on makefile from proseminar
 CXX=g++
 LD=g++
 CXXFLAGS=-std=c++17 -Wall -pedantic -fsanitize=address
