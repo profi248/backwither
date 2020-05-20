@@ -14,6 +14,7 @@ add_executable(backwither
         FilesystemBrowser.cpp FilesystemBrowser.h Backup.cpp Backup.h BackupStorageProvider.cpp
         BackupStorageProvider.h IncrementalFilesystemBackupStorageProvider.cpp IncrementalFilesystemBackupStorageProvider.h
         FilesystemBackupStorageProvider.cpp FilesystemBackupStorageProvider.h UserInterface.cpp UserInterface.h TerminalUserInterface.cpp TerminalUserInterface.h
-        FileComparator.cpp FileComparator.h HashFileComparator.cpp HashFileComparator.h TimeFileComparator.cpp TimeFileComparator.h)
+        FileComparator.cpp FileComparator.h HashFileComparator.cpp HashFileComparator.h TimeFileComparator.cpp TimeFileComparator.h
+        BackupPlanIterator.cpp BackupPlanIterator.h)
 
 target_link_libraries(backwither -lsqlite3)

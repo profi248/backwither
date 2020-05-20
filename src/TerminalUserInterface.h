@@ -9,8 +9,14 @@
 
 class TerminalUserInterface : public UserInterface {
 public:
-    void ShowBackupList() override;
-    BackupJob AddBackupJob() override;
+    ~TerminalUserInterface () override = default;
+    int StartInterface (int argc, char** argv) override;
+    // void ShowBackupList() override;
+    // BackupJob AddBackupJob() override;
+private:
+    int         list (std::string configPath);
+    int         help ();
+    std::string getVersion ();
 };
 
 

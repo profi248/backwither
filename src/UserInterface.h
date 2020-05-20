@@ -7,8 +7,11 @@
  */
 
 class UserInterface {
-    virtual void ShowBackupList();
-    virtual BackupJob AddBackupJob();
+public:
+    virtual ~UserInterface () = default;
+    virtual int StartInterface(int argc, char** argv) = 0;
+    // virtual void ShowBackupList();
+    // virtual BackupJob AddBackupJob();
 };
 
 
