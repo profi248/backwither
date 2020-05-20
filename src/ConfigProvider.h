@@ -1,13 +1,15 @@
 #ifndef BACKUP_CONFIGPROVIDER_H
 #define BACKUP_CONFIGPROVIDER_H
 #include "BackupPlan.h"
+#include "Directory.h"
 /**
  * Provides access to saving and loading backup configuration.
  */
 class ConfigProvider {
 public:
-    ConfigProvider();
+    ConfigProvider() = default;
     virtual ~ConfigProvider() = default;
+
     /**
      * Saves provided backup plan to config storage.
      * @param plan Backup plan.
@@ -18,6 +20,19 @@ public:
      * @return Backup plan.
      */
     virtual BackupPlan LoadBackupPlan () = 0;
+
+    /**
+     * Save file index (root folder) to config.
+     * @param fld Folder to save.
+     */
+    virtual void SaveFileIndex (Directory fld) = 0;
+
+   /**
+    * Retrieve file index (root folder) from config.
+    * @return Direcroty
+    */
+    virtual Directory LoadFileIndex () = 0;
+
 };
 
 

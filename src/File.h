@@ -7,8 +7,9 @@
  */
 
 class File : public FilesystemEntity {
+    size_t m_Size = 0;
 public:
-    File(std::string path);
+    File(std::string path, size_t size);
     ~File() override = default;
     bool IsFileModified ();
 };

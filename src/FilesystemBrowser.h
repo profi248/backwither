@@ -14,7 +14,7 @@ public:
      * @return Directory structure.
      */
 
-    static Directory BrowseFolderRecursive (std::string path_str);
+    static Directory* BrowseFolderRecursive (std::string path_str);
 };
 
 
