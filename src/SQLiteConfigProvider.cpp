@@ -16,6 +16,9 @@ const int   SQLITE_NULL_TERMINATED = -1;
 // todo maybe move SQLite object to member var
 
 SQLiteConfigProvider::SQLiteConfigProvider (std::string path) {
+    if (!path.empty())
+        if (path[path.length()] != '/')
+            path += '/';
     m_Path = path;
 }
 
@@ -114,7 +117,7 @@ bool SQLiteConfigProvider::configExists () {
     int version;
 
     if (sqlite3_step(checkVersionStmt) == SQLITE_ROW)
-        version = sqlite3_column_int(checkVersionStmt, 0);
+        version = sqlite3_column_int(checkVersionStmt, 0); // first column
     else {
         sqlite3_finalize(checkVersionStmt);
         sqlite3_close(db);
@@ -124,7 +127,7 @@ bool SQLiteConfigProvider::configExists () {
     if (version != 1) {
         sqlite3_finalize(checkVersionStmt);
         sqlite3_close(db);
-        throw std::runtime_error("Invalid config version");
+        throw std::runtime_error("Invalid config version " + std::to_string(version));
     }
 
     sqlite3_finalize(checkVersionStmt);
@@ -142,7 +145,6 @@ std::string SQLiteConfigProvider::getDbPath () const {
 
 
 void SQLiteConfigProvider::SaveBackupPlan (BackupPlan plan) {
-
 
 }
 
