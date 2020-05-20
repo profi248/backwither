@@ -70,7 +70,12 @@ int TerminalUserInterface::list (string configPath) {
         config = new SQLiteConfigProvider();
 
     cout << "Backup jobs:" << endl;
-    BackupPlan plan = config->LoadBackupPlan();
+    BackupPlan plan;
+    try {
+        plan = config->LoadBackupPlan();
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+    }
     BackupPlanIterator it(plan);
     while (!it.End()) {
 
