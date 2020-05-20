@@ -16,8 +16,8 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
     char *path       = nullptr;
     char *name       = nullptr;
     char *configPath = nullptr;
-    int index;
-    int c;
+    int  index;
+    int  c;
 
     if (argc == 1)
         help();
@@ -47,12 +47,14 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
         string command(argv[index]);
         // apparently we can't use switch for strings...
         if (command == "list") {
-            if (configPath)
-                list (configPath);
-            else
-                list(""); // default path
+            list (configPath);
         } else if (command == "add") {
+            if (!path || !name) {
+                cerr << "Specifying backup path (-p) and name (-n) is required." << endl;
+                return 1;
+            }
 
+            add (path, name);
         } else {
             cerr << "Command " << command << " not recognized." << endl;
             return 1;
@@ -62,9 +64,9 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
     return 0;
 }
 
-int TerminalUserInterface::list (string configPath) {
+int TerminalUserInterface::list (char* configPath) {
     ConfigProvider* config;
-    if (!configPath.empty())
+    if (configPath)
         config = new SQLiteConfigProvider(configPath);
     else
         config = new SQLiteConfigProvider();
@@ -77,10 +79,10 @@ int TerminalUserInterface::list (string configPath) {
         cerr << "Fatal error: " << e.what() << endl;
     }
     BackupPlanIterator it(plan);
+
     while (!it.End()) {
-
+        // todo actually output
     }
-
 
     delete config;
     return 0;
@@ -111,4 +113,9 @@ int TerminalUserInterface::help () {
 
 string TerminalUserInterface::getVersion () {
     return "dev";
+}
+
+bool TerminalUserInterface::add (char* path, char* name) {
+    // todo
+    return false;
 }

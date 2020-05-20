@@ -143,7 +143,6 @@ std::string SQLiteConfigProvider::getDbPath () const {
         return getDefaultConfigPath() + std::string(CONFIG_DATABASE_FILENAME);
     else
         return m_Path + std::string(CONFIG_DATABASE_FILENAME);
-
 }
 
 

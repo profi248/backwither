@@ -14,9 +14,10 @@ public:
     // void ShowBackupList() override;
     // BackupJob AddBackupJob() override;
 private:
-    int         list (std::string configPath);
+    int         list (char* configPath);
     int         help ();
     std::string getVersion ();
+    bool        add (char* path, char* name);
 };
 
 
