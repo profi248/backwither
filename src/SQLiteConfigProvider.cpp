@@ -39,7 +39,10 @@ std::string SQLiteConfigProvider::getDefaultConfigPath () const {
             path += "/" + std::string(CONFIG_DEFAULT_PATH) + "/";
         }
     }
+
     path += std::string(CONFIG_FOLDER_FILENAME) + "/";
+    std::filesystem::create_directories(path);
+
     return path;
 }
 
