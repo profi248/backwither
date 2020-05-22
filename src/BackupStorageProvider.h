@@ -19,7 +19,7 @@ class BackupStorageProvider {
      * @param path FilesystemEntity path.
      * @return The FilesystemEntity.
      */
-    virtual FilesystemEntity StoreFilesystemEntity(std::string path);
+    virtual FilesystemEntity RetrieveFilesystemEntity(std::string path);
 };
 
 #endif //BACKUP_BACKUPSTORAGEPROVIDER_H
