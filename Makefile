@@ -24,6 +24,10 @@ compile: backwither
 run: backwither
 	src/bin/backwither
 
+test: backwither
+	$(CXX) $(CXXFLAGS) -o src/bin/test src/tests/test.cpp
+	src/bin/test
+
 backwither: $(FILES)
 	$(LD) -o src/bin/$@ $^ $(LIBS)
 
