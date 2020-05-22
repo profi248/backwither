@@ -66,18 +66,24 @@ bool SQLiteConfigProvider::initConfig () {
     sqlite3_exec(db,
     "pragma foreign_keys = 1;"
 
-        "create table backups (backup_id integer primary key asc, path text, name text, incremental integer);"
-
         "create table settings (key text unique, value);"
 
+        "create table backups (backup_id integer primary key asc, path text, name text, incremental integer);"
+
+        "create table snapshots (snapshot_id integer primary key asc, creation integer,"
+        "backup_id integer references backups (backup_id));"
+
         "create table files (file_id integer primary key asc, path text, size integer,"
-        "mtime integer, ctime integer, backup_id integer references backups (backup_id));"
+        "mtime integer, ctime integer, snapshot_id integer references snapshots (snapshot_id));"
 
-        "create table chunks (chunk_id integer primary key asc, file_id integer references files (file_id),"
-        "position integer, hash text, size integer);"
+        "create table chunkdata (chunk_id integer primary key asc, hash text, size integer);"
 
-        "create index chunk_idx on chunks (file_id, hash, position);"
-        "create index file_idx on files (backup_id, path);"
+        "create table filechunks (chunk_id integer references chunkdata (chunk_id),"
+        "file_id integer references files (file_id), position integer);"
+
+        "create index chunkdata_idx on chunkdata (hash);"
+        "create index filechunks_idx on filechunks (file_id, position);"
+        "create index file_idx on files (snapshot_id, path);"
 
         "insert into settings (key, value) values ('version', 1)",
 
