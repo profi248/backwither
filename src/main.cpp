@@ -8,8 +8,5 @@ int main (int argc, char** argv) {
 
     return tui.StartInterface(argc, argv);
 
-    Directory* root = FilesystemBrowser::BrowseFolderRecursive("/var/home/david/ProgTest/PA2/kostada2/examples");
-    auto cf = new SQLiteConfigProvider();
-    cf->LoadBackupPlan();
-    return 0;
+    // Directory* root = FilesystemBrowser::BrowseFolderRecursive("/var/home/david/ProgTest/PA2/kostada2/examples");
 }

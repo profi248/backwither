@@ -19,8 +19,11 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
     int  index;
     int  c;
 
+    // default command is help
     if (argc == 1)
         help();
+
+    // parse arguments: options need to be parsed first, then commands
 
     while ((c = getopt (argc, argv, "p:n:c:")) != -1)
         switch (c) {
@@ -47,14 +50,14 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
         string command(argv[index]);
         // apparently we can't use switch for strings...
         if (command == "list") {
-            list (configPath);
+            list(configPath);
         } else if (command == "add") {
             if (!path || !name) {
                 cerr << "Specifying backup path (-p) and name (-n) is required." << endl;
                 return 1;
             }
 
-            add (path, name);
+            add(path, name);
         } else {
             cerr << "Command " << command << " not recognized." << endl;
             return 1;
