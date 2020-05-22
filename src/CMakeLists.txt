@@ -8,7 +8,7 @@ include_directories(..)
 
 add_executable(backwither
         main.cpp FilesystemEntity.cpp File.cpp Directory.cpp Link.cpp
-        main.h FilesystemEntity.h File.h Directory.h Link.h BackupJob.cpp
+        FilesystemEntity.h File.h Directory.h Link.h BackupJob.cpp
         BackupJob.h BackupPlan.cpp BackupPlan.h TimedBackupJob.cpp TimedBackupJob.h
         ConfigProvider.h SQLiteConfigProvider.cpp SQLiteConfigProvider.h
         FilesystemBrowser.cpp FilesystemBrowser.h Backup.cpp Backup.h BackupStorageProvider.cpp

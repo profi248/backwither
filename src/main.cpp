@@ -1,4 +1,3 @@
-#include "main.h"
 #include "FilesystemBrowser.h"
 #include "SQLiteConfigProvider.h"
 #include "TerminalUserInterface.h"
