@@ -2,6 +2,7 @@
 #define BACKUP_TERMINALUSERINTERFACE_H
 #include "UserInterface.h"
 #include "BackupJob.h"
+#include "ConfigProvider.h"
 
 /**
  * Implements user interface as terminal applicatiopn.
@@ -17,7 +18,9 @@ private:
     int         list (char* configPath);
     int         help ();
     std::string getVersion ();
-    bool        add (char* path, char* name);
+    int         add (char* source, char* destination, char* name, char* configPath);
+
+    ConfigProvider* getConfigProvider (const char* configPath) const;
 };
 
 

@@ -69,7 +69,7 @@ bool SQLiteConfigProvider::initConfig () {
         "create table settings (key text unique, value);"
 
         "create table backups (backup_id integer primary key asc, source text,"
-        "destination text, name text, incremental integer);"
+        "destination text, name text unique, incremental integer);"
 
         "create table snapshots (snapshot_id integer primary key asc, creation integer,"
         "backup_id integer references backups (backup_id));"
@@ -153,24 +153,40 @@ std::string SQLiteConfigProvider::getDbPath () const {
 }
 
 
-void SQLiteConfigProvider::SaveBackupPlan (BackupPlan* plan) {
+void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
+     sqlite3* db = openDB();
+     sqlite3_stmt* addJobStmt;
 
+    int result = sqlite3_prepare_v2(db,
+       "insert into backups (source, destination, name, incremental) values (?, ?, ?, ?);",
+       SQLITE_NULL_TERMINATED, & addJobStmt, nullptr);
+
+    // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
+    result = sqlite3_bind_text(addJobStmt, 1, job->GetSource().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+    result = sqlite3_bind_text(addJobStmt, 2, job->GetDestination().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+    result = sqlite3_bind_text(addJobStmt, 3, job->GetName().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+    result = sqlite3_bind_int(addJobStmt, 4, static_cast<int>(job->GetIncremental()));
+
+    if (sqlite3_step(addJobStmt) != SQLITE_DONE) {
+        sqlite3_finalize(addJobStmt);
+        sqlite3_close(db);
+
+        throw std::runtime_error("Error when adding a new backup job. Name might already be taken.");
+
+    }
+
+    sqlite3_finalize(addJobStmt);
+    sqlite3_close(db);
 }
 
 BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
-    if (!configExists())
-        initConfig();
-
     BackupPlan* plan = new BackupPlan();
-    sqlite3* db;
-
-    if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK)
-        throw std::runtime_error("Cannot open SQLite DB.");
+    sqlite3* db = openDB();
 
     sqlite3_stmt* loadPlanStmt;
 
     sqlite3_prepare_v2(db,
-       "select source, destination, name, incremental from backups order by name desc;",
+       "select source, destination, name, incremental from backups order by name;",
        SQLITE_NULL_TERMINATED, & loadPlanStmt, nullptr);
 
     while (sqlite3_step(loadPlanStmt) == SQLITE_ROW) {
@@ -188,7 +204,6 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     sqlite3_finalize(loadPlanStmt);
     sqlite3_close(db);
     return plan;
-
 }
 
 void SQLiteConfigProvider::SaveFileIndex (Directory fld) {
@@ -197,4 +212,16 @@ void SQLiteConfigProvider::SaveFileIndex (Directory fld) {
 
 Directory SQLiteConfigProvider::LoadFileIndex () {
     return Directory("");
+}
+
+sqlite3* SQLiteConfigProvider::openDB () {
+    if (!configExists())
+        initConfig();
+
+    sqlite3* db;
+
+    if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK)
+        throw std::runtime_error("Cannot open the database.");
+
+    return db;
 }

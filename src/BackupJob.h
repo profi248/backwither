@@ -22,6 +22,11 @@ public:
      */
     void Backup ();
 
+    std::string GetSource () const;
+    std::string GetDestination () const;
+    std::string GetName () const;
+    bool        GetIncremental () const;
+
     friend BackupPlanIterator;
 };
 

@@ -16,9 +16,10 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
     opterr = 0;
 
-    char *path       = nullptr;
-    char *name       = nullptr;
-    char *configPath = nullptr;
+    char *source      = nullptr;
+    char *destination = nullptr;
+    char *name        = nullptr;
+    char *configPath  = nullptr;
     int  index;
     int  c;
 
@@ -28,10 +29,13 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
     // parse arguments: options need to be parsed first, then commands
 
-    while ((c = getopt (argc, argv, "p:n:c:")) != -1)
+    while ((c = getopt (argc, argv, "s:d:n:c:")) != -1)
         switch (c) {
-            case 'p':
-                path = optarg;
+            case 's':
+                source = optarg;
+                break;
+            case 'd':
+                destination = optarg;
                 break;
             case 'n':
                 name = optarg;
@@ -40,7 +44,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 configPath = optarg;
                 break;
             case '?':
-                if (optopt == 'p' || optopt == 'n' || optopt == 'c')
+                if (optopt == 's' || optopt == 'd' || optopt == 'n' || optopt == 'c')
                     cerr << "Option -" << (char) optopt << " requires an argument." << endl;
                 else
                     cerr << "Unknown option -" << (char) optopt << "." << endl;
@@ -49,18 +53,19 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 throw bad_exception();
         }
 
+    // todo change config to member var!
     for (index = optind; index < argc; index++) {
         string command(argv[index]);
         // apparently we can't use switch for strings...
         if (command == "list") {
             list(configPath);
         } else if (command == "add") {
-            if (!path || !name) {
-                cerr << "Specifying backup path (-p) and name (-n) is required." << endl;
+            if (!source || !destination || !name) {
+                cerr << "Specifying backup source path (-s), destination path (-d) and name (-n) is required." << endl;
                 return 1;
             }
 
-            add(path, name);
+            add(source, destination, name, configPath);
         } else {
             cerr << "Command " << command << " not recognized." << endl;
             return 1;
@@ -71,11 +76,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 }
 
 int TerminalUserInterface::list (char* configPath) {
-    ConfigProvider* config;
-    if (configPath)
-        config = new SQLiteConfigProvider(configPath);
-    else
-        config = new SQLiteConfigProvider();
+    ConfigProvider* config = getConfigProvider(configPath);
 
     BackupPlan* plan;
     try {
@@ -101,6 +102,7 @@ int TerminalUserInterface::list (char* configPath) {
             "destination" << setw(TABLE_FIELD_LENGTH) << "incremental" << endl;
 
     // todo improve table... (setw should be longest displayed value)
+    // todo refactor into table function
     while (!it.End()) {
         cout << left << setw(TABLE_FIELD_LENGTH) << it.GetName()
                      << setw(TABLE_FIELD_LENGTH) << it.GetSource()
@@ -111,6 +113,17 @@ int TerminalUserInterface::list (char* configPath) {
 
     delete config;
     return 0;
+}
+
+ConfigProvider* TerminalUserInterface::getConfigProvider (const char* configPath) const {
+    ConfigProvider* config;
+
+    if (configPath)
+        config = new SQLiteConfigProvider(configPath);
+    else
+        config = new SQLiteConfigProvider();
+
+    return config;
 }
 
 int TerminalUserInterface::help () {
@@ -132,7 +145,8 @@ int TerminalUserInterface::help () {
 
     cout << "  -c\tspecify config directory" << endl <<
             "  -n\tspecify new backup job name" << endl <<
-            "  -p\tspecify new backup job path" << endl;
+            "  -s\tspecify new backup job source path" << endl <<
+            "  -d\tspecify new backup job destination path" << endl;
     return 0;
 }
 
@@ -140,7 +154,22 @@ string TerminalUserInterface::getVersion () {
     return "dev";
 }
 
-bool TerminalUserInterface::add (char* path, char* name) {
-    // todo
-    return false;
+int TerminalUserInterface::add (char* source, char* destination, char* name, char* configPath) {
+    ConfigProvider* config = getConfigProvider(configPath);
+
+    // todo support non-incremental
+    BackupJob* job = new BackupJob(source, destination, name, true);
+
+    try {
+        config->AddBackupJob(job);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete job;
+        delete config;
+        return 2;
+    }
+
+    delete job;
+    delete config;
+    return 0;
 }

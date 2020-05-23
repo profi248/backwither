@@ -1,5 +1,6 @@
 #ifndef BACKUP_SQLITECONFIGPROVIDER_H
 #define BACKUP_SQLITECONFIGPROVIDER_H
+#include <sqlite3.h>
 #include "ConfigProvider.h"
 
 /**
@@ -13,7 +14,7 @@ public:
 
     ~SQLiteConfigProvider () override = default;
 
-    void SaveBackupPlan (BackupPlan* plan) override;
+    void AddBackupJob (BackupJob* job) override;
 
     BackupPlan* LoadBackupPlan () override;
 
@@ -26,9 +27,11 @@ private:
 
     std::string getDbPath () const;
 
-    bool configExists ();
+    bool        configExists ();
 
-    bool initConfig ();
+    bool        initConfig ();
+
+    sqlite3*    openDB();
 };
 
 #endif //BACKUP_SQLITECONFIGPROVIDER_H

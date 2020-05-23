@@ -11,10 +11,10 @@ public:
     virtual ~ConfigProvider() = default;
 
     /**
-     * Saves provided backup plan to config storage.
-     * @param plan Backup plan.
+     * Adds new backup job to plan in config storage.
+     * @param job Backup job.
      */
-    virtual void SaveBackupPlan (BackupPlan* plan) = 0;
+    virtual void AddBackupJob (BackupJob* job) = 0;
     /**
      * Retrieves a backup plan from config storage.
      * @return Backup plan.
