@@ -94,7 +94,7 @@ bool SQLiteConfigProvider::initConfig () {
         std::string err(SQLiteError);
         sqlite3_free(SQLiteError);
         sqlite3_close(db);
-        throw std::runtime_error("SQLite error when creating DB schema: " + err);
+        throw std::runtime_error("SQLite error when creating DB schema in " + getDbPath() + ": " + err + ".");
     }
 
     sqlite3_close(db);
@@ -108,7 +108,7 @@ bool SQLiteConfigProvider::configExists () {
 
     sqlite3_stmt* checkTblStmt;
     sqlite3_prepare_v2(db,
-        "select 1 from sqlite_master where type='table' and name='settings'",
+        "select 1 from sqlite_master where type='table' and name='settings';",
     SQLITE_NULL_TERMINATED, & checkTblStmt, nullptr);
 
     if (sqlite3_step(checkTblStmt) != SQLITE_ROW || sqlite3_column_int(checkTblStmt, 0) != 1) {
