@@ -68,7 +68,8 @@ bool SQLiteConfigProvider::initConfig () {
 
         "create table settings (key text unique, value);"
 
-        "create table backups (backup_id integer primary key asc, path text, name text, incremental integer);"
+        "create table backups (backup_id integer primary key asc, source text,"
+        "destination text, name text, incremental integer);"
 
         "create table snapshots (snapshot_id integer primary key asc, creation integer,"
         "backup_id integer references backups (backup_id));"
@@ -152,15 +153,42 @@ std::string SQLiteConfigProvider::getDbPath () const {
 }
 
 
-void SQLiteConfigProvider::SaveBackupPlan (BackupPlan plan) {
+void SQLiteConfigProvider::SaveBackupPlan (BackupPlan* plan) {
 
 }
 
-BackupPlan SQLiteConfigProvider::LoadBackupPlan () {
+BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     if (!configExists())
         initConfig();
 
-    return BackupPlan();
+    BackupPlan* plan = new BackupPlan();
+    sqlite3* db;
+
+    if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK)
+        throw std::runtime_error("Cannot open SQLite DB.");
+
+    sqlite3_stmt* loadPlanStmt;
+
+    sqlite3_prepare_v2(db,
+       "select source, destination, name, incremental from backups order by name desc;",
+       SQLITE_NULL_TERMINATED, & loadPlanStmt, nullptr);
+
+    while (sqlite3_step(loadPlanStmt) == SQLITE_ROW) {
+        // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
+        BackupJob* job = new BackupJob (
+            std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 0))), // source
+            std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 1))), // destination
+            std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 2))), // name
+            static_cast<bool>(sqlite3_column_int(loadPlanStmt, 3))  // incremental
+        );
+
+        plan->AddBackup(job);
+    }
+
+    sqlite3_finalize(loadPlanStmt);
+    sqlite3_close(db);
+    return plan;
+
 }
 
 void SQLiteConfigProvider::SaveFileIndex (Directory fld) {

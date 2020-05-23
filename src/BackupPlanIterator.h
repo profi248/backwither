@@ -10,14 +10,21 @@ class BackupPlan;
  */
 
 class BackupPlanIterator {
-    BackupPlan & m_Plan;
+    BackupPlan * m_Plan;
     size_t       m_Pos;
 public:
-    explicit BackupPlanIterator (BackupPlan & plan);
+    explicit BackupPlanIterator (BackupPlan * plan);
+    ~BackupPlanIterator ();
 
     void Next ();
-    BackupJob* GetCurrent () const;
+    std::string GetSource () const;
+    std::string GetDestination () const;
+    std::string GetName () const;
+    bool GetIncremental () const;
     bool End () const;
+    bool Empty () const;
+
+    BackupPlanIterator operator ++ (int);
 };
 
 

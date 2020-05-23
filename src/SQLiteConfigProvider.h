@@ -13,9 +13,9 @@ public:
 
     ~SQLiteConfigProvider () override = default;
 
-    void SaveBackupPlan (BackupPlan plan) override;
+    void SaveBackupPlan (BackupPlan* plan) override;
 
-    BackupPlan LoadBackupPlan () override;
+    BackupPlan* LoadBackupPlan () override;
 
     void SaveFileIndex (Directory fld) override;
 

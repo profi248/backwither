@@ -1,5 +1,6 @@
 #include <getopt.h>
 #include <iostream>
+#include <iomanip>
 #include <exception>
 
 #include "TerminalUserInterface.h"
@@ -7,6 +8,8 @@
 #include "BackupPlanIterator.h"
 
 using namespace std;
+
+const int TABLE_FIELD_LENGTH = 20;
 
 int TerminalUserInterface::StartInterface (int argc, char** argv) {
     // example from https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html#Using-Getopt
@@ -74,17 +77,36 @@ int TerminalUserInterface::list (char* configPath) {
     else
         config = new SQLiteConfigProvider();
 
-    cout << "Backup jobs:" << endl;
-    BackupPlan plan;
+    BackupPlan* plan;
     try {
         plan = config->LoadBackupPlan();
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
+        delete config;
+        return 2;
     }
     BackupPlanIterator it(plan);
 
+    if (it.Empty()) {
+        cout << "No backup jobs. Add a new job by running `add`." << endl
+             << "If you expect to see something, please verify that correct config is in place." << endl;
+        delete config;
+        return 0;
+    } else {
+        cout << "Backup jobs:" << endl;
+    }
+
+    cout << left << setw(TABLE_FIELD_LENGTH) << "name"
+         << setw(TABLE_FIELD_LENGTH) << "source" << setw(TABLE_FIELD_LENGTH) <<
+            "destination" << setw(TABLE_FIELD_LENGTH) << "incremental" << endl;
+
+    // todo improve table... (setw should be longest displayed value)
     while (!it.End()) {
-        // todo actually output
+        cout << left << setw(TABLE_FIELD_LENGTH) << it.GetName()
+                     << setw(TABLE_FIELD_LENGTH) << it.GetSource()
+                     << setw(TABLE_FIELD_LENGTH) << it.GetDestination()
+                     << setw(TABLE_FIELD_LENGTH) << boolalpha << it.GetIncremental() << endl;
+        it++;
     }
 
     delete config;

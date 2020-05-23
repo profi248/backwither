@@ -14,12 +14,12 @@ public:
      * Saves provided backup plan to config storage.
      * @param plan Backup plan.
      */
-    virtual void SaveBackupPlan (BackupPlan plan) = 0;
+    virtual void SaveBackupPlan (BackupPlan* plan) = 0;
     /**
      * Retrieves a backup plan from config storage.
      * @return Backup plan.
      */
-    virtual BackupPlan LoadBackupPlan () = 0;
+    virtual BackupPlan* LoadBackupPlan () = 0;
 
     /**
      * Save file index (root folder) to config.

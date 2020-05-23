@@ -4,13 +4,15 @@
 #include "BackupJob.h"
 #include "BackupPlanIterator.h"
 
+class BackupJob;
 /**
  * Holds list of backup jobs.
  */
 class BackupPlan {
     std::vector<BackupJob*> m_Jobs;
 public:
-    void AddBackup ();
+    ~BackupPlan ();
+    void AddBackup (BackupJob* job);
 
     friend class BackupPlanIterator;
 };
