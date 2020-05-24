@@ -11,6 +11,8 @@ public:
 private:
     static std::string normalizeDirectoryPath (std::string path);
     static bool        isDirectoryEmpty (std::string path);
+    static void        verifySourceDirectory (std::string source);
+    static void        verifyOrCreateDestinationDirectory (std::string destination);
 };
 
 

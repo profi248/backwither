@@ -10,9 +10,6 @@ namespace fs = std::filesystem;
 
 Directory* FilesystemBrowser::BrowseFolderRecursive (std::string path_str) {
     auto path = fs::path(path_str);
-    if (!fs::exists(path))
-        throw std::invalid_argument("Path does not exist.");
-
     auto de = fs::directory_entry(path);
 
     Directory* root = new Directory("/");
