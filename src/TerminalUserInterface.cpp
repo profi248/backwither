@@ -6,6 +6,7 @@
 #include "TerminalUserInterface.h"
 #include "SQLiteConfigProvider.h"
 #include "BackupPlanIterator.h"
+#include "Backup.h"
 
 using namespace std;
 
@@ -199,7 +200,13 @@ int TerminalUserInterface::run (char* name, char* configPath) {
         return 1;
     }
 
-    cout << "will run backup in " << job->GetSource() << "... when it's implemented" << endl;
+    try {
+        Backup::DoBackup(job);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete config;
+        return 2;
+    }
 
     delete job;
     delete config;
