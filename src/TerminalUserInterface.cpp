@@ -99,6 +99,8 @@ int TerminalUserInterface::list (char* configPath) {
     if (it.Empty()) {
         cout << "No backup jobs. Add a new job by running `add`." << endl
              << "If you expect to see something, please verify that correct config is in place." << endl;
+
+        delete plan;
         delete config;
         return 0;
     } else {
@@ -119,6 +121,7 @@ int TerminalUserInterface::list (char* configPath) {
         it++;
     }
 
+    delete plan;
     delete config;
     return 0;
 }
@@ -204,6 +207,7 @@ int TerminalUserInterface::run (char* name, char* configPath) {
         Backup::DoBackup(job);
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
+        delete job;
         delete config;
         return 2;
     }

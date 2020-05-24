@@ -14,7 +14,7 @@ class BackupPlanIterator {
     size_t       m_Pos;
 public:
     explicit BackupPlanIterator (BackupPlan * plan);
-    ~BackupPlanIterator ();
+    ~BackupPlanIterator () = default;
 
     void Next ();
     std::string GetSource () const;

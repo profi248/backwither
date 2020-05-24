@@ -4,13 +4,6 @@ BackupPlanIterator::BackupPlanIterator (BackupPlan * plan) :
         m_Plan (plan),
         m_Pos (0) {}
 
-
-BackupPlanIterator::~BackupPlanIterator () {
-    // todo also broken...
-    // delete m_Plan;
-}
-
-
 void BackupPlanIterator::Next () {
     m_Pos++;
 }
