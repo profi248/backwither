@@ -194,7 +194,7 @@ BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
     if (sqlite3_step(getBackupJobStmt) == SQLITE_ROW) {
         std::string source = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 0)); // first column
         std::string destination = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 1));
-        bool incremental = static_cast<bool>(sqlite3_column_int(getBackupJobStmt, 3));
+        bool incremental = static_cast<bool>(sqlite3_column_int(getBackupJobStmt, 2));
 
         sqlite3_finalize(getBackupJobStmt);
         sqlite3_close(db);
