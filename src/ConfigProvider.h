@@ -16,6 +16,12 @@ public:
      */
     virtual void AddBackupJob (BackupJob* job) = 0;
     /**
+     * Get a backup job from config storage by name.
+     * @param name Name of the backup job.
+     * @return The backub job.
+     */
+    virtual BackupJob* GetBackupJob (std::string name) = 0;
+    /**
      * Retrieves a backup plan from config storage.
      * @return Backup plan.
      */

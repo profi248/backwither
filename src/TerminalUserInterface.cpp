@@ -66,6 +66,13 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             }
 
             add(source, destination, name, configPath);
+        } else if (command == "run") {
+            if (!name) {
+                cerr << "Specifying backup name (-n) is required." << endl;
+                return 1;
+            }
+
+            run(name, configPath);
         } else {
             cerr << "Command " << command << " not recognized." << endl;
             return 1;
@@ -168,6 +175,31 @@ int TerminalUserInterface::add (char* source, char* destination, char* name, cha
         delete config;
         return 2;
     }
+
+    delete job;
+    delete config;
+    return 0;
+}
+
+int TerminalUserInterface::run (char* name, char* configPath) {
+    ConfigProvider* config = getConfigProvider(configPath);
+    BackupJob* job;
+
+    try {
+        job = config->GetBackupJob(name);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete config;
+        return 2;
+    }
+
+    if (!job) {
+        cout << "Backup job named \"" << name << "\" not found." << endl;
+        delete config;
+        return 1;
+    }
+
+    cout << "will run backup in " << job->GetSource() << "... when it's implemented" << endl;
 
     delete job;
     delete config;

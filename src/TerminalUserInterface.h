@@ -19,6 +19,7 @@ private:
     int         help ();
     std::string getVersion ();
     int         add (char* source, char* destination, char* name, char* configPath);
+    int         run (char* name, char* configPath);
 
     ConfigProvider* getConfigProvider (const char* configPath) const;
 };

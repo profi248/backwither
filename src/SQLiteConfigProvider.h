@@ -16,6 +16,8 @@ public:
 
     void AddBackupJob (BackupJob* job) override;
 
+    BackupJob* GetBackupJob (std::string name) override;
+
     BackupPlan* LoadBackupPlan () override;
 
     void SaveFileIndex (Directory fld) override;
