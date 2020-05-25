@@ -247,7 +247,6 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
        "insert into snapshots (creation, backup_id) values (?, ?);",
        SQLITE_NULL_TERMINATED, & addSnapshotStmt, nullptr);
 
-    // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
     sqlite3_bind_int64(addSnapshotStmt, 1, std::time(nullptr));
     sqlite3_bind_int64(addSnapshotStmt, 2, job->GetID());
 
@@ -272,6 +271,7 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
     sqlite3_bind_int64(addFileStmt, 4, snapshotID);
 
     while (!it.End()) {
+        // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
         sqlite3_bind_text(addFileStmt, 1, it.GetPath().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
         sqlite3_bind_int64(addFileStmt, 2, it.GetSize());
         sqlite3_bind_int64(addFileStmt, 3, it.GetMtime());
@@ -289,8 +289,10 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
     }
 
     sqlite3_finalize(addFileStmt);
-    if (sqlite3_exec(db, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK)
+    if (sqlite3_exec(db, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK) {
+        sqlite3_close(db);
         throw std::runtime_error("Database error when creating a snapshot.");
+    }
 
     sqlite3_close(db);
 }

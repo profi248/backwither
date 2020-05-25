@@ -35,9 +35,9 @@ public:
 
    /**
     * Retrieve file index (root folder) from config.
-    * @return Direcroty
+    * @return Directory
     */
-    virtual Directory LoadSnapshotFileIndex () = 0;
+    virtual Directory LoadSnapshotFileIndex (BackupJob* job, int64_t snapshotID = -1) = 0;
 
 };
 
