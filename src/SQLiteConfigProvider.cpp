@@ -244,8 +244,10 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
     sqlite3* db = openDB();
     sqlite3_stmt* addSnapshotStmt;
 
-    if (sqlite3_exec(db, "begin transaction;", nullptr, nullptr, nullptr) != SQLITE_OK)
+    if (sqlite3_exec(db, "begin transaction;", nullptr, nullptr, nullptr) != SQLITE_OK) {
+        sqlite3_close(db);
         throw std::runtime_error("Database error initializing a snapshot.");
+    }
 
     sqlite3_prepare_v2(db,
        "insert into snapshots (creation, backup_id) values (?, ?);",
@@ -259,7 +261,7 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
         sqlite3_exec(db, "rollback;", nullptr, nullptr, nullptr);
         sqlite3_close(db);
 
-        throw std::runtime_error("Error adding a new snapshot.");
+        throw std::runtime_error("Database error adding a new snapshot.");
     }
 
     int64_t snapshotID = sqlite3_last_insert_rowid(db);
@@ -286,7 +288,7 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
             sqlite3_exec(db, "rollback;", nullptr, nullptr, nullptr);
             sqlite3_close(db);
 
-            throw std::runtime_error("Error when adding a file.");
+            throw std::runtime_error("Database error when adding a file.");
         }
 
         sqlite3_reset(addFileStmt);
@@ -311,8 +313,10 @@ Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t s
     if (snapshotID != -1) {
         if (snapshotID == 0) {
             snapshotID = getLastSnapshotId(job);
-            if (snapshotID < 0)
+            if (snapshotID < 0) {
+                sqlite3_close(db);
                 throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+            }
         }
         sqlite3_prepare_v2(db,
            "select path, size, mtime from files where snapshot_id = ?;",
