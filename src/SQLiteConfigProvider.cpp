@@ -185,21 +185,22 @@ BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
 
     sqlite3_stmt* getBackupJobStmt;
     sqlite3_prepare_v2(db,
-        "select source, destination, incremental from backups where name = ?;",
+        "select backup_id, source, destination, incremental from backups where name = ?;",
         SQLITE_NULL_TERMINATED, & getBackupJobStmt, nullptr);
 
     // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
     sqlite3_bind_text(getBackupJobStmt, 1, name.c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
 
     if (sqlite3_step(getBackupJobStmt) == SQLITE_ROW) {
-        std::string source = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 0)); // first column
-        std::string destination = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 1));
-        bool incremental = static_cast<bool>(sqlite3_column_int(getBackupJobStmt, 2));
+        int64_t id = sqlite3_column_int64(getBackupJobStmt, 0); // first column
+        std::string source = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 1));
+        std::string destination = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 2));
+        bool incremental = static_cast<bool>(sqlite3_column_int(getBackupJobStmt, 3));
 
         sqlite3_finalize(getBackupJobStmt);
         sqlite3_close(db);
 
-        return new BackupJob(source, destination, name, incremental);
+        return new BackupJob(source, destination, name, incremental, id);
     } else {
         sqlite3_finalize(getBackupJobStmt);
         sqlite3_close(db);

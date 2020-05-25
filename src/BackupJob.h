@@ -15,8 +15,10 @@ class BackupJob {
     std::string m_DestinationPath;
     std::string m_Name;
     bool        m_Incremental;
+    /** @var ID of backup from config if saved. */
+    int64_t m_ID;
 public:
-    BackupJob (std::string source, std::string destination, std::string name, bool incremental);
+    BackupJob (std::string source, std::string destination, std::string name, bool incremental, int64_t id = -1) ;
     /**
      * Start backup of this job.
      */
@@ -26,6 +28,7 @@ public:
     std::string GetDestination () const;
     std::string GetName () const;
     bool        GetIncremental () const;
+    int64_t     GetID () const;
 
     friend BackupPlanIterator;
 };
