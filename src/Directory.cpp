@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
 #include "Directory.h"
 
 Directory::Directory (std::string path) {
@@ -16,9 +17,10 @@ Directory Directory::operator - (const Directory & dir) const {
 
     Directory diff(m_Path);
 
-    std::set_difference(dir.m_Contents.begin(), dir.m_Contents.end(),
-                        m_Contents.begin(), m_Contents.end(),
-                        std::inserter(diff.m_Contents, diff.m_Contents.begin()));
+    std::set_difference(m_Contents.begin(), m_Contents.end(),
+                        dir.m_Contents.begin(), dir.m_Contents.end(),
+                        std::inserter(diff.m_Contents, diff.m_Contents.begin()),
+                        Directory::compare);
 
     return diff;
 }
@@ -46,4 +48,9 @@ Directory & Directory::operator = (Directory const & dir) {
      */
 
     return *this;
+}
+
+bool Directory::compare (const std::shared_ptr <FilesystemEntity> & a,
+                         const std::shared_ptr <FilesystemEntity> & b) {
+    return a->Path() < b->Path();
 }

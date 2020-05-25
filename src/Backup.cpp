@@ -19,7 +19,6 @@ int Backup::DoBackup (BackupJob* job, ConfigProvider* config) {
 
     Directory prevState = config->LoadSnapshotFileIndex(job);
     Directory currentState = FilesystemBrowser::BrowseFolderRecursive(source);
-    // fixme diff broken
     Directory diff = currentState - prevState;
 
     config->SaveSnapshotFileIndex(diff, job);

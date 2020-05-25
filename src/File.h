@@ -16,6 +16,7 @@ public:
     size_t Size ();
     size_t Mtime ();
     bool IsFileModified ();
+
 };
 
 

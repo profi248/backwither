@@ -78,7 +78,8 @@ bool SQLiteConfigProvider::initConfig () {
         "backup_id integer references backups (backup_id));"
 
         "create table files (file_id integer primary key asc, path text, size integer,"
-        "mtime integer, ctime integer, snapshot_id integer references snapshots (snapshot_id));"
+        "mtime integer, ctime integer, snapshot_id integer references snapshots (snapshot_id),"
+        "backup_id integer references backups (backup_id));"
 
         "create table chunkdata (chunk_id integer primary key asc, hash text, size integer);"
 
@@ -268,16 +269,17 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
     sqlite3_stmt* addFileStmt;
 
     sqlite3_prepare_v2(db,
-           "insert into files (path, size, mtime, snapshot_id) values (?, ?, ?, ?);",
+           "insert into files (path, size, mtime, snapshot_id, backup_id) values (?, ?, ?, ?, ?);",
            SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
 
-    sqlite3_bind_int64(addFileStmt, 4, snapshotID);
 
     while (!it.End()) {
         // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
         sqlite3_bind_text(addFileStmt, 1, it.GetPath().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
         sqlite3_bind_int64(addFileStmt, 2, it.GetSize());
         sqlite3_bind_int64(addFileStmt, 3, it.GetMtime());
+        sqlite3_bind_int64(addFileStmt, 4, snapshotID);
+        sqlite3_bind_int64(addFileStmt, 5, job->GetID());
 
         if (sqlite3_step(addFileStmt) != SQLITE_DONE) {
             sqlite3_finalize(addFileStmt);
@@ -304,18 +306,28 @@ Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t s
     Directory dir("/");
     sqlite3* db = openDB();
 
-    if (snapshotID < 0) {
-        snapshotID = getLastSnapshotId(job);
-        if (snapshotID < 0)
-            throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+    sqlite3_stmt* loadFilesStmt;
+
+    if (snapshotID != -1) {
+        if (snapshotID == 0) {
+            snapshotID = getLastSnapshotId(job);
+            if (snapshotID < 0)
+                throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+        }
+        sqlite3_prepare_v2(db,
+           "select path, size, mtime from files where snapshot_id = ?;",
+           SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
+
+        sqlite3_bind_int64(loadFilesStmt, 1, snapshotID);
+    } else { // all files from all snapshots for this backup job
+        sqlite3_prepare_v2(db,
+           "select path, size, mtime from files where backup_id = ?;",
+           SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
+
+        sqlite3_bind_int64(loadFilesStmt, 1, job->GetID());
     }
 
-    sqlite3_stmt* loadFilesStmt;
-    sqlite3_prepare_v2(db,
-       "select path, size, mtime from files where snapshot_id = ?;",
-       SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
 
-    sqlite3_bind_int64(loadFilesStmt, 1, snapshotID);
 
     while (sqlite3_step(loadFilesStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
