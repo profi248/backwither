@@ -17,9 +17,9 @@ int Backup::DoBackup (BackupJob* job, ConfigProvider* config) {
     if (!job->GetIncremental())
         return 3; // fixme implement !incremental
 
-    // Directory prevState = <get list of files in last snapshot from config provider>
-    Directory prevState("/");
+    Directory prevState = config->LoadSnapshotFileIndex(job);
     Directory currentState = FilesystemBrowser::BrowseFolderRecursive(source);
+    // fixme diff broken
     Directory diff = currentState - prevState;
 
     config->SaveSnapshotFileIndex(diff, job);

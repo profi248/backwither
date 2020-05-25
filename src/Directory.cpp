@@ -16,8 +16,8 @@ Directory Directory::operator - (const Directory & dir) const {
 
     Directory diff(m_Path);
 
-    std::set_difference(m_Contents.begin(), m_Contents.end(),
-                        dir.m_Contents.begin(), dir.m_Contents.end(),
+    std::set_difference(dir.m_Contents.begin(), dir.m_Contents.end(),
+                        m_Contents.begin(), m_Contents.end(),
                         std::inserter(diff.m_Contents, diff.m_Contents.begin()));
 
     return diff;

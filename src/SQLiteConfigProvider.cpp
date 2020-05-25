@@ -3,7 +3,10 @@
 #include <filesystem>
 #include <sqlite3.h>
 #include <ctime>
+#include <memory>
 #include "SQLiteConfigProvider.h"
+#include "FilesystemEntity.h"
+#include "File.h"
 
 const char* CONFIG_FOLDER_FILENAME   = "backwither";
 const char* CONFIG_DATABASE_FILENAME = "config.db";
@@ -297,8 +300,56 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
     sqlite3_close(db);
 }
 
-Directory SQLiteConfigProvider::LoadSnapshotFileIndex () {
-    return Directory("");
+Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t snapshotID) {
+    Directory dir("/");
+    sqlite3* db = openDB();
+
+    if (snapshotID < 0) {
+        snapshotID = getLastSnapshotId(job);
+        if (snapshotID < 0)
+            throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+    }
+
+    sqlite3_stmt* loadFilesStmt;
+    sqlite3_prepare_v2(db,
+       "select path, size, mtime from files where snapshot_id = ?;",
+       SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
+
+    sqlite3_bind_int64(loadFilesStmt, 1, snapshotID);
+
+    while (sqlite3_step(loadFilesStmt) == SQLITE_ROW) {
+        // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
+
+        auto file = std::make_shared<File> (File(
+            std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadFilesStmt, 0))), // path
+            sqlite3_column_int64(loadFilesStmt, 1), // size
+            sqlite3_column_int64(loadFilesStmt, 2)  // mtime
+        ));
+
+        dir.AddFilesystemEntity(file);
+    }
+
+    sqlite3_finalize(loadFilesStmt);
+    sqlite3_close(db);
+    return dir;
+}
+
+int64_t SQLiteConfigProvider::getLastSnapshotId (const BackupJob* job) {
+    sqlite3* db = openDB();
+    int64_t snapshotID;
+    sqlite3_stmt* getSnapshotStmt;
+    sqlite3_prepare_v2(db,
+       "select snapshot_id from snapshots where backup_id = ? order by snapshot_id desc limit 1;",
+       SQLITE_NULL_TERMINATED, & getSnapshotStmt, nullptr);
+    sqlite3_bind_int64(getSnapshotStmt, 1, job->GetID());
+    if (sqlite3_step(getSnapshotStmt) == SQLITE_ROW)
+        snapshotID = sqlite3_column_int64(getSnapshotStmt, 0);  // mtime
+    else
+        snapshotID = -1;
+
+    sqlite3_finalize(getSnapshotStmt);
+    sqlite3_close(db);
+    return snapshotID;
 }
 
 sqlite3* SQLiteConfigProvider::openDB () {

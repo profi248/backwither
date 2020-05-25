@@ -22,7 +22,7 @@ public:
 
     void SaveSnapshotFileIndex (Directory fld, BackupJob *job) override;
 
-    Directory LoadSnapshotFileIndex () override;
+    Directory LoadSnapshotFileIndex (BackupJob* job, int64_t snapshotID) override;
 
 private:
     std::string getDefaultConfigPath () const;
@@ -34,6 +34,8 @@ private:
     bool        initConfig ();
 
     sqlite3*    openDB();
+
+    int64_t getLastSnapshotId (const BackupJob* job);
 };
 
 #endif //BACKUP_SQLITECONFIGPROVIDER_H
