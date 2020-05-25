@@ -204,7 +204,7 @@ int TerminalUserInterface::run (char* name, char* configPath) {
     }
 
     try {
-        Backup::DoBackup(job);
+        Backup::DoBackup(job, config);
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;

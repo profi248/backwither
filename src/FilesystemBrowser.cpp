@@ -36,6 +36,7 @@ Directory FilesystemBrowser::BrowseFolderRecursive (std::string path_str) {
                 std::make_shared<File>(File(item.path(),
                 // time_point -> duration -> seconds
                 // https://gist.github.com/kantoniak/d58103623d0d7a7748fbc2040810428f
+                // fixme broken
                 std::chrono::duration_cast<std::chrono::seconds>(item.last_write_time().time_since_epoch()).count(),
                 item.file_size()))
             );

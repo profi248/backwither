@@ -7,7 +7,7 @@
 using namespace std;
 namespace fs = filesystem;
 // todo maybe refactor -> BackubJob::DoBackup;
-int Backup::DoBackup (BackupJob* job) {
+int Backup::DoBackup (BackupJob* job, ConfigProvider* config) {
     std::string source = job->GetSource();
     std::string destination = job->GetDestination();
 
@@ -21,6 +21,8 @@ int Backup::DoBackup (BackupJob* job) {
     Directory prevState("/");
     Directory currentState = FilesystemBrowser::BrowseFolderRecursive(source);
     Directory diff = currentState - prevState;
+
+    config->SaveSnapshotFileIndex(diff, job);
 
     return 0;
 }

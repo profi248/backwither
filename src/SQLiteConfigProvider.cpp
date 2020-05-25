@@ -259,10 +259,31 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
     sqlite3_finalize(addSnapshotStmt);
 
     DirectoryIterator it (& fld);
+    sqlite3_stmt* addFileStmt;
 
-    // todo use the iterator here
+    sqlite3_prepare_v2(db,
+           "insert into files (path, size, mtime, snapshot_id) values (?, ?, ?, ?);",
+           SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
 
-    sqlite3_finalize(addSnapshotStmt);
+    sqlite3_bind_int64(addFileStmt, 4, snapshotID);
+
+    while (!it.End()) {
+        sqlite3_bind_text(addFileStmt, 1, it.GetPath().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(addFileStmt, 2, it.GetSize());
+        sqlite3_bind_int64(addFileStmt, 3, it.GetMtime());
+
+        if (sqlite3_step(addFileStmt) != SQLITE_DONE) {
+            sqlite3_finalize(addFileStmt);
+            sqlite3_close(db);
+
+            throw std::runtime_error("Error when adding a file.");
+        }
+
+        sqlite3_reset(addFileStmt);
+        it++;
+    }
+
+    sqlite3_finalize(addFileStmt);
     sqlite3_close(db);
 
 }
