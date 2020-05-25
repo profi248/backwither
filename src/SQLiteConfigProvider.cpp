@@ -157,15 +157,15 @@ void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
      sqlite3* db = openDB();
      sqlite3_stmt* addJobStmt;
 
-    int result = sqlite3_prepare_v2(db,
+    sqlite3_prepare_v2(db,
        "insert into backups (source, destination, name, incremental) values (?, ?, ?, ?);",
        SQLITE_NULL_TERMINATED, & addJobStmt, nullptr);
 
     // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
-    result = sqlite3_bind_text(addJobStmt, 1, job->GetSource().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
-    result = sqlite3_bind_text(addJobStmt, 2, job->GetDestination().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
-    result = sqlite3_bind_text(addJobStmt, 3, job->GetName().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
-    result = sqlite3_bind_int(addJobStmt, 4, static_cast<int>(job->GetIncremental()));
+    sqlite3_bind_text(addJobStmt, 1, job->GetSource().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+    sqlite3_bind_text(addJobStmt, 2, job->GetDestination().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+    sqlite3_bind_text(addJobStmt, 3, job->GetName().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+    sqlite3_bind_int(addJobStmt, 4, static_cast<int>(job->GetIncremental()));
 
     if (sqlite3_step(addJobStmt) != SQLITE_DONE) {
         sqlite3_finalize(addJobStmt);
@@ -184,12 +184,12 @@ BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
     sqlite3* db = openDB();
 
     sqlite3_stmt* getBackupJobStmt;
-    int result = sqlite3_prepare_v2(db,
+    sqlite3_prepare_v2(db,
         "select source, destination, incremental from backups where name = ?;",
         SQLITE_NULL_TERMINATED, & getBackupJobStmt, nullptr);
 
     // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
-    result = sqlite3_bind_text(getBackupJobStmt, 1, name.c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+    sqlite3_bind_text(getBackupJobStmt, 1, name.c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
 
     if (sqlite3_step(getBackupJobStmt) == SQLITE_ROW) {
         std::string source = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 0)); // first column

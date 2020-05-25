@@ -198,7 +198,7 @@ int TerminalUserInterface::run (char* name, char* configPath) {
     }
 
     if (!job) {
-        cout << "Backup job named \"" << name << "\" not found." << endl;
+        cerr << "Backup job named \"" << name << "\" not found." << endl;
         delete config;
         return 1;
     }
