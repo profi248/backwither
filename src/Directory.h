@@ -1,7 +1,8 @@
 #ifndef BACKUP_DIRECTORY_H
 #define BACKUP_DIRECTORY_H
-#include <vector>
+#include <set>
 #include <string>
+#include <memory>
 #include "FilesystemEntity.h"
 
 /**
@@ -11,13 +12,14 @@
 
 class Directory : public FilesystemEntity {
     // list of files and subfolders
-    std::vector<FilesystemEntity*> m_Contents;
+    std::set<std::shared_ptr<FilesystemEntity>> m_Contents;
 
 public:
     Directory(std::string path);
-    ~Directory() override = default;
-    void AddFilesystemEntity(FilesystemEntity*);
+    ~Directory() override;
+    void AddFilesystemEntity(std::shared_ptr<FilesystemEntity>);
+    Directory operator - (Directory const & dir) const;
+    Directory & operator = (Directory const & dir);
 };
-
 
 #endif //BACKUP_FILE_H

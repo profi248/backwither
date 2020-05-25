@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <algorithm>
 #include "Backup.h"
 #include "FilesystemBrowser.h"
 
@@ -16,7 +17,10 @@ int Backup::DoBackup (BackupJob* job) {
     if (!job->GetIncremental())
         return 3; // fixme implement !incremental
 
-    FilesystemBrowser::BrowseFolderRecursive(source);
+    // Directory prevState = <get list of files in last snapshot from config provider>
+    Directory prevState("/");
+    Directory currentState = FilesystemBrowser::BrowseFolderRecursive(source);
+    Directory diff = currentState - prevState;
 
     return 0;
 }

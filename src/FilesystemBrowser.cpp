@@ -1,18 +1,17 @@
 #include <filesystem>
-#include <iostream>
-#include <iomanip>
 #include <exception>
+#include <memory>
 #include "FilesystemBrowser.h"
 #include "Directory.h"
 #include "File.h"
 
 namespace fs = std::filesystem;
 
-Directory* FilesystemBrowser::BrowseFolderRecursive (std::string path_str) {
+Directory FilesystemBrowser::BrowseFolderRecursive (std::string path_str) {
     auto path = fs::path(path_str);
     auto de = fs::directory_entry(path);
 
-    Directory* root = new Directory("/");
+    Directory root("/");
 
     for (auto & item : fs::recursive_directory_iterator(path)) {
         // FilesystemEntity* e;
@@ -31,10 +30,9 @@ Directory* FilesystemBrowser::BrowseFolderRecursive (std::string path_str) {
         }
         */
 
-        if (item.is_regular_file()) {
-            root->AddFilesystemEntity(new File(item.path(), item.file_size()));
-            std::cout << item.path() << '\n';
-        }
+        if (item.is_regular_file())
+            root.AddFilesystemEntity(std::make_shared<FilesystemEntity>(File(item.path(), item.file_size())));
+
     }
 
     return root;
