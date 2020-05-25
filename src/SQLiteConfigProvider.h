@@ -20,9 +20,9 @@ public:
 
     BackupPlan* LoadBackupPlan () override;
 
-    void SaveFileIndex (Directory fld) override;
+    void SaveSnapshotFileIndex (Directory fld, BackupJob *job) override;
 
-    Directory LoadFileIndex () override;
+    Directory LoadSnapshotFileIndex () override;
 
 private:
     std::string getDefaultConfigPath () const;

@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <filesystem>
 #include <sqlite3.h>
-#include <iostream>
+#include <ctime>
 #include "SQLiteConfigProvider.h"
 
 const char* CONFIG_FOLDER_FILENAME   = "backwither";
@@ -236,11 +236,38 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     return plan;
 }
 
-void SQLiteConfigProvider::SaveFileIndex (Directory fld) {
+void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job) {
+    sqlite3* db = openDB();
+    sqlite3_stmt* addSnapshotStmt;
+
+    sqlite3_prepare_v2(db,
+       "insert into snapshots (creation, backup_id) values (?, ?);",
+       SQLITE_NULL_TERMINATED, & addSnapshotStmt, nullptr);
+
+    // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
+    sqlite3_bind_int64(addSnapshotStmt, 1, std::time(nullptr));
+    sqlite3_bind_int64(addSnapshotStmt, 2, job->GetID());
+
+    if (sqlite3_step(addSnapshotStmt) != SQLITE_DONE) {
+        sqlite3_finalize(addSnapshotStmt);
+        sqlite3_close(db);
+
+        throw std::runtime_error("Error when adding a new snapshot.");
+    }
+
+    int64_t snapshotID = sqlite3_last_insert_rowid(db);
+    sqlite3_finalize(addSnapshotStmt);
+
+    DirectoryIterator it (& fld);
+
+    // todo use the iterator here
+
+    sqlite3_finalize(addSnapshotStmt);
+    sqlite3_close(db);
 
 }
 
-Directory SQLiteConfigProvider::LoadFileIndex () {
+Directory SQLiteConfigProvider::LoadSnapshotFileIndex () {
     return Directory("");
 }
 

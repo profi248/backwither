@@ -10,7 +10,7 @@ FILES= \
 	src/bin/intermediate/Backup.o src/bin/intermediate/BackupStorageProvider.o src/bin/intermediate/IncrementalFilesystemBackupStorageProvider.o \
 	src/bin/intermediate/FilesystemBackupStorageProvider.o src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o \
 	src/bin/intermediate/FileComparator.o src/bin/intermediate/HashFileComparator.o src/bin/intermediate/TimeFileComparator.o \
-	src/bin/intermediate/BackupPlanIterator.o
+	src/bin/intermediate/BackupPlanIterator.o src/bin/intermediate/DirectoryIterator.o
 
 .PHONY: all clean run doc
 

@@ -4,11 +4,12 @@
 #include <string>
 #include <memory>
 #include "FilesystemEntity.h"
+#include "DirectoryIterator.h"
 
 /**
  * Represents a folder in a filesystem tree.
  */
-
+class DirectoryIterator;
 
 class Directory : public FilesystemEntity {
     // list of files and subfolders
@@ -20,6 +21,8 @@ public:
     void AddFilesystemEntity(std::shared_ptr<FilesystemEntity>);
     Directory operator - (Directory const & dir) const;
     Directory & operator = (Directory const & dir);
+
+    friend class DirectoryIterator;
 };
 
 #endif //BACKUP_FILE_H

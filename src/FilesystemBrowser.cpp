@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <exception>
 #include <memory>
+#include <chrono>
 #include "FilesystemBrowser.h"
 #include "Directory.h"
 #include "File.h"
@@ -31,7 +32,13 @@ Directory FilesystemBrowser::BrowseFolderRecursive (std::string path_str) {
         */
 
         if (item.is_regular_file())
-            root.AddFilesystemEntity(std::make_shared<FilesystemEntity>(File(item.path(), item.file_size())));
+            root.AddFilesystemEntity(
+                std::make_shared<File>(File(item.path(),
+                // time_point -> duration -> seconds
+                // https://gist.github.com/kantoniak/d58103623d0d7a7748fbc2040810428f
+                std::chrono::duration_cast<std::chrono::seconds>(item.last_write_time().time_since_epoch()).count(),
+                item.file_size()))
+            );
 
     }
 

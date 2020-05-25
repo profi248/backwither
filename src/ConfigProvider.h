@@ -31,13 +31,13 @@ public:
      * Save file index (root folder) to config.
      * @param fld Folder to save.
      */
-    virtual void SaveFileIndex (Directory fld) = 0;
+    virtual void SaveSnapshotFileIndex (Directory fld, BackupJob *job) = 0;
 
    /**
     * Retrieve file index (root folder) from config.
     * @return Direcroty
     */
-    virtual Directory LoadFileIndex () = 0;
+    virtual Directory LoadSnapshotFileIndex () = 0;
 
 };
 
