@@ -1,12 +1,17 @@
 #ifndef BACKUP_FILESYSTEMBROWSER_H
 #define BACKUP_FILESYSTEMBROWSER_H
 #include "Directory.h"
+#include "BackupJob.h"
+#include "ConfigProvider.h"
 #include <string>
 
 /**
  * Class for browsing filesystem.
  */
 class FilesystemBrowser {
+
+    static std::string normalizeDirectoryPath (std::string path);
+
 public:
     /**
      * Builds a recursive tree of a filesystem path.
@@ -15,6 +20,9 @@ public:
      */
 
     static Directory BrowseFolderRecursive (std::string path_str);
+    static void      VerifyOrCreateDestinationDirectory (std::string destination);
+    static void      VerifySourceDirectory (std::string source);
+    static bool      IsDirectoryEmpty (std::string path);
 };
 
 

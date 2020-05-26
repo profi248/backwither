@@ -1,5 +1,6 @@
+#include <algorithm>
+#include <fstream>
 #include <filesystem>
-#include <exception>
 #include <memory>
 #include <chrono>
 #include "FilesystemBrowser.h"
@@ -44,4 +45,49 @@ Directory FilesystemBrowser::BrowseFolderRecursive (std::string path_str) {
     }
 
     return root;
+}
+
+void FilesystemBrowser::VerifySourceDirectory (std::string source) {
+    if (!fs::exists(source))
+        throw std::runtime_error("Backup source path doesn't exist.");
+
+    if (!fs::is_directory(source))
+        throw std::runtime_error("Backup source path is not a directory.");
+
+    if (IsDirectoryEmpty(source))
+        throw std::runtime_error("Backup source directory is empty.");
+}
+
+void FilesystemBrowser::VerifyOrCreateDestinationDirectory (std::string destination) {
+    if (fs::exists(destination)) {
+        if (fs::is_directory(destination)) {
+            if (!IsDirectoryEmpty(destination)) {
+                throw std::runtime_error("Backup destination path is not empty.");
+            }
+        } else {
+            throw std::runtime_error("Backup destination path is not a directory.");
+        }
+    } else {
+        if (!fs::create_directories(destination))
+            throw std::runtime_error("Directory can't be created in backup destination path.");
+    }
+
+    auto tmpFileStream = std::ofstream(normalizeDirectoryPath(destination) + ".tmp");
+
+    if (!tmpFileStream.is_open() || !(tmpFileStream << "a"))
+        throw std::runtime_error("Backup destination path is not writable.");
+
+    if (!fs::remove(normalizeDirectoryPath(destination) + ".tmp"))
+        throw std::runtime_error("Backup destination path is not writable.");
+}
+
+std::string FilesystemBrowser::normalizeDirectoryPath (std::string path) {
+    if (path[path.length()] != '/')
+        return path += '/';
+
+    return path;
+}
+
+bool FilesystemBrowser::IsDirectoryEmpty (std::string path) {
+    return fs::begin(fs::directory_iterator(path)) == fs::end(fs::directory_iterator(path));
 }

@@ -2,8 +2,10 @@
 #define BACKUP_BACKUPJOB_H
 #include <string>
 #include "BackupPlanIterator.h"
+#include "ConfigProvider.h"
 
 class BackupPlanIterator;
+class ConfigProvider;
 
 /**
  * Represents a backup job for a certain filesystem path.
@@ -22,7 +24,8 @@ public:
     /**
      * Start backup of this job.
      */
-    void Backup ();
+
+    int DoBackup (ConfigProvider* config);
 
     std::string GetSource () const;
     std::string GetDestination () const;
@@ -31,6 +34,7 @@ public:
     int64_t     GetID () const;
 
     friend BackupPlanIterator;
+
 };
 
 

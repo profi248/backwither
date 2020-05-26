@@ -2,6 +2,11 @@
 #define BACKUP_CONFIGPROVIDER_H
 #include "BackupPlan.h"
 #include "Directory.h"
+#include "BackupJob.h"
+
+class BackupJob;
+class BackupPlan;
+
 /**
  * Provides access to saving and loading backup configuration.
  */
