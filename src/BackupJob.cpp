@@ -4,6 +4,7 @@
 #include <utility>
 #include "BackupJob.h"
 #include "FilesystemBrowser.h"
+#include "FileChunker.h"
 
 BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool incremental, int64_t id) :
         m_SourcePath (std::move(source)),
@@ -27,6 +28,14 @@ int BackupJob::DoBackup (ConfigProvider* config) {
     Directory diff = currentState - prevState;
 
     config->SaveSnapshotFileIndex(diff, this);
+
+    DirectoryIterator it(& currentState);
+
+    while (!it.End()) {
+        FileChunker::GenerateFileChunks(it.GetPath());
+        it++;
+    }
+
 
     // todo split files into chunks, deduplicate chunks, save chunks index into db and chunk data on fs
 
