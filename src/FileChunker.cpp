@@ -4,25 +4,40 @@
 #include <ios>
 #include <iostream>
 #include "FileChunker.h"
+#include "ChunkList.h"
+#include "Chunk.h"
+#include "IncrementalFilesystemBackupStorageProvider.h"
 
 using namespace std;
 
-void FileChunker::GenerateFileChunks (std::string path) {
-    fstream file = fstream(path, ios::in | ios::binary);
-    char buf[CHUNK_SIZE];
-    size_t chunks = 0;
-    cout << path << ": ";
+char* FileChunker::buf = nullptr;
+
+void FileChunker::GenerateFileChunks (std::string inFile, std::string & outFolder) {
+    fstream file = fstream(inFile, ios::in | ios::binary);
+    // unique_ptr<char[]> bufPtr = std::make_unique<char[]>(CHUNK_SIZE);
+    size_t chunkCnt = 0;
+
+    auto storageProvider = IncrementalFilesystemBackupStorageProvider(outFolder);
+
+    // cout << inFile << ": ";
+    ChunkList chunks(inFile);
+
     while (!file.eof()) {
+        buf = new char [CHUNK_SIZE];
         if (file.bad() || file.fail())
-            throw ios_base::failure("Error reading file " + path + ".");
+            throw ios_base::failure("Error reading file " + inFile + ".");
         file.read(buf, CHUNK_SIZE);
-        chunks++;
+        chunkCnt++;
         size_t bytesRead = file.gcount();
-        cout << chunks << " " << bytesRead << "B / hash: " << chunkHashSha256(buf, bytesRead) << " ";
+        string hash = chunkHashSha256(buf, bytesRead);
+        // cout << chunkCnt << " " << bytesRead << "B / hash: " << hash << " ";
+        Chunk c = Chunk(hash, bytesRead);
+        chunks.AddChunk(c);
+        storageProvider.StoreChunk(c, buf);
+        delete [] buf;
         // todo store index in config (maybe create new class, but maybe simply call config function)
-        // todo call backupstorageprovider to save actual data (buf)
     }
-    cout << endl;
+    // cout << endl;
 }
 
 // https://stackoverflow.com/a/10632725/2465760
@@ -34,6 +49,10 @@ std::string FileChunker::chunkHashSha256 (char* data, size_t size) {
     SHA256_Final(digest, & sha256Ctx);
     ostringstream oss;
     for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
-        oss << hex << static_cast<int>(digest[i]);
+        oss << hex << setw(2) << setfill('0') << static_cast<int>(digest[i]);
     return oss.str();
+}
+
+FileChunker::~FileChunker () {
+    delete [] buf;
 }

@@ -9,9 +9,6 @@
  * Class for browsing filesystem.
  */
 class FilesystemBrowser {
-
-    static std::string normalizeDirectoryPath (std::string path);
-
 public:
     /**
      * Builds a recursive tree of a filesystem path.
@@ -19,10 +16,11 @@ public:
      * @return Directory structure.
      */
 
-    static Directory BrowseFolderRecursive (std::string path_str);
-    static void      VerifyOrCreateDestinationDirectory (std::string destination);
-    static void      VerifySourceDirectory (std::string source);
-    static bool      IsDirectoryEmpty (std::string path);
+    static Directory   BrowseFolderRecursive (std::string path_str);
+    static void        VerifyOrCreateDestinationDirectory (std::string destination);
+    static void        VerifySourceDirectory (std::string source);
+    static bool        IsDirectoryEmpty (std::string path);
+    static std::string NormalizeDirectoryPath (std::string path);
 };
 
 

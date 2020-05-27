@@ -8,14 +8,6 @@
 #include "FilesystemEntity.h"
 #include "File.h"
 
-const char* CONFIG_FOLDER_FILENAME   = "backwither";
-const char* CONFIG_DATABASE_FILENAME = "config.db";
-const char* CONFIG_DEFAULT_PATH      = ".config";
-const char* CONFIG_HOME_ENVVAR       = "HOME";
-const char* CONFIG_DEFAULT_ENVVAR    = "XDG_CONFIG_HOME";
-
-const int   SQLITE_NULL_TERMINATED = -1;
-
 // todo maybe move SQLite object to member var
 
 SQLiteConfigProvider::SQLiteConfigProvider (std::string path) {
@@ -39,11 +31,11 @@ std::string SQLiteConfigProvider::getDefaultConfigPath () const {
             + " or " + std::string(CONFIG_DEFAULT_ENVVAR) +
             " env variables are set. Cannot find default path for config.");
         } else {
-            path += "/" + std::string(CONFIG_DEFAULT_PATH) + "/";
+            path += "/" + std::string(CONFIG_DEFAULT_PATH);
         }
     }
 
-    path += std::string(CONFIG_FOLDER_FILENAME) + "/";
+    path += std::string(CONFIG_FOLDER_FILENAME);
     std::filesystem::create_directories(path);
 
     return path;

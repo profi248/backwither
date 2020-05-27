@@ -32,7 +32,7 @@ int BackupJob::DoBackup (ConfigProvider* config) {
     DirectoryIterator it(& currentState);
 
     while (!it.End()) {
-        FileChunker::GenerateFileChunks(it.GetPath());
+        FileChunker::GenerateFileChunks(it.GetPath(), destination);
         it++;
     }
 

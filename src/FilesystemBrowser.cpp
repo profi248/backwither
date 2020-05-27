@@ -60,28 +60,24 @@ void FilesystemBrowser::VerifySourceDirectory (std::string source) {
 
 void FilesystemBrowser::VerifyOrCreateDestinationDirectory (std::string destination) {
     if (fs::exists(destination)) {
-        if (fs::is_directory(destination)) {
-            if (!IsDirectoryEmpty(destination)) {
-                throw std::runtime_error("Backup destination path is not empty.");
-            }
-        } else {
+        if (!fs::is_directory(destination))
             throw std::runtime_error("Backup destination path is not a directory.");
-        }
+
     } else {
         if (!fs::create_directories(destination))
             throw std::runtime_error("Directory can't be created in backup destination path.");
     }
 
-    auto tmpFileStream = std::ofstream(normalizeDirectoryPath(destination) + ".tmp");
+    auto tmpFileStream = std::ofstream(NormalizeDirectoryPath(destination) + ".tmp");
 
     if (!tmpFileStream.is_open() || !(tmpFileStream << "a"))
         throw std::runtime_error("Backup destination path is not writable.");
 
-    if (!fs::remove(normalizeDirectoryPath(destination) + ".tmp"))
+    if (!fs::remove(NormalizeDirectoryPath(destination) + ".tmp"))
         throw std::runtime_error("Backup destination path is not writable.");
 }
 
-std::string FilesystemBrowser::normalizeDirectoryPath (std::string path) {
+std::string FilesystemBrowser::NormalizeDirectoryPath (std::string path) {
     if (path[path.length()] != '/')
         return path += '/';
 

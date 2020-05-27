@@ -16,6 +16,6 @@ add_executable(backwither
         FilesystemBackupStorageProvider.cpp FilesystemBackupStorageProvider.h UserInterface.cpp UserInterface.h TerminalUserInterface.cpp TerminalUserInterface.h
         FileComparator.cpp FileComparator.h HashFileComparator.cpp HashFileComparator.h TimeFileComparator.cpp TimeFileComparator.h
         BackupPlanIterator.cpp BackupPlanIterator.h DirectoryIterator.cpp DirectoryIterator.h
-        FileChunker.cpp FileChunker.h)
+        FileChunker.cpp FileChunker.h Chunk.cpp Chunk.h ChunkList.cpp ChunkList.h)
 
-target_link_libraries(backwither -lsqlite3)
+target_link_libraries(backwither -lsqlite3 -lcrypto)
