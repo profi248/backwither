@@ -26,14 +26,14 @@ std::string DirectoryIterator::GetPath () const {
 
 int64_t DirectoryIterator::GetMtime () const {
     if (auto file = std::dynamic_pointer_cast<File>(*m_DirectoryIt))
-        return file->Mtime();
+        return file->GetMtime();
     else
         return 0;
 }
 
 int64_t DirectoryIterator::GetSize () const {
     if (auto file = std::dynamic_pointer_cast<File>(*m_DirectoryIt))
-        return file->Size();
+        return file->GetSize();
     else
         return 0;
 }
