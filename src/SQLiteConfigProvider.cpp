@@ -8,13 +8,12 @@
 #include "FilesystemEntity.h"
 #include "File.h"
 
-// todo maybe move SQLite object to member var
-
 SQLiteConfigProvider::SQLiteConfigProvider (std::string path) {
     if (!path.empty())
         if (path[path.length()] != '/')
             path += '/';
     m_Path = path;
+    m_DB   = openDB();
 }
 
 std::string SQLiteConfigProvider::getDefaultConfigPath () const {
@@ -150,10 +149,9 @@ std::string SQLiteConfigProvider::getDbPath () const {
 
 
 void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
-     sqlite3* db = openDB();
      sqlite3_stmt* addJobStmt;
 
-    sqlite3_prepare_v2(db,
+    sqlite3_prepare_v2(m_DB,
        "insert into backups (source, destination, name, incremental) values (?, ?, ?, ?);",
        SQLITE_NULL_TERMINATED, & addJobStmt, nullptr);
 
@@ -165,22 +163,18 @@ void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
 
     if (sqlite3_step(addJobStmt) != SQLITE_DONE) {
         sqlite3_finalize(addJobStmt);
-        sqlite3_close(db);
 
         throw std::runtime_error("Error when adding a new backup job. Name might already be taken.");
 
     }
 
     sqlite3_finalize(addJobStmt);
-    sqlite3_close(db);
 }
 
 
 BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
-    sqlite3* db = openDB();
-
     sqlite3_stmt* getBackupJobStmt;
-    sqlite3_prepare_v2(db,
+    sqlite3_prepare_v2(m_DB,
         "select backup_id, source, destination, incremental from backups where name = ?;",
         SQLITE_NULL_TERMINATED, & getBackupJobStmt, nullptr);
 
@@ -194,12 +188,10 @@ BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
         bool incremental = static_cast<bool>(sqlite3_column_int(getBackupJobStmt, 3));
 
         sqlite3_finalize(getBackupJobStmt);
-        sqlite3_close(db);
 
         return new BackupJob(source, destination, name, incremental, id);
     } else {
         sqlite3_finalize(getBackupJobStmt);
-        sqlite3_close(db);
         return nullptr;
     }
 
@@ -207,11 +199,9 @@ BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
 
 BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     BackupPlan* plan = new BackupPlan();
-    sqlite3* db = openDB();
-
     sqlite3_stmt* loadPlanStmt;
 
-    sqlite3_prepare_v2(db,
+    sqlite3_prepare_v2(m_DB,
        "select source, destination, name, incremental from backups order by name;",
        SQLITE_NULL_TERMINATED, & loadPlanStmt, nullptr);
 
@@ -228,20 +218,17 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     }
 
     sqlite3_finalize(loadPlanStmt);
-    sqlite3_close(db);
     return plan;
 }
 
 void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job) {
-    sqlite3* db = openDB();
     sqlite3_stmt* addSnapshotStmt;
 
-    if (sqlite3_exec(db, "begin transaction;", nullptr, nullptr, nullptr) != SQLITE_OK) {
-        sqlite3_close(db);
+    if (sqlite3_exec(m_DB, "begin transaction;", nullptr, nullptr, nullptr) != SQLITE_OK) {
         throw std::runtime_error("Database error initializing a snapshot.");
     }
 
-    sqlite3_prepare_v2(db,
+    sqlite3_prepare_v2(m_DB,
        "insert into snapshots (creation, backup_id) values (?, ?);",
        SQLITE_NULL_TERMINATED, & addSnapshotStmt, nullptr);
 
@@ -250,21 +237,20 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
 
     if (sqlite3_step(addSnapshotStmt) != SQLITE_DONE) {
         sqlite3_finalize(addSnapshotStmt);
-        sqlite3_exec(db, "rollback;", nullptr, nullptr, nullptr);
-        sqlite3_close(db);
+        sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
 
         throw std::runtime_error("Database error adding a new snapshot.");
     }
 
-    int64_t snapshotID = sqlite3_last_insert_rowid(db);
+    int64_t snapshotID = sqlite3_last_insert_rowid(m_DB);
     sqlite3_finalize(addSnapshotStmt);
 
     DirectoryIterator it (& fld);
     sqlite3_stmt* addFileStmt;
 
-    sqlite3_prepare_v2(db,
-           "insert into files (path, size, mtime, snapshot_id, backup_id) values (?, ?, ?, ?, ?);",
-           SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
+    sqlite3_prepare_v2(m_DB,
+       "insert into files (path, size, mtime, snapshot_id, backup_id) values (?, ?, ?, ?, ?);",
+       SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
 
 
     while (!it.End()) {
@@ -277,8 +263,7 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
 
         if (sqlite3_step(addFileStmt) != SQLITE_DONE) {
             sqlite3_finalize(addFileStmt);
-            sqlite3_exec(db, "rollback;", nullptr, nullptr, nullptr);
-            sqlite3_close(db);
+            sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
 
             throw std::runtime_error("Database error when adding a file.");
         }
@@ -288,35 +273,30 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
     }
 
     sqlite3_finalize(addFileStmt);
-    if (sqlite3_exec(db, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK) {
-        sqlite3_close(db);
+    if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK)
         throw std::runtime_error("Database error when creating a snapshot.");
-    }
 
-    sqlite3_close(db);
 }
 
 Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t snapshotID) {
     Directory dir("/");
-    sqlite3* db = openDB();
 
     sqlite3_stmt* loadFilesStmt;
 
     if (snapshotID != -1) {
         if (snapshotID == 0) {
             snapshotID = getLastSnapshotId(job);
-            if (snapshotID < 0) {
-                sqlite3_close(db);
+            if (snapshotID < 0)
                 throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
-            }
+
         }
-        sqlite3_prepare_v2(db,
+        sqlite3_prepare_v2(m_DB,
            "select path, size, mtime from files where snapshot_id = ?;",
            SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
 
         sqlite3_bind_int64(loadFilesStmt, 1, snapshotID);
     } else { // all files from all snapshots for this backup job
-        sqlite3_prepare_v2(db,
+        sqlite3_prepare_v2(m_DB,
            "select path, size, mtime from files where backup_id = ?;",
            SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
 
@@ -338,15 +318,13 @@ Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t s
     }
 
     sqlite3_finalize(loadFilesStmt);
-    sqlite3_close(db);
     return dir;
 }
 
 int64_t SQLiteConfigProvider::getLastSnapshotId (const BackupJob* job) {
-    sqlite3* db = openDB();
     int64_t snapshotID;
     sqlite3_stmt* getSnapshotStmt;
-    sqlite3_prepare_v2(db,
+    sqlite3_prepare_v2(m_DB,
        "select snapshot_id from snapshots where backup_id = ? order by snapshot_id desc limit 1;",
        SQLITE_NULL_TERMINATED, & getSnapshotStmt, nullptr);
     sqlite3_bind_int64(getSnapshotStmt, 1, job->GetID());
@@ -356,7 +334,6 @@ int64_t SQLiteConfigProvider::getLastSnapshotId (const BackupJob* job) {
         snapshotID = -1;
 
     sqlite3_finalize(getSnapshotStmt);
-    sqlite3_close(db);
     return snapshotID;
 }
 
@@ -370,4 +347,8 @@ sqlite3* SQLiteConfigProvider::openDB () {
         throw std::runtime_error("Cannot open the database.");
 
     return db;
+}
+
+SQLiteConfigProvider::~SQLiteConfigProvider () {
+    sqlite3_close(m_DB);
 }

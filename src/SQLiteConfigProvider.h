@@ -16,9 +16,11 @@ class SQLiteConfigProvider : public ConfigProvider {
     const int   SQLITE_NULL_TERMINATED = -1;
 
     std::string m_Path;
+    sqlite3*    m_DB;
+
 public:
     explicit SQLiteConfigProvider (std::string path = "");
-    ~SQLiteConfigProvider () override = default;
+    ~SQLiteConfigProvider () override;
 
     void        AddBackupJob (BackupJob* job) override;
     BackupJob*  GetBackupJob (std::string name) override;
