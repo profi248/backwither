@@ -382,6 +382,29 @@ void SQLiteConfigProvider::SaveFileChunks (ChunkList chunks, int64_t snapshotId)
 
 }
 
+ChunkList SQLiteConfigProvider::RetrieveFileChunks (int64_t snapshotId, int64_t fileId) {
+    ChunkList chunks(fileId);
+    sqlite3_stmt* retrieveChunksStmt;
+
+    sqlite3_prepare_v2(m_DB,
+       "select hash, size from chunks where file_id = ? and snapshot_id = ? order by position;",
+       SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
+
+    while (sqlite3_step(retrieveChunksStmt) == SQLITE_ROW) {
+        // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
+        Chunk chunk (
+            std::string(reinterpret_cast<const char*>(sqlite3_column_text(retrieveChunksStmt, 0))), // hash
+            sqlite3_column_int64(retrieveChunksStmt, 3)  // size
+        );
+
+        chunks.AddChunk(chunk);
+    }
+
+    sqlite3_finalize(retrieveChunksStmt);
+    return chunks;
+}
+
+
 sqlite3* SQLiteConfigProvider::openDB () {
     if (!configExists())
         initConfig();
@@ -397,3 +420,4 @@ sqlite3* SQLiteConfigProvider::openDB () {
 SQLiteConfigProvider::~SQLiteConfigProvider () {
     sqlite3_close(m_DB);
 }
+

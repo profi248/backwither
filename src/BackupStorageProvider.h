@@ -12,7 +12,7 @@ public:
     virtual ~BackupStorageProvider() = default;
 
     virtual void  StoreChunk (Chunk metadata, char* data) = 0;
-    virtual Chunk RetrieveChunk (std::string hash) = 0;
+    virtual char* RetrieveChunk (Chunk metadata) = 0;
 };
 
 #endif //BACKUP_BACKUPSTORAGEPROVIDER_H

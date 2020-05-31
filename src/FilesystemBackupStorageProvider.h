@@ -11,7 +11,7 @@
 class FilesystemBackupStorageProvider : public BackupStorageProvider {
     ~FilesystemBackupStorageProvider() override = default;
     void StoreChunk (Chunk metadata, char* data) override;
-    virtual Chunk RetrieveChunk (std::string hash);
+    virtual char* RetrieveChunk (Chunk metadata);
 };
 
 #endif //BACKUP_FILESYSTEMBACKUPSTORAGEPROVIDER_H

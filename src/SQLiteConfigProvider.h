@@ -29,6 +29,7 @@ public:
     int64_t     SaveSnapshotFileIndex (Directory & fld, BackupJob *job) override;
     Directory   LoadSnapshotFileIndex (BackupJob* job, int64_t snapshotID) override;
     void        SaveFileChunks (ChunkList chunks, int64_t snapshotId) override;
+    ChunkList   RetrieveFileChunks (int64_t snapshotId, int64_t fileId) override;
 
 private:
     std::string getDefaultConfigPath () const;

@@ -52,6 +52,8 @@ public:
      */
     virtual void SaveFileChunks (ChunkList chunks, int64_t snapshotId) = 0;
 
+    virtual ChunkList RetrieveFileChunks (int64_t snapshotId, int64_t fileId) = 0;
+
 };
 
 

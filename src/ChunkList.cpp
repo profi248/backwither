@@ -1,7 +1,6 @@
 #include "ChunkList.h"
 
-ChunkList::ChunkList (std::string & file, int64_t fileId) :
-        m_File(file),
+ChunkList::ChunkList (int64_t fileId) :
         m_FileID(fileId) {}
 
 void ChunkList::AddChunk (Chunk & c) {

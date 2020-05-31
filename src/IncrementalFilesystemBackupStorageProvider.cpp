@@ -27,6 +27,20 @@ void IncrementalFilesystemBackupStorageProvider::StoreChunk (Chunk metadata, cha
     }
 }
 
-Chunk IncrementalFilesystemBackupStorageProvider::RetrieveChunk (std::string hash) {
+char* IncrementalFilesystemBackupStorageProvider::RetrieveChunk (Chunk metadata) {
+    string chunkFile = m_ChunkDir + metadata.GetHash();
+    if (!fs::exists(chunkFile)) {
+        fstream file (chunkFile, ios::in | ios::binary);
+        m_Buf = new char[metadata.GetSize()];
+        file.read(m_Buf, metadata.GetSize());
+        if (!file.good())
+            throw runtime_error("Cannot read chunk in " + chunkFile + ".");
+    } else {
+        throw runtime_error("Chunk in " + chunkFile + " does not exist .");
+    }
+    return m_Buf;
+}
 
+IncrementalFilesystemBackupStorageProvider::~IncrementalFilesystemBackupStorageProvider () {
+    delete [] m_Buf;
 }

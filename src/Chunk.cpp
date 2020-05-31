@@ -1,6 +1,6 @@
 #include "Chunk.h"
 
-Chunk::Chunk (std::string & hash, size_t size) :
+Chunk::Chunk (std::string hash, size_t size) :
         m_Hash (hash),
         m_Size (size) {}
 

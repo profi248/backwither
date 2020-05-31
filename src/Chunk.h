@@ -8,7 +8,7 @@ class Chunk {
     std::string             m_Hash;
     size_t                  m_Size;
 public:
-    Chunk (std::string & hash, size_t size);
+    Chunk (std::string hash, size_t size);
     std::string GetHash ();
     size_t GetSize ();
 };

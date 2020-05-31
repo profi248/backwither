@@ -22,7 +22,7 @@ void FileChunker::GenerateFileChunks (std::string inFile, int64_t fileID, std::s
     auto storageProvider = IncrementalFilesystemBackupStorageProvider(outFolder);
 
     // cout << inFile << ": ";
-    ChunkList chunks(inFile, fileID);
+    ChunkList chunks(fileID);
 
     while (!file.eof()) {
         buf = new char [CHUNK_SIZE];

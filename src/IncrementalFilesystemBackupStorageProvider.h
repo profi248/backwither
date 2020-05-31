@@ -13,11 +13,12 @@ class IncrementalFilesystemBackupStorageProvider : public BackupStorageProvider 
 
     std::string m_OutputPath;
     std::string m_ChunkDir;
+    char*       m_Buf = nullptr;
 public:
     IncrementalFilesystemBackupStorageProvider (std::string outPath);
-    ~IncrementalFilesystemBackupStorageProvider () override = default;
+    ~IncrementalFilesystemBackupStorageProvider () override;
     void StoreChunk (Chunk metadata, char* data) override;
-    Chunk RetrieveChunk (std::string hash) override;
+    char* RetrieveChunk (Chunk metadata) override;
 };
 
 #endif //BACKUP_INCREMENTALFILESYSTEMBACKUPSTORAGEPROVIDER_H

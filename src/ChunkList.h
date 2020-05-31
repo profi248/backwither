@@ -5,11 +5,10 @@
 #include "Chunk.h"
 
 class ChunkList {
-    std::string        m_File;
     int64_t            m_FileID;
     std::vector<Chunk> m_Chunks;
 public:
-    ChunkList (std::string & file, int64_t fileId);
+    ChunkList (int64_t fileId);
     void    AddChunk (Chunk & c);
     int64_t GetFileID ();
 

@@ -7,9 +7,8 @@ class FileChunker {
     static constexpr int CHUNK_SIZE = 1024 * 1024; // 1 MiB
     static char* buf; // make it static class member to avoid memory leaks when exception is thrown
 public:
-    static void
     // todo refactor config provider to member var
-    GenerateFileChunks (std::string inFile, int64_t fileID, std::string & outFolder, int64_t snapshotId,
+    static void GenerateFileChunks (std::string inFile, int64_t fileID, std::string & outFolder, int64_t snapshotId,
                         ConfigProvider* config);
     ~FileChunker ();
 
