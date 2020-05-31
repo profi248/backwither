@@ -7,6 +7,7 @@
 #include "SQLiteConfigProvider.h"
 #include "FilesystemEntity.h"
 #include "File.h"
+#include "ChunkListIterator.h"
 
 SQLiteConfigProvider::SQLiteConfigProvider (std::string path) {
     if (!path.empty())
@@ -68,17 +69,16 @@ bool SQLiteConfigProvider::initConfig () {
         "create table snapshots (snapshot_id integer primary key asc, creation integer,"
         "backup_id integer references backups (backup_id));"
 
-        "create table files (file_id integer primary key asc, path text, size integer,"
+        "create table files (file_id integer primary key asc, path text unique, size integer,"
         "mtime integer, ctime integer, snapshot_id integer references snapshots (snapshot_id),"
         "backup_id integer references backups (backup_id));"
 
-        "create table chunkdata (chunk_id integer primary key asc, hash text, size integer);"
+        "create table chunks (hash text, size integer,"
+        "file_id integer references files (file_id),"
+        "snapshot_id integer references snapshots (snapshot_id),"
+        "position integer);"
 
-        "create table filechunks (chunk_id integer references chunkdata (chunk_id),"
-        "file_id integer references files (file_id), position integer);"
-
-        "create index chunkdata_idx on chunkdata (hash);"
-        "create index filechunks_idx on filechunks (file_id, position);"
+        "create index chunks_idx on chunks (hash, file_id, position);"
         "create index file_idx on files (snapshot_id, path);"
 
         "insert into settings (key, value) values ('version', 1)",
@@ -221,7 +221,7 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     return plan;
 }
 
-void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job) {
+int64_t SQLiteConfigProvider::SaveSnapshotFileIndex (Directory & fld, BackupJob *job) {
     sqlite3_stmt* addSnapshotStmt;
 
     if (sqlite3_exec(m_DB, "begin transaction;", nullptr, nullptr, nullptr) != SQLITE_OK) {
@@ -249,7 +249,7 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
     sqlite3_stmt* addFileStmt;
 
     sqlite3_prepare_v2(m_DB,
-       "insert into files (path, size, mtime, snapshot_id, backup_id) values (?, ?, ?, ?, ?);",
+       "insert or ignore into files (path, size, mtime, snapshot_id, backup_id) values (?, ?, ?, ?, ?);",
        SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
 
 
@@ -261,11 +261,15 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
         sqlite3_bind_int64(addFileStmt, 4, snapshotID);
         sqlite3_bind_int64(addFileStmt, 5, job->GetID());
 
+
         if (sqlite3_step(addFileStmt) != SQLITE_DONE) {
+            const char * err = sqlite3_errmsg(m_DB);
             sqlite3_finalize(addFileStmt);
             sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
-
-            throw std::runtime_error("Database error when adding a file.");
+            throw std::runtime_error("Database error when adding a file: " + std::string(err) + ".");
+        } else {
+            int64_t newFileID = sqlite3_last_insert_rowid(m_DB);
+            it.SetID(newFileID);
         }
 
         sqlite3_reset(addFileStmt);
@@ -276,6 +280,7 @@ void SQLiteConfigProvider::SaveSnapshotFileIndex (Directory fld, BackupJob *job)
     if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK)
         throw std::runtime_error("Database error when creating a snapshot.");
 
+    return snapshotID;
 }
 
 Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t snapshotID) {
@@ -291,19 +296,17 @@ Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t s
 
         }
         sqlite3_prepare_v2(m_DB,
-           "select path, size, mtime from files where snapshot_id = ?;",
+           "select path, size, mtime, file_id from files where snapshot_id = ?;",
            SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
 
         sqlite3_bind_int64(loadFilesStmt, 1, snapshotID);
     } else { // all files from all snapshots for this backup job
         sqlite3_prepare_v2(m_DB,
-           "select path, size, mtime from files where backup_id = ?;",
+           "select path, size, mtime, file_id from files where backup_id = ?;",
            SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
 
         sqlite3_bind_int64(loadFilesStmt, 1, job->GetID());
     }
-
-
 
     while (sqlite3_step(loadFilesStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
@@ -311,7 +314,8 @@ Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t s
         auto file = std::make_shared<File> (File(
             std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadFilesStmt, 0))), // path
             sqlite3_column_int64(loadFilesStmt, 1), // size
-            sqlite3_column_int64(loadFilesStmt, 2)  // mtime
+            sqlite3_column_int64(loadFilesStmt, 2),  // mtime
+            sqlite3_column_int64(loadFilesStmt, 3)  // id
         ));
 
         dir.AddFilesystemEntity(file);
@@ -329,12 +333,53 @@ int64_t SQLiteConfigProvider::getLastSnapshotId (const BackupJob* job) {
        SQLITE_NULL_TERMINATED, & getSnapshotStmt, nullptr);
     sqlite3_bind_int64(getSnapshotStmt, 1, job->GetID());
     if (sqlite3_step(getSnapshotStmt) == SQLITE_ROW)
-        snapshotID = sqlite3_column_int64(getSnapshotStmt, 0);  // mtime
+        snapshotID = sqlite3_column_int64(getSnapshotStmt, 0);  // snapshot_id
     else
         snapshotID = -1;
 
     sqlite3_finalize(getSnapshotStmt);
     return snapshotID;
+}
+
+void SQLiteConfigProvider::SaveFileChunks (ChunkList chunks, int64_t snapshotId) {
+    ChunkListIterator it (& chunks);
+    sqlite3_stmt* saveChunksStmt;
+
+    if (sqlite3_exec(m_DB, "begin transaction;", nullptr, nullptr, nullptr) != SQLITE_OK) {
+        throw std::runtime_error("Database error initializing saving chunks.");
+    }
+
+    sqlite3_prepare_v2(m_DB,
+       "insert into chunks (hash, size, file_id, snapshot_id, position) values (?, ?, ?, ?, ?);",
+       SQLITE_NULL_TERMINATED, & saveChunksStmt, nullptr);
+
+
+    size_t pos = 1;
+    while (!it.End()) {
+        // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
+        sqlite3_bind_text(saveChunksStmt, 1, it.GetHash().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(saveChunksStmt, 2, it.GetSize());
+        sqlite3_bind_int64(saveChunksStmt, 3, chunks.GetFileID());
+        sqlite3_bind_int64(saveChunksStmt, 4, snapshotId);
+        sqlite3_bind_int64(saveChunksStmt, 5, pos);
+
+        if (sqlite3_step(saveChunksStmt) != SQLITE_DONE) {
+            const char * err = sqlite3_errmsg(m_DB);
+            sqlite3_finalize(saveChunksStmt);
+            sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
+
+            throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
+        }
+
+        sqlite3_reset(saveChunksStmt);
+        it++;
+        pos++;
+    }
+
+    sqlite3_finalize(saveChunksStmt);
+    if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK)
+        throw std::runtime_error("Database error when saving chunks.");
+
 }
 
 sqlite3* SQLiteConfigProvider::openDB () {

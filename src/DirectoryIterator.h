@@ -20,6 +20,8 @@ public:
     std::string GetPath () const;
     int64_t     GetMtime () const;
     int64_t     GetSize () const;
+    int64_t     GetID () const;
+    void        SetID (int64_t id);
     bool End () const;
     bool Empty () const;
 

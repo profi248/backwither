@@ -16,3 +16,7 @@ int64_t File::GetID () {
     return m_ID;
 }
 
+void File::SetID (int64_t id) {
+    m_ID = id;
+}
+

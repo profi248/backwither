@@ -17,6 +17,7 @@ public:
     size_t  GetSize ();
     size_t  GetMtime ();
     int64_t GetID ();
+    void    SetID (int64_t id);
     bool IsFileModified ();
 
 };

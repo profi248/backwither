@@ -7,12 +7,14 @@
 #include "ChunkList.h"
 #include "Chunk.h"
 #include "IncrementalFilesystemBackupStorageProvider.h"
+#include "ConfigProvider.h"
 
 using namespace std;
 
 char* FileChunker::buf = nullptr;
 
-void FileChunker::GenerateFileChunks (std::string inFile, std::string & outFolder) {
+void FileChunker::GenerateFileChunks (std::string inFile, int64_t fileID, std::string & outFolder, int64_t snapshotId,
+                                      ConfigProvider* config) {
     fstream file = fstream(inFile, ios::in | ios::binary);
     // unique_ptr<char[]> bufPtr = std::make_unique<char[]>(CHUNK_SIZE);
     size_t chunkCnt = 0;
@@ -20,7 +22,7 @@ void FileChunker::GenerateFileChunks (std::string inFile, std::string & outFolde
     auto storageProvider = IncrementalFilesystemBackupStorageProvider(outFolder);
 
     // cout << inFile << ": ";
-    ChunkList chunks(inFile);
+    ChunkList chunks(inFile, fileID);
 
     while (!file.eof()) {
         buf = new char [CHUNK_SIZE];
@@ -35,7 +37,7 @@ void FileChunker::GenerateFileChunks (std::string inFile, std::string & outFolde
         chunks.AddChunk(c);
         storageProvider.StoreChunk(c, buf);
         delete [] buf;
-        // todo store index in config (maybe create new class, but maybe simply call config function)
+        config->SaveFileChunks(chunks, snapshotId);
     }
     // cout << endl;
 }

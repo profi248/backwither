@@ -38,6 +38,20 @@ int64_t DirectoryIterator::GetSize () const {
         return 0;
 }
 
+int64_t DirectoryIterator::GetID () const {
+    if (auto file = std::dynamic_pointer_cast<File>(*m_DirectoryIt))
+        return file->GetID();
+    else
+        return 0;
+}
+
+void DirectoryIterator::SetID (int64_t id) {
+    if (auto file = std::dynamic_pointer_cast<File>(*m_DirectoryIt))
+        file->SetID(id);
+}
+
+
+
 DirectoryIterator DirectoryIterator::operator ++ (int) {
     Next();
     return *this;

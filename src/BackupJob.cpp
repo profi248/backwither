@@ -25,17 +25,17 @@ int BackupJob::DoBackup (ConfigProvider* config) {
 
     Directory prevState = config->LoadSnapshotFileIndex(this);
     Directory currentState = FilesystemBrowser::BrowseFolderRecursive(source);
-    Directory diff = currentState - prevState;
+    // Directory diff = currentState - prevState;
+    // todo improve
 
-    config->SaveSnapshotFileIndex(diff, this);
+    int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState, this);
 
     DirectoryIterator it(& currentState);
 
     while (!it.End()) {
-        FileChunker::GenerateFileChunks(it.GetPath(), destination);
+        FileChunker::GenerateFileChunks(it.GetPath(), it.GetID(), destination, newSnapshotId, config);
         it++;
     }
-
 
     // todo split files into chunks, deduplicate chunks, save chunks index into db and chunk data on fs
 
