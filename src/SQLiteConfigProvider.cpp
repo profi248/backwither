@@ -249,8 +249,6 @@ int64_t SQLiteConfigProvider::SaveSnapshotFileIndex (Directory & fld, BackupJob 
     sqlite3_stmt* addFileStmt;
     sqlite3_stmt* fileIdLookbackStmt;
 
-    // fixme file id is incorrect after first inser
-    // probably needs to be replaced with additional select
     sqlite3_prepare_v2(m_DB,
        "insert or ignore into files (path, size, mtime, snapshot_id, backup_id) values (?, ?, ?, ?, ?);",
        SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
@@ -320,7 +318,7 @@ Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t s
         sqlite3_bind_int64(loadFilesStmt, 1, snapshotID);
     } else { // all files from all snapshots for this backup job
         sqlite3_prepare_v2(m_DB,
-           "select path, size, mtime, file_id from files where backup_id = ?;",
+           "select path, mtime, size, file_id from files where backup_id = ?;",
            SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
 
         sqlite3_bind_int64(loadFilesStmt, 1, job->GetID());
