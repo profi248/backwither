@@ -82,6 +82,8 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             }
 
             restore(name, configPath);
+        } else if (command == "help") {
+            help();
         } else {
             cerr << "Command " << command << " not recognized." << endl;
             return 1;
@@ -158,7 +160,8 @@ int TerminalUserInterface::help () {
             "  rollback\trollback a file to older version" << endl <<
             "  diff\t\tshow difference between backups" << endl <<
             "  history\tpast backups history" << endl <<
-            "  run-cron\trun planned backups" << endl << endl;
+            "  run-cron\trun planned backups" << endl <<
+            "  help\t\tshow this help message" << endl << endl;
 
     cout << "Options" << endl;
 
