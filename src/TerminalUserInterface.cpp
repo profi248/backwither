@@ -289,6 +289,13 @@ void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std
 
 std::string TerminalUserInterface::humanFileSize (size_t bytes) {
     ostringstream oss;
+
+    // bypass float if division not needed
+    if (bytes < 1024) {
+        oss << bytes << " B";
+        return oss.str();
+    }
+
     double size = bytes;
     int divisions = 0;
     while (size >= 1024) {
@@ -300,9 +307,6 @@ std::string TerminalUserInterface::humanFileSize (size_t bytes) {
 
     oss << setprecision(precision) << size;
     switch (divisions) {
-        case 0:
-            oss << " B";
-            break;
         case 1:
             oss << " KiB";
             break;
