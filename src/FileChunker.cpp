@@ -16,12 +16,10 @@ char* FileChunker::buf = nullptr;
 void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::string outFolder, int64_t snapshotId,
                                   ConfigProvider* config) {
     fstream file = fstream(inFile, ios::in | ios::binary);
-    // unique_ptr<char[]> bufPtr = std::make_unique<char[]>(CHUNK_SIZE);
     size_t chunkCnt = 0;
 
     auto storageProvider = FilesystemChunkStorageProvider(outFolder);
 
-    // cout << inFile << ": ";
     ChunkList chunks(fileID);
 
     while (!file.eof()) {
@@ -32,14 +30,12 @@ void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::strin
         chunkCnt++;
         size_t bytesRead = file.gcount();
         string hash = chunkHashSha256(buf, bytesRead);
-        // cout << chunkCnt << " " << bytesRead << "B / hash: " << hash << " ";
         Chunk c = Chunk(hash, bytesRead);
         chunks.AddChunk(c);
         storageProvider.StoreChunk(c, buf);
         delete [] buf;
     }
     config->SaveFileChunks(chunks, snapshotId);
-    // cout << endl;
 }
 
 // https://stackoverflow.com/a/10632725/2465760
