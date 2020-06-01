@@ -247,12 +247,17 @@ int64_t SQLiteConfigProvider::SaveSnapshotFileIndex (Directory & fld, BackupJob 
 
     DirectoryIterator it (& fld);
     sqlite3_stmt* addFileStmt;
+    sqlite3_stmt* fileIdLookbackStmt;
 
     // fixme file id is incorrect after first inser
     // probably needs to be replaced with additional select
     sqlite3_prepare_v2(m_DB,
        "insert or ignore into files (path, size, mtime, snapshot_id, backup_id) values (?, ?, ?, ?, ?);",
        SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
+
+    sqlite3_prepare_v2(m_DB,
+       "select file_id from files where path = ?;",
+       SQLITE_NULL_TERMINATED, & fileIdLookbackStmt, nullptr);
 
 
     while (!it.End()) {
@@ -267,18 +272,27 @@ int64_t SQLiteConfigProvider::SaveSnapshotFileIndex (Directory & fld, BackupJob 
         if (sqlite3_step(addFileStmt) != SQLITE_DONE) {
             const char * err = sqlite3_errmsg(m_DB);
             sqlite3_finalize(addFileStmt);
+            sqlite3_finalize(fileIdLookbackStmt);
             sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
             throw std::runtime_error("Database error when adding a file: " + std::string(err) + ".");
         } else {
-            int64_t newFileID = sqlite3_last_insert_rowid(m_DB);
+            sqlite3_bind_text(fileIdLookbackStmt, 1, it.GetPath().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+            if (sqlite3_step(fileIdLookbackStmt) != SQLITE_ROW) {
+                sqlite3_finalize(addFileStmt);
+                sqlite3_finalize(fileIdLookbackStmt);
+                throw std::runtime_error("Database error when adding a file.");
+            }
+            int64_t newFileID = sqlite3_column_int64(fileIdLookbackStmt, 0);
             it.SetID(newFileID);
         }
 
         sqlite3_reset(addFileStmt);
+        sqlite3_reset(fileIdLookbackStmt);
         it++;
     }
 
     sqlite3_finalize(addFileStmt);
+    sqlite3_finalize(fileIdLookbackStmt);
     if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK)
         throw std::runtime_error("Database error when creating a snapshot.");
 
@@ -293,8 +307,10 @@ Directory SQLiteConfigProvider::LoadSnapshotFileIndex (BackupJob* job, int64_t s
     if (snapshotID != -1) {
         if (snapshotID == 0) {
             snapshotID = getLastSnapshotId(job);
-            if (snapshotID < 0)
+            if (snapshotID < 0) {
+                sqlite3_finalize(loadFilesStmt);
                 throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+            }
 
         }
         sqlite3_prepare_v2(m_DB,
@@ -379,8 +395,10 @@ void SQLiteConfigProvider::SaveFileChunks (ChunkList chunks, int64_t snapshotId)
     }
 
     sqlite3_finalize(saveChunksStmt);
-    if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK)
-        throw std::runtime_error("Database error when saving chunks.");
+    if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK) {
+        const char * err = sqlite3_errmsg(m_DB);
+        throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
+    }
 
 }
 

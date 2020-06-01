@@ -37,8 +37,8 @@ void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::strin
         chunks.AddChunk(c);
         storageProvider.StoreChunk(c, buf);
         delete [] buf;
-        config->SaveFileChunks(chunks, snapshotId);
     }
+    config->SaveFileChunks(chunks, snapshotId);
     // cout << endl;
 }
 

@@ -27,6 +27,7 @@ int BackupJob::Backup (ConfigProvider* config) {
     Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
     // Directory diff = currentState - prevState;
     // todo improve
+    // add file comparator
 
     int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState, this);
 
