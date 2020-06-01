@@ -126,7 +126,9 @@ void FilesystemUtils::RestoreFileFromChunks (std::string source, std::string des
         throw runtime_error("Cannot open file " + filePath + ".");
 
     while (!it.End()) {
-        file.write(storageProvider.RetrieveChunk(it.Current()), it.GetSize());
+        char* data = storageProvider.RetrieveChunk(it.Current());
+        file.write(data, it.GetSize());
+        delete [] data;
         if (!file.good())
             throw runtime_error("Cannot write to file " + filePath + ".");
         it++;

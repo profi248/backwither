@@ -13,10 +13,9 @@ class FilesystemChunkStorageProvider : public ChunkStorageProvider {
 
     std::string m_OutputPath;
     std::string m_ChunkDir;
-    char*       m_Buf = nullptr;
 public:
     FilesystemChunkStorageProvider (std::string outPath);
-    ~FilesystemChunkStorageProvider () override;
+    ~FilesystemChunkStorageProvider () override = default;
     void  StoreChunk (Chunk metadata, char* data) override;
     char* RetrieveChunk (Chunk metadata) override;
 };

@@ -29,18 +29,15 @@ void FilesystemChunkStorageProvider::StoreChunk (Chunk metadata, char* data) {
 
 char* FilesystemChunkStorageProvider::RetrieveChunk (Chunk metadata) {
     string chunkFile = m_ChunkDir + metadata.GetHash();
+    char* buf;
     if (fs::exists(chunkFile)) {
         fstream file (chunkFile, ios::in | ios::binary);
-        m_Buf = new char[metadata.GetSize()];
-        file.read(m_Buf, metadata.GetSize());
+        buf = new char [metadata.GetSize()];
+        file.read(buf, metadata.GetSize());
         if (!file.good())
             throw runtime_error("Cannot read chunk in " + chunkFile + ".");
     } else {
         throw runtime_error("Chunk in " + chunkFile + " does not exist.");
     }
-    return m_Buf;
-}
-
-FilesystemChunkStorageProvider::~FilesystemChunkStorageProvider () {
-    delete [] m_Buf;
+    return buf;
 }
