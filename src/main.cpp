@@ -6,11 +6,14 @@
 #include "TerminalUserInterface.h"
 
 int main (int argc, char** argv) {
-    TerminalUserInterface tui;
+    TerminalUserInterface* tui = new TerminalUserInterface();
 
     try {
-        return tui.StartInterface(argc, argv);
+        int ret = tui->StartInterface(argc, argv);
+        delete tui;
+        return ret;
     } catch (std::exception const & e) {
+        delete tui;
         std::cerr << "Unexpected fatal error: " << e.what() << std::endl;
     }
 

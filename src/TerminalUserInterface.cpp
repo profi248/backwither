@@ -212,7 +212,7 @@ int TerminalUserInterface::run (char* name, char* configPath) {
     }
 
     try {
-        job->Backup(config);
+        job->Backup(config, this);
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
@@ -256,7 +256,7 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
             return 0;
         } else if (answer == "y" || answer == "Y") {
             try {
-                job->Restore(config); // todo pass snapshot id
+                job->Restore(config, this, 0); // todo pass snapshot id
             } catch (runtime_error & e) {
                 cerr << "Fatal error: " << e.what() << endl;
                 delete job;
@@ -271,4 +271,59 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
     delete job;
     delete config;
     return 0;
+}
+
+void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std::string status, size_t fileSize) {
+    stringstream oss;
+    if (expected > 0)
+        oss << "[" << current << "/" << expected << "] ";
+    else
+        oss << "[" << current << "...] ";
+
+    oss << status << " (" << humanFileSize(fileSize) << ")";
+    cout << left << setw(m_LastStatusLength) << setfill(' ') << oss.str() << '\r' << flush;
+    // cout << m_LastStatusLength;
+    m_LastStatusLength = oss.str().length();
+
+}
+
+std::string TerminalUserInterface::humanFileSize (size_t bytes) {
+    ostringstream oss;
+    double size = bytes;
+    int divisions = 0;
+    while (size >= 1024) {
+        size /= 1024;
+        divisions++;
+    }
+
+    int precision = (divisions < 2) ? 2 : 3;
+
+    oss << setprecision(precision) << size;
+    switch (divisions) {
+        case 0:
+            oss << " B";
+            break;
+        case 1:
+            oss << " KiB";
+            break;
+        case 2:
+            oss << " MiB";
+            break;
+        case 3:
+            oss << " GiB";
+            break;
+        case 4:
+            oss << " TiB";
+            break;
+        case 5:
+            oss << " PiB";
+            break;
+        case 6:
+            oss << " EiB";
+            break;
+        default:
+            throw bad_exception();
+    }
+
+    return oss.str();
 }

@@ -3,9 +3,11 @@
 #include <string>
 #include "BackupPlanIterator.h"
 #include "ConfigProvider.h"
+#include "UserInterface.h"
 
 class BackupPlanIterator;
 class ConfigProvider;
+class UserInterface;
 
 /**
  * Represents a backup job for a certain filesystem path.
@@ -25,8 +27,8 @@ public:
      * Start backup of this job.
      */
 
-    int Backup  (ConfigProvider* config);
-    int Restore (ConfigProvider* config, int64_t snapshotId = 0);
+    int Backup  (ConfigProvider* config, UserInterface* ui);
+    int Restore (ConfigProvider* config, UserInterface* ui, int64_t snapshotId = 0);
 
     std::string GetSource () const;
     std::string GetDestination () const;

@@ -5,6 +5,7 @@
 #include "BackupJob.h"
 #include "FilesystemUtils.h"
 #include "FileChunker.h"
+#include "UserInterface.h"
 
 BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool incremental, int64_t id) :
         m_SourcePath (std::move(source)),
@@ -13,7 +14,7 @@ BackupJob::BackupJob (std::string source, std::string destination, std::string n
         m_Incremental (incremental),
         m_ID (id) {}
 
-int BackupJob::Backup (ConfigProvider* config) {
+int BackupJob::Backup (ConfigProvider* config, UserInterface* ui) {
     std::filesystem::path source = GetSource();
     std::filesystem::path destination = GetDestination();
 
@@ -32,16 +33,20 @@ int BackupJob::Backup (ConfigProvider* config) {
     int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState, this);
 
     DirectoryIterator it(& currentState);
+    size_t cnt = 0;
 
     while (!it.End()) {
+        if (ui)
+            ui->UpdateProgress(cnt, 0, it.GetPath(), it.GetSize());
         FileChunker::SaveFileChunks(source / it.GetPath(), it.GetID(), destination, newSnapshotId, config);
         it++;
+        cnt++;
     }
 
     return 0;
 }
 
-int BackupJob::Restore (ConfigProvider* config, int64_t snapshotId) {
+int BackupJob::Restore (ConfigProvider* config, UserInterface* ui, int64_t snapshotId) {
     std::filesystem::path restoreFrom = GetDestination();
     std::filesystem::path restoreTo = GetSource();
 
@@ -55,11 +60,15 @@ int BackupJob::Restore (ConfigProvider* config, int64_t snapshotId) {
     Directory snapshotFiles = config->LoadSnapshotFileIndex(this, -1); // todo fix this snapshotID trash
 
     DirectoryIterator it(& snapshotFiles);
+    size_t cnt = 0;
 
     while (!it.End()) {
+        if (ui)
+            ui->UpdateProgress(cnt, 0, it.GetPath(), it.GetSize());
         ChunkList fileChunks = config->RetrieveFileChunks(this, snapshotId, it.GetID());
         FilesystemUtils::RestoreFileFromChunks(restoreFrom, restoreTo, fileChunks, restoreTo / it.GetPath());
         it++;
+        cnt++;
     }
 
     return 0;
