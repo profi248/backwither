@@ -248,6 +248,8 @@ int64_t SQLiteConfigProvider::SaveSnapshotFileIndex (Directory & fld, BackupJob 
     DirectoryIterator it (& fld);
     sqlite3_stmt* addFileStmt;
 
+    // fixme file id is incorrect after first inser
+    // probably needs to be replaced with additional select
     sqlite3_prepare_v2(m_DB,
        "insert or ignore into files (path, size, mtime, snapshot_id, backup_id) values (?, ?, ?, ?, ?);",
        SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
@@ -382,7 +384,7 @@ void SQLiteConfigProvider::SaveFileChunks (ChunkList chunks, int64_t snapshotId)
 
 }
 
-ChunkList SQLiteConfigProvider::RetrieveFileChunks (int64_t snapshotId, int64_t fileId) {
+ChunkList SQLiteConfigProvider::RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) {
     ChunkList chunks(fileId);
     sqlite3_stmt* retrieveChunksStmt;
 
@@ -390,11 +392,20 @@ ChunkList SQLiteConfigProvider::RetrieveFileChunks (int64_t snapshotId, int64_t 
        "select hash, size from chunks where file_id = ? and snapshot_id = ? order by position;",
        SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
 
+    if (snapshotId == 0) {
+        snapshotId = getLastSnapshotId(job);
+        if (snapshotId < 0)
+            throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+    }
+
+    sqlite3_bind_int64(retrieveChunksStmt, 1, fileId);
+    sqlite3_bind_int64(retrieveChunksStmt, 2, snapshotId);
+
     while (sqlite3_step(retrieveChunksStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
         Chunk chunk (
             std::string(reinterpret_cast<const char*>(sqlite3_column_text(retrieveChunksStmt, 0))), // hash
-            sqlite3_column_int64(retrieveChunksStmt, 3)  // size
+            sqlite3_column_int64(retrieveChunksStmt, 1)  // size
         );
 
         chunks.AddChunk(chunk);

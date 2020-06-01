@@ -7,9 +7,9 @@
  * Provides a storage to save actual data that is being backed up.
  */
 
-class BackupStorageProvider {
+class ChunkStorageProvider {
 public:
-    virtual ~BackupStorageProvider() = default;
+    virtual ~ChunkStorageProvider() = default;
 
     virtual void  StoreChunk (Chunk metadata, char* data) = 0;
     virtual char* RetrieveChunk (Chunk metadata) = 0;

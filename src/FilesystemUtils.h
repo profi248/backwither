@@ -8,7 +8,7 @@
 /**
  * Class for browsing filesystem.
  */
-class FilesystemBrowser {
+class FilesystemUtils {
 public:
     /**
      * Builds a recursive tree of a filesystem path.
@@ -21,6 +21,9 @@ public:
     static void        VerifySourceDirectory (std::string source);
     static bool        IsDirectoryEmpty (std::string path);
     static std::string NormalizeDirectoryPath (std::string path);
+    static std::string GetDirectoryOfFilePath (std::string path);
+    static void
+    RestoreFileFromChunks (std::string source, std::string destination, ChunkList chunks, std::string filePath);
 };
 
 

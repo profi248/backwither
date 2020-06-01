@@ -18,6 +18,7 @@ public:
     void Next ();
     std::string GetHash () const;
     size_t GetSize () const;
+    Chunk Current () const;
     bool End () const;
     bool Empty () const;
 

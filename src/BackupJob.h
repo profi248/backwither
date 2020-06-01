@@ -25,7 +25,8 @@ public:
      * Start backup of this job.
      */
 
-    int DoBackup (ConfigProvider* config);
+    int Backup  (ConfigProvider* config);
+    int Restore (ConfigProvider* config, int64_t snapshotId = 0);
 
     std::string GetSource () const;
     std::string GetDestination () const;

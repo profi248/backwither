@@ -6,20 +6,20 @@
 #include "FileChunker.h"
 #include "ChunkList.h"
 #include "Chunk.h"
-#include "IncrementalFilesystemBackupStorageProvider.h"
+#include "FilesystemChunkStorageProvider.h"
 #include "ConfigProvider.h"
 
 using namespace std;
 
 char* FileChunker::buf = nullptr;
 
-void FileChunker::GenerateFileChunks (std::string inFile, int64_t fileID, std::string & outFolder, int64_t snapshotId,
-                                      ConfigProvider* config) {
+void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::string outFolder, int64_t snapshotId,
+                                  ConfigProvider* config) {
     fstream file = fstream(inFile, ios::in | ios::binary);
     // unique_ptr<char[]> bufPtr = std::make_unique<char[]>(CHUNK_SIZE);
     size_t chunkCnt = 0;
 
-    auto storageProvider = IncrementalFilesystemBackupStorageProvider(outFolder);
+    auto storageProvider = FilesystemChunkStorageProvider(outFolder);
 
     // cout << inFile << ": ";
     ChunkList chunks(fileID);
@@ -27,7 +27,7 @@ void FileChunker::GenerateFileChunks (std::string inFile, int64_t fileID, std::s
     while (!file.eof()) {
         buf = new char [CHUNK_SIZE];
         if (file.bad() || file.fail())
-            throw ios_base::failure("Error reading file " + inFile + ".");
+            throw ios_base::failure("Error reading file \"" + inFile + "\".");
         file.read(buf, CHUNK_SIZE);
         chunkCnt++;
         size_t bytesRead = file.gcount();

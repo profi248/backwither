@@ -1,7 +1,7 @@
 #include <iostream>
 #include <exception>
 
-#include "FilesystemBrowser.h"
+#include "FilesystemUtils.h"
 #include "SQLiteConfigProvider.h"
 #include "TerminalUserInterface.h"
 
@@ -14,5 +14,5 @@ int main (int argc, char** argv) {
         std::cerr << "Unexpected fatal error: " << e.what() << std::endl;
     }
 
-    // Directory* root = FilesystemBrowser::BrowseFolderRecursive("/var/home/david/ProgTest/PA2/kostada2/examples");
+    // Directory* root = FilesystemUtils::BrowseFolderRecursive("/var/home/david/ProgTest/PA2/kostada2/examples");
 }

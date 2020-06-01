@@ -74,6 +74,14 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             }
 
             run(name, configPath);
+        } else if (command == "restore") {
+            // todo support specifing snapshot
+            if (!name) {
+                cerr << "Specifying backup name (-n) is required." << endl;
+                return 1;
+            }
+
+            restore(name, configPath);
         } else {
             cerr << "Command " << command << " not recognized." << endl;
             return 1;
@@ -204,12 +212,60 @@ int TerminalUserInterface::run (char* name, char* configPath) {
     }
 
     try {
-        job->DoBackup(config);
+        job->Backup(config);
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
         delete config;
         return 2;
+    }
+
+    delete job;
+    delete config;
+    return 0;
+}
+
+int TerminalUserInterface::restore (char* name, char* configPath) {
+    // todo refactor job lookup
+    ConfigProvider* config = getConfigProvider(configPath);
+    BackupJob* job;
+
+    try {
+        job = config->GetBackupJob(name);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete config;
+        return 2;
+    }
+
+    if (!job) {
+        cerr << "Backup job named \"" << name << "\" not found." << endl;
+        delete config;
+        return 1;
+    }
+
+    // todo check if dir is empty
+    string answer;
+    cout << "WARNING! ALL files in backup source (" << job->GetSource() << ") will be replaced by versions from the snapshot you selected!"
+            " Continue? [N/y] " << flush;
+    while (answer != "n" && answer != "y" && answer != "N" && answer != "Y") {
+        getline(cin, answer);
+        if (answer == "n" || answer == "N" || answer.empty()) {
+            delete job;
+            delete config;
+            return 0;
+        } else if (answer == "y" || answer == "Y") {
+            try {
+                job->Restore(config); // todo pass snapshot id
+            } catch (runtime_error & e) {
+                cerr << "Fatal error: " << e.what() << endl;
+                delete job;
+                delete config;
+                return 2;
+            }
+        } else {
+            cout << "Invalid answer. Do you want to replace all files? [N/y] " << flush;
+        }
     }
 
     delete job;

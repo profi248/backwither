@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <utility>
 #include "BackupJob.h"
-#include "FilesystemBrowser.h"
+#include "FilesystemUtils.h"
 #include "FileChunker.h"
 
 BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool incremental, int64_t id) :
@@ -13,18 +13,18 @@ BackupJob::BackupJob (std::string source, std::string destination, std::string n
         m_Incremental (incremental),
         m_ID (id) {}
 
-int BackupJob::DoBackup (ConfigProvider* config) {
-    std::string source = GetSource();
-    std::string destination = GetDestination();
+int BackupJob::Backup (ConfigProvider* config) {
+    std::filesystem::path source = GetSource();
+    std::filesystem::path destination = GetDestination();
 
-    FilesystemBrowser::VerifySourceDirectory(source);
-    FilesystemBrowser::VerifyOrCreateDestinationDirectory(destination);
+    FilesystemUtils::VerifySourceDirectory(source);
+    FilesystemUtils::VerifyOrCreateDestinationDirectory(destination);
 
     if (!GetIncremental())
         throw std::logic_error("Not implemented"); // fixme implement !incremental
 
     Directory prevState = config->LoadSnapshotFileIndex(this);
-    Directory currentState = FilesystemBrowser::BrowseFolderRecursive(source);
+    Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
     // Directory diff = currentState - prevState;
     // todo improve
 
@@ -33,11 +33,33 @@ int BackupJob::DoBackup (ConfigProvider* config) {
     DirectoryIterator it(& currentState);
 
     while (!it.End()) {
-        FileChunker::GenerateFileChunks(it.GetPath(), it.GetID(), destination, newSnapshotId, config);
+        FileChunker::SaveFileChunks(source / it.GetPath(), it.GetID(), destination, newSnapshotId, config);
         it++;
     }
 
-    // todo split files into chunks, deduplicate chunks, save chunks index into db and chunk data on fs
+    return 0;
+}
+
+int BackupJob::Restore (ConfigProvider* config, int64_t snapshotId) {
+    std::filesystem::path restoreFrom = GetDestination();
+    std::filesystem::path restoreTo = GetSource();
+
+    // todo change the verification here, this is trash - maybe refactor
+    FilesystemUtils::VerifySourceDirectory(restoreFrom);
+    FilesystemUtils::VerifyOrCreateDestinationDirectory(restoreTo);
+
+    if (!GetIncremental())
+        throw std::logic_error("Not implemented"); // fixme implement !incremental
+
+    Directory snapshotFiles = config->LoadSnapshotFileIndex(this, -1); // todo fix this snapshotID trash
+
+    DirectoryIterator it(& snapshotFiles);
+
+    while (!it.End()) {
+        ChunkList fileChunks = config->RetrieveFileChunks(this, snapshotId, it.GetID());
+        FilesystemUtils::RestoreFileFromChunks(restoreFrom, restoreTo, fileChunks, restoreTo / it.GetPath());
+        it++;
+    }
 
     return 0;
 }

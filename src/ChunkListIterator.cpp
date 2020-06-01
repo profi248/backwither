@@ -24,6 +24,11 @@ size_t ChunkListIterator::GetSize () const {
     return m_ChunkList->m_Chunks[m_Pos].GetSize();
 }
 
+Chunk ChunkListIterator::Current () const {
+    return m_ChunkList->m_Chunks[m_Pos];
+}
+
+
 ChunkListIterator ChunkListIterator::operator ++ (int) {
     Next();
     return *this;
