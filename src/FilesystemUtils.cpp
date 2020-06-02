@@ -97,7 +97,7 @@ string FilesystemUtils::NormalizeDirectoryPath (string path) {
 
 string FilesystemUtils::GetDirectoryOfFilePath (string path) {
     int lastSeparator = -1;
-    for (int i = 0; i < path.length(); i++) {
+    for (size_t i = 0; i < path.length(); i++) {
         if (path[i] == '/')
             lastSeparator = i;
     }

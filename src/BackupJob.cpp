@@ -7,6 +7,8 @@
 #include "FileChunker.h"
 #include "UserInterface.h"
 
+namespace fs = std::filesystem;
+
 BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool incremental, int64_t id) :
         m_SourcePath (std::move(source)),
         m_DestinationPath (std::move(destination)),
@@ -15,8 +17,8 @@ BackupJob::BackupJob (std::string source, std::string destination, std::string n
         m_ID (id) {}
 
 int BackupJob::Backup (ConfigProvider* config, UserInterface* ui) {
-    std::filesystem::path source = GetSource();
-    std::filesystem::path destination = GetDestination();
+    fs::path source = fs::path(GetSource());
+    fs::path destination = fs::path(GetDestination());
 
     FilesystemUtils::VerifySourceDirectory(source);
     FilesystemUtils::VerifyOrCreateDestinationDirectory(destination);
@@ -47,8 +49,8 @@ int BackupJob::Backup (ConfigProvider* config, UserInterface* ui) {
 }
 
 int BackupJob::Restore (ConfigProvider* config, UserInterface* ui, int64_t snapshotId) {
-    std::filesystem::path restoreFrom = GetDestination();
-    std::filesystem::path restoreTo = GetSource();
+    fs::path restoreFrom = fs::path(GetDestination());
+    fs::path restoreTo = fs::path(GetSource());
 
     // todo change the verification here, this is trash - maybe refactor
     FilesystemUtils::VerifySourceDirectory(restoreFrom);

@@ -2,6 +2,7 @@
 #include <openssl/sha.h>
 #include <fstream>
 #include <ios>
+#include <iomanip>
 #include <iostream>
 #include "FileChunker.h"
 #include "ChunkList.h"

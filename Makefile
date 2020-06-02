@@ -2,7 +2,7 @@
 CXX=g++
 LD=g++
 CXXFLAGS=-std=c++17 -Wall -pedantic
-LDFLAGS=-lstdc++fs -lsqlite3 -lcrypto -lz
+LDFLAGS=-lsqlite3 -lcrypto -lz -lstdc++fs
 FILES= \
 	src/bin/intermediate/main.o src/bin/intermediate/FilesystemEntity.o src/bin/intermediate/File.o src/bin/intermediate/Directory.o \
 	src/bin/intermediate/Link.o src/bin/intermediate/BackupJob.o src/bin/intermediate/BackupPlan.o src/bin/intermediate/TimedBackupJob.o \
@@ -11,7 +11,7 @@ FILES= \
 	src/bin/intermediate/ChunkStorageProvider.o src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o \
 	src/bin/intermediate/FileComparator.o src/bin/intermediate/HashFileComparator.o src/bin/intermediate/TimeFileComparator.o \
 	src/bin/intermediate/BackupPlanIterator.o src/bin/intermediate/DirectoryIterator.o src/bin/intermediate/FileChunker.o \
-	src/bin/intermediate/Chunk.o src/bin/intermediate/ChunkList.o src/bin/intermediate/ChunkListIterator.o \
+	src/bin/intermediate/Chunk.o src/bin/intermediate/ChunkList.o src/bin/intermediate/ChunkListIterator.o
 
 .PHONY: all clean run doc
 
@@ -37,7 +37,7 @@ test: backwither
 	src/bin/test
 
 backwither: $(FILES)
-	$(LD) $(LDFLAGS) -o src/bin/$@ $^
+	$(LD) -o src/bin/$@ $^ $(LDFLAGS)
 
 clean:
 	rm -f  src/bin/backwither

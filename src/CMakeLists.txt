@@ -19,4 +19,4 @@ add_executable(backwither
         FileChunker.cpp FileChunker.h Chunk.cpp Chunk.h ChunkList.cpp ChunkList.h
         ChunkListIterator.cpp ChunkListIterator.h CompressedFilesystemChunkStorageProvider.cpp CompressedFilesystemChunkStorageProvider.h)
 
-target_link_libraries(backwither -lsqlite3 -lcrypto -lz)
+target_link_libraries(backwither -lsqlite3 -lcrypto -lz -lstdc++fs)
