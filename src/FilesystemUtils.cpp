@@ -21,21 +21,9 @@ Directory FilesystemUtils::BrowseFolderRecursive (string path_str) {
     Directory root("/");
 
     for (auto & item : fs::recursive_directory_iterator(path)) {
-        // FilesystemEntity* e;
-
-        // todo MAYBE remove directory altogether and make backup folder structure flat - put all files in a vector
-        // file will have path in name, directory will be repurposed to just root directory, as it's used here
-        // this will allow simple access to files and will be probably much easier overall
-        /*
-        if (item.is_directory()) {
-            e = new Directory(item.path());
-        } else if (item.is_regular_file()) {
-            e = new File(item.path());
-        } else if (item.is_symlink()) {
-            // todo make symlinks work
-            // e = new File(item.path());
-        }
-        */
+        // todo handle folder links (ignored now)
+        // handle folder linking to destination, folder linking to source
+        // file symlinks and hardlinks work already
 
         if (item.is_regular_file()) {
             fs::path filePath = item.path();
@@ -109,6 +97,8 @@ string FilesystemUtils::GetDirectoryOfFilePath (string path) {
 }
 
 bool FilesystemUtils::IsDirectoryEmpty (string path) {
+    if (!fs::exists(path))
+        throw runtime_error("Directory \"" + path + "\" does not exist.");
     return fs::begin(fs::directory_iterator(path)) == fs::end(fs::directory_iterator(path));
 }
 
@@ -144,5 +134,21 @@ void FilesystemUtils::RestoreFileFromChunks (std::string source, std::string des
             throw runtime_error("Cannot write to file " + filePath + ".");
         it++;
     }
+}
+
+string FilesystemUtils::AbsolutePath (std::string path, bool create) {
+    if (fs::exists(path))
+        return fs::absolute(path);
+    else {
+        if (create) {
+            fs::create_directories(path);
+            return fs::absolute(path);
+        } else
+            throw runtime_error("Backup path \"" + path + "\" does not exist.");
+    }
+}
+
+bool FilesystemUtils::ArePathsEqual (std::string a, std::string b) {
+    return fs::equivalent(a, b);
 }
 

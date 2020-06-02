@@ -22,9 +22,10 @@ public:
     static bool        IsDirectoryEmpty (std::string path);
     static std::string NormalizeDirectoryPath (std::string path);
     static std::string GetDirectoryOfFilePath (std::string path);
-    static void
-    RestoreFileFromChunks (std::string source, std::string destination, ChunkList chunks,
+    static void        RestoreFileFromChunks (std::string source, std::string destination, ChunkList chunks,
                            std::string filePath, bool compressed);
+    static std::string AbsolutePath (std::string path, bool create = false);
+    static bool        ArePathsEqual (std::string a, std::string b);
 };
 
 

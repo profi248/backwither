@@ -202,12 +202,15 @@ string TerminalUserInterface::getVersion () {
 }
 
 int TerminalUserInterface::add (char* source, char* destination, char* name, char* configPath, bool compress) {
-    // todo convert to absolute path
     ConfigProvider* config = getConfigProvider(configPath);
 
-    BackupJob* job = new BackupJob(source, destination, name, compress);
-
+    BackupJob* job = nullptr;
     try {
+        std::string src = FilesystemUtils::AbsolutePath(source);
+        std::string dst = FilesystemUtils::AbsolutePath(destination, true);
+        if (FilesystemUtils::ArePathsEqual(src, dst))
+            throw std::runtime_error("Source and destination leads to the same path.");
+        job = new BackupJob(src, dst, name, compress);
         config->AddBackupJob(job);
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
@@ -276,40 +279,34 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
     string answer;
     int formattedChars;
 
-    if (!FilesystemUtils::IsDirectoryEmpty(job->GetSource())) {
-        cout << format("WARNING!", formattedChars) << " Restore foler is not empty. All files in backup source ("
-             << job->GetSource() << ") will be replaced by versions from the snapshot you selected! Continue? [N/y] "
-             << flush;
+    try {
+        if (!FilesystemUtils::IsDirectoryEmpty(job->GetSource())) {
+            cout << format("WARNING!", formattedChars) << " Restore foler is not empty. All files in backup source ("
+                 << job->GetSource()
+                 << ") will be replaced by versions from the snapshot you selected! Continue? [N/y] "
+                 << flush;
 
-        while (answer != "n" && answer != "y" && answer != "N" && answer != "Y") {
-            getline(cin, answer);
+            while (answer != "n" && answer != "y" && answer != "N" && answer != "Y") {
+                getline(cin, answer);
 
-            if (answer == "n" || answer == "N" || answer.empty()) {
-                delete job;
-                delete config;
-                return 0;
-            } else if (answer == "y" || answer == "Y") {
-                try {
-                    job->Restore(this, 0); // todo pass snapshot id
-                } catch (runtime_error & e) {
-                    cerr << "Fatal error: " << e.what() << endl;
+                if (answer == "n" || answer == "N" || answer.empty()) {
                     delete job;
                     delete config;
-                    return 2;
+                    return 0;
+                } else if (answer == "y" || answer == "Y") {
+                    job->Restore(this, -1); // todo pass snapshot id
+                } else {
+                    cout << "Invalid answer. Do you want to replace all files? [N/y] " << flush;
                 }
-            } else {
-                cout << "Invalid answer. Do you want to replace all files? [N/y] " << flush;
             }
+        } else {
+            job->Restore(this, -1); // todo pass snapshot id
         }
-    } else {
-        try {
-            job->Restore(this, 0); // todo pass snapshot id
-        } catch (runtime_error & e) {
-            cerr << "Fatal error: " << e.what() << endl;
-            delete job;
-            delete config;
-            return 2;
-        }
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete job;
+        delete config;
+        return 2;
     }
 
 

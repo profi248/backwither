@@ -18,14 +18,17 @@ BackupJob::BackupJob (std::string source, std::string destination, std::string n
         m_ID (id) {}
 
 int BackupJob::Backup (UserInterface* ui) {
-    // fixme with make_unique destructor gets called and I don't know why
-    std::unique_ptr<BackupIndexProvider> config = std::unique_ptr<SQLiteBackupIndexProvider>
-                                                  (new SQLiteBackupIndexProvider(this));
     fs::path source = fs::path(GetSource());
     fs::path destination = fs::path(GetDestination());
 
     FilesystemUtils::VerifySourceDirectory(source);
     FilesystemUtils::VerifyOrCreateDestinationDirectory(destination);
+    if (FilesystemUtils::ArePathsEqual(source, destination))
+        throw std::runtime_error("Backup source and destination lead to the same path.");
+
+    // fixme with make_unique destructor gets called and I don't know why
+    std::unique_ptr<BackupIndexProvider> config = std::unique_ptr<SQLiteBackupIndexProvider>
+            (new SQLiteBackupIndexProvider(this));
 
     Directory prevState = config->LoadSnapshotFileIndex(-1);
     Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
@@ -41,6 +44,8 @@ int BackupJob::Backup (UserInterface* ui) {
     while (!it.End()) {
         if (ui)
             ui->UpdateProgress(cnt, 0, it.GetPath(), it.GetSize());
+        // if (FilesystemUtils::ArePathsEqual(it.GetPath(), destination))
+        //    throw std::runtime_error("Link in source directory (" + it.GetPath() + ") leads to destination directory");
         FileChunker::SaveFileChunks(source / it.GetPath(), it.GetID(), destination,
                                     newSnapshotId, config, IsCompressed());
         it++;
@@ -51,19 +56,30 @@ int BackupJob::Backup (UserInterface* ui) {
 }
 
 int BackupJob::Restore (UserInterface* ui, int64_t snapshotId) {
-    std::unique_ptr<BackupIndexProvider> config =  std::unique_ptr<SQLiteBackupIndexProvider>
-                                                   (new SQLiteBackupIndexProvider(this));
     fs::path restoreFrom = fs::path(GetDestination());
     fs::path restoreTo = fs::path(GetSource());
 
     // todo change the verification here, this is trash - maybe refactor
     FilesystemUtils::VerifySourceDirectory(restoreFrom);
     FilesystemUtils::VerifyOrCreateDestinationDirectory(restoreTo);
+    if (FilesystemUtils::ArePathsEqual(restoreFrom, restoreTo))
+        throw std::runtime_error("Backup source and destination lead to the same path.");
+
+    std::unique_ptr<BackupIndexProvider> config =  std::unique_ptr<SQLiteBackupIndexProvider>
+            (new SQLiteBackupIndexProvider(this));
 
     Directory snapshotFiles = config->LoadSnapshotFileIndex(-1); // todo fix this snapshotID trash
 
     DirectoryIterator it(& snapshotFiles);
     size_t cnt = 0;
+
+    // TODO IMPORTANT FIX SNAPSHOTS
+    // do something about selecting a snapshot - default should be everyhing from LAST snapshot
+    // chunks and files need to match up
+    // currently files are added and saved with a snapshot number, but we don't know when they are removed
+    // possibly store list of ALL files in every snapshot again and again and change id of snapshot to path of file
+    // also, to reduce redundancy, store chunk hashes and file paths in separate tables
+    // current workaround is retrieving all data from all snapshots
 
     while (!it.End()) {
         if (ui)

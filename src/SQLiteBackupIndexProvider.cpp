@@ -22,8 +22,10 @@ SQLiteBackupIndexProvider::SQLiteBackupIndexProvider (BackupJob* job) :
 bool SQLiteBackupIndexProvider::initConfig () {
     sqlite3* db;
 
-    if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK)
+    if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK) {
+        sqlite3_close(db);
         throw std::runtime_error("Cannot create database in " + getDbPath() + ".");
+    }
 
     char* SQLiteError;
 
@@ -290,18 +292,27 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
     ChunkList chunks(fileId);
     sqlite3_stmt* retrieveChunksStmt;
 
-    sqlite3_prepare_v2(m_DB,
-       "select hash, size from chunks where file_id = ? and snapshot_id = ? order by position;",
-       SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
+    if (snapshotId != -1) {
+        sqlite3_prepare_v2(m_DB,
+           "select hash, size from chunks where file_id = ? and snapshot_id = ? order by position;",
+           SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
+        if (snapshotId == 0) {
+            snapshotId = getLastSnapshotId(job);
+            if (snapshotId < 0) {
+                sqlite3_finalize(retrieveChunksStmt);
+                throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+            }
 
-    if (snapshotId == 0) {
-        snapshotId = getLastSnapshotId(job);
-        if (snapshotId < 0)
-            throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+            sqlite3_bind_int64(retrieveChunksStmt, 2, snapshotId);
+        }
+
+    } else {
+        sqlite3_prepare_v2(m_DB,
+           "select hash, size from chunks where file_id = ? order by position;",
+           SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
     }
 
     sqlite3_bind_int64(retrieveChunksStmt, 1, fileId);
-    sqlite3_bind_int64(retrieveChunksStmt, 2, snapshotId);
 
     while (sqlite3_step(retrieveChunksStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
