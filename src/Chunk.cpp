@@ -12,3 +12,7 @@ size_t Chunk::GetSize () {
     return m_Size;
 }
 
+void Chunk::SetSize (size_t size) {
+    m_Size = size;
+}
+

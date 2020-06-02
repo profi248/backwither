@@ -7,6 +7,7 @@
 #include "ChunkList.h"
 #include "Chunk.h"
 #include "FilesystemChunkStorageProvider.h"
+#include "CompressedFilesystemChunkStorageProvider.h"
 #include "ConfigProvider.h"
 
 using namespace std;
@@ -18,7 +19,7 @@ void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::strin
     fstream file = fstream(inFile, ios::in | ios::binary);
     size_t chunkCnt = 0;
 
-    auto storageProvider = FilesystemChunkStorageProvider(outFolder);
+    auto storageProvider = CompressedFilesystemChunkStorageProvider(outFolder);
 
     ChunkList chunks(fileID);
 
@@ -31,8 +32,9 @@ void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::strin
         size_t bytesRead = file.gcount();
         string hash = chunkHashSha256(buf, bytesRead);
         Chunk c = Chunk(hash, bytesRead);
+        size_t storedSize = storageProvider.StoreChunk(c, buf);
+        c.SetSize(storedSize);
         chunks.AddChunk(c);
-        storageProvider.StoreChunk(c, buf);
         delete [] buf;
     }
     config->SaveFileChunks(chunks, snapshotId);

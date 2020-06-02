@@ -17,7 +17,7 @@ FilesystemChunkStorageProvider::FilesystemChunkStorageProvider (std::string out)
         throw runtime_error("Cannot create directory " + m_ChunkDir + ".");
 }
 
-void FilesystemChunkStorageProvider::StoreChunk (Chunk metadata, char* data) {
+size_t FilesystemChunkStorageProvider::StoreChunk (Chunk & metadata, char* data) {
     string chunkFile = m_ChunkDir + metadata.GetHash();
     if (!fs::exists(chunkFile)) {
         fstream file (chunkFile, ios::out | ios::binary);
@@ -25,9 +25,11 @@ void FilesystemChunkStorageProvider::StoreChunk (Chunk metadata, char* data) {
         if (!file.good())
             throw runtime_error("Cannot write in " + chunkFile + ".");
     }
+
+    return metadata.GetSize();
 }
 
-char* FilesystemChunkStorageProvider::RetrieveChunk (Chunk metadata) {
+char* FilesystemChunkStorageProvider::RetrieveChunk (Chunk & metadata) {
     string chunkFile = m_ChunkDir + metadata.GetHash();
     char* buf;
     if (fs::exists(chunkFile)) {

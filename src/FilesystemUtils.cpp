@@ -9,6 +9,7 @@
 #include "File.h"
 #include "ChunkListIterator.h"
 #include "FilesystemChunkStorageProvider.h"
+#include "CompressedFilesystemChunkStorageProvider.h"
 
 using namespace std;
 namespace fs = filesystem;
@@ -121,13 +122,14 @@ void FilesystemUtils::RestoreFileFromChunks (std::string source, std::string des
         fs::create_directories(GetDirectoryOfFilePath(filePath));
 
     fstream file (filePath, ios::out | ios::binary);
-    auto storageProvider = FilesystemChunkStorageProvider(source);
+    auto storageProvider = CompressedFilesystemChunkStorageProvider(source);
     if (!file.is_open())
         throw runtime_error("Cannot open file " + filePath + ".");
 
     while (!it.End()) {
-        char* data = storageProvider.RetrieveChunk(it.Current());
-        file.write(data, it.GetSize());
+        Chunk current = it.Current();
+        char* data = storageProvider.RetrieveChunk(current);
+        file.write(data, current.GetSize());
         delete [] data;
         if (!file.good())
             throw runtime_error("Cannot write to file " + filePath + ".");

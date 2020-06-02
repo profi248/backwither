@@ -16,8 +16,8 @@ class FilesystemChunkStorageProvider : public ChunkStorageProvider {
 public:
     FilesystemChunkStorageProvider (std::string outPath);
     ~FilesystemChunkStorageProvider () override = default;
-    void  StoreChunk (Chunk metadata, char* data) override;
-    char* RetrieveChunk (Chunk metadata) override;
+    size_t StoreChunk (Chunk & metadata, char* data) override;
+    char* RetrieveChunk (Chunk & metadata) override;
 };
 
 #endif //BACKUP_INCREMENTALFILESYSTEMBACKUPSTORAGEPROVIDER_H
