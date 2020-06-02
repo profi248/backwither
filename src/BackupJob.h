@@ -27,8 +27,8 @@ public:
      * Start backup of this job.
      */
 
-    int Backup  (ConfigProvider* config, UserInterface* ui);
-    int Restore (ConfigProvider* config, UserInterface* ui, int64_t snapshotId = 0);
+    int Backup (UserInterface* ui);
+    int Restore (UserInterface* ui, int64_t snapshotId);
 
     std::string GetSource () const;
     std::string GetDestination () const;

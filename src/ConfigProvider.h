@@ -33,27 +33,6 @@ public:
      */
     virtual BackupPlan* LoadBackupPlan () = 0;
 
-    /**
-     * Save file index (root folder) to config.
-     * @param fld Folder to save.
-     * @return ID of newly created snapshot.
-     */
-    virtual int64_t SaveSnapshotFileIndex (Directory & fld, BackupJob *job) = 0;
-
-   /**
-    * Retrieve file index (root folder) from config.
-    * @return Directory
-    */
-    virtual Directory LoadSnapshotFileIndex (BackupJob* job, int64_t snapshotID = -1) = 0;
-
-    /**
-     * Store chunks that a file comprises from (ChunkList).
-     * @param chunks Chunks of a file.
-     */
-    virtual void SaveFileChunks (ChunkList chunks, int64_t snapshotId) = 0;
-
-    virtual ChunkList RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) = 0;
-
 };
 
 

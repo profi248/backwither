@@ -220,7 +220,7 @@ int TerminalUserInterface::run (char* name, char* configPath) {
     }
 
     try {
-        job->Backup(config, this);
+        job->Backup(this);
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
@@ -264,7 +264,7 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
             return 0;
         } else if (answer == "y" || answer == "Y") {
             try {
-                job->Restore(config, this, 0); // todo pass snapshot id
+                job->Restore(this, 0); // todo pass snapshot id
             } catch (runtime_error & e) {
                 cerr << "Fatal error: " << e.what() << endl;
                 delete job;

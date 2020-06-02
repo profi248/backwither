@@ -14,7 +14,7 @@ class SQLiteConfigProvider : public ConfigProvider {
     const char* CONFIG_DEFAULT_PATH      = ".config/";
     const char* CONFIG_HOME_ENVVAR       = "HOME";
     const char* CONFIG_DEFAULT_ENVVAR    = "XDG_CONFIG_HOME";
-    const int   SQLITE_NULL_TERMINATED = -1;
+    const int   SQLITE_NULL_TERMINATED   = -1;
 
     std::string m_Path;
     sqlite3*    m_DB;
@@ -26,10 +26,6 @@ public:
     void        AddBackupJob (BackupJob* job) override;
     BackupJob*  GetBackupJob (std::string name) override;
     BackupPlan* LoadBackupPlan () override;
-    int64_t     SaveSnapshotFileIndex (Directory & fld, BackupJob *job) override;
-    Directory   LoadSnapshotFileIndex (BackupJob* job, int64_t snapshotID) override;
-    void        SaveFileChunks (ChunkList chunks, int64_t snapshotId) override;
-    ChunkList   RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) override;
 
 private:
     std::string getDefaultConfigPath () const;
@@ -37,7 +33,6 @@ private:
     bool        configExists ();
     bool        initConfig ();
     sqlite3*    openDB ();
-    int64_t     getLastSnapshotId (const BackupJob* job);
 };
 
 #endif //BACKUP_SQLITECONFIGPROVIDER_H

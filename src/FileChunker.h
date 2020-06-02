@@ -2,6 +2,7 @@
 #define BACKWITHER_FILECHUNKER_H
 #include <string>
 #include "ConfigProvider.h"
+#include "BackupIndexProvider.h"
 
 class FileChunker {
     static constexpr int CHUNK_SIZE = 1024 * 1024; // 1 MiB
@@ -10,7 +11,7 @@ public:
     static constexpr int MAX_CHUNK_SIZE = CHUNK_SIZE;
     // todo refactor config provider to member var
     static void SaveFileChunks (std::string inFile, int64_t fileID, std::string outFolder, int64_t snapshotId,
-                                ConfigProvider* config, bool compressed);
+                                std::unique_ptr<BackupIndexProvider> & config, bool compressed);
     ~FileChunker ();
 
 private:

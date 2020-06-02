@@ -6,6 +6,7 @@
 #include "FilesystemUtils.h"
 #include "FileChunker.h"
 #include "UserInterface.h"
+#include "SQLiteBackupIndexProvider.h"
 
 namespace fs = std::filesystem;
 
@@ -16,20 +17,23 @@ BackupJob::BackupJob (std::string source, std::string destination, std::string n
         m_Compressed (compressed),
         m_ID (id) {}
 
-int BackupJob::Backup (ConfigProvider* config, UserInterface* ui) {
+int BackupJob::Backup (UserInterface* ui) {
+    // fixme with make_unique destructor gets called and I don't know why
+    std::unique_ptr<BackupIndexProvider> config = std::unique_ptr<SQLiteBackupIndexProvider>
+                                                  (new SQLiteBackupIndexProvider(this));
     fs::path source = fs::path(GetSource());
     fs::path destination = fs::path(GetDestination());
 
     FilesystemUtils::VerifySourceDirectory(source);
     FilesystemUtils::VerifyOrCreateDestinationDirectory(destination);
 
-    Directory prevState = config->LoadSnapshotFileIndex(this);
+    Directory prevState = config->LoadSnapshotFileIndex(-1);
     Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
     // Directory diff = currentState - prevState;
     // todo improve
     // add file comparator
 
-    int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState, this);
+    int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState);
 
     DirectoryIterator it(& currentState);
     size_t cnt = 0;
@@ -46,7 +50,9 @@ int BackupJob::Backup (ConfigProvider* config, UserInterface* ui) {
     return 0;
 }
 
-int BackupJob::Restore (ConfigProvider* config, UserInterface* ui, int64_t snapshotId) {
+int BackupJob::Restore (UserInterface* ui, int64_t snapshotId) {
+    std::unique_ptr<BackupIndexProvider> config =  std::unique_ptr<SQLiteBackupIndexProvider>
+                                                   (new SQLiteBackupIndexProvider(this));
     fs::path restoreFrom = fs::path(GetDestination());
     fs::path restoreTo = fs::path(GetSource());
 
@@ -54,7 +60,7 @@ int BackupJob::Restore (ConfigProvider* config, UserInterface* ui, int64_t snaps
     FilesystemUtils::VerifySourceDirectory(restoreFrom);
     FilesystemUtils::VerifyOrCreateDestinationDirectory(restoreTo);
 
-    Directory snapshotFiles = config->LoadSnapshotFileIndex(this, -1); // todo fix this snapshotID trash
+    Directory snapshotFiles = config->LoadSnapshotFileIndex(-1); // todo fix this snapshotID trash
 
     DirectoryIterator it(& snapshotFiles);
     size_t cnt = 0;
