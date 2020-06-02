@@ -29,7 +29,10 @@ bool SQLiteBackupIndexProvider::initConfig () {
 
     int createSuccess =
     sqlite3_exec(db,
-    "pragma foreign_keys = 1;"
+    "pragma encoding     = 'UTF-8';"
+        "pragma foreign_keys = 1;"
+        "pragma journal_mode = WAL;"   // more optimized writes
+        "pragma synchronous  = NORMAL;"
 
         "create table settings (key text unique, value);"
 
@@ -323,6 +326,14 @@ sqlite3* SQLiteBackupIndexProvider::openDB () {
 
     if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK)
         throw std::runtime_error("Cannot open the database.");
+
+    int result = sqlite3_exec(db,
+        "pragma encoding     = 'UTF-8';"
+            "pragma foreign_keys = 1;"
+            "pragma journal_mode = WAL;"   // more optimized writes
+            "pragma synchronous  = NORMAL", nullptr, nullptr, nullptr);
+    if (result != SQLITE_OK)
+        throw std::runtime_error("Cannot set database parameters.");
 
     return db;
 }
