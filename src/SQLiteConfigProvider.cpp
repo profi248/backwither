@@ -64,7 +64,7 @@ bool SQLiteConfigProvider::initConfig () {
         "create table settings (key text unique, value);"
 
         "create table backups (backup_id integer primary key asc, source text,"
-        "destination text, name text unique, incremental integer);"
+        "destination text, name text unique, compressed integer);"
 
         "create table snapshots (snapshot_id integer primary key asc, creation integer,"
         "backup_id integer references backups (backup_id));"
@@ -152,14 +152,14 @@ void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
      sqlite3_stmt* addJobStmt;
 
     sqlite3_prepare_v2(m_DB,
-       "insert into backups (source, destination, name, incremental) values (?, ?, ?, ?);",
+       "insert into backups (source, destination, name, compressed) values (?, ?, ?, ?);",
        SQLITE_NULL_TERMINATED, & addJobStmt, nullptr);
 
     // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
     sqlite3_bind_text(addJobStmt, 1, job->GetSource().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
     sqlite3_bind_text(addJobStmt, 2, job->GetDestination().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
     sqlite3_bind_text(addJobStmt, 3, job->GetName().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
-    sqlite3_bind_int(addJobStmt, 4, static_cast<int>(job->GetIncremental()));
+    sqlite3_bind_int(addJobStmt, 4, static_cast<int>(job->IsCompressed()));
 
     if (sqlite3_step(addJobStmt) != SQLITE_DONE) {
         sqlite3_finalize(addJobStmt);
@@ -175,7 +175,7 @@ void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
 BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
     sqlite3_stmt* getBackupJobStmt;
     sqlite3_prepare_v2(m_DB,
-        "select backup_id, source, destination, incremental from backups where name = ?;",
+        "select backup_id, source, destination, compressed from backups where name = ?;",
         SQLITE_NULL_TERMINATED, & getBackupJobStmt, nullptr);
 
     // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
@@ -185,11 +185,11 @@ BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
         int64_t id = sqlite3_column_int64(getBackupJobStmt, 0); // first column
         std::string source = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 1));
         std::string destination = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 2));
-        bool incremental = static_cast<bool>(sqlite3_column_int(getBackupJobStmt, 3));
+        bool compressed = static_cast<bool>(sqlite3_column_int(getBackupJobStmt, 3));
 
         sqlite3_finalize(getBackupJobStmt);
 
-        return new BackupJob(source, destination, name, incremental, id);
+        return new BackupJob(source, destination, name, compressed, id);
     } else {
         sqlite3_finalize(getBackupJobStmt);
         return nullptr;
@@ -202,7 +202,7 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     sqlite3_stmt* loadPlanStmt;
 
     sqlite3_prepare_v2(m_DB,
-       "select source, destination, name, incremental from backups order by name;",
+       "select source, destination, name, compressed from backups order by name;",
        SQLITE_NULL_TERMINATED, & loadPlanStmt, nullptr);
 
     while (sqlite3_step(loadPlanStmt) == SQLITE_ROW) {
@@ -211,7 +211,7 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
             std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 0))), // source
             std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 1))), // destination
             std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 2))), // name
-            static_cast<bool>(sqlite3_column_int(loadPlanStmt, 3))  // incremental
+            static_cast<bool>(sqlite3_column_int(loadPlanStmt, 3))  // compressed
         );
 
         plan->AddBackup(job);

@@ -16,11 +16,18 @@ using namespace std;
 char* FileChunker::buf = nullptr;
 
 void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::string outFolder, int64_t snapshotId,
-                                  ConfigProvider* config) {
+                                  ConfigProvider* config, bool compressed) {
     fstream file = fstream(inFile, ios::in | ios::binary);
     size_t chunkCnt = 0;
 
-    auto storageProvider = CompressedFilesystemChunkStorageProvider(outFolder);
+    std::unique_ptr<ChunkStorageProvider> storageProvider;
+
+    if (compressed)
+        storageProvider = std::make_unique<CompressedFilesystemChunkStorageProvider>
+                                          (CompressedFilesystemChunkStorageProvider(outFolder));
+    else
+        storageProvider = std::make_unique<FilesystemChunkStorageProvider>
+                                          (FilesystemChunkStorageProvider(outFolder));
 
     ChunkList chunks(fileID);
 
@@ -33,7 +40,7 @@ void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::strin
         size_t bytesRead = file.gcount();
         string hash = chunkHashSha256(buf, bytesRead);
         Chunk c = Chunk(hash, bytesRead);
-        size_t storedSize = storageProvider.StoreChunk(c, buf);
+        size_t storedSize = storageProvider->StoreChunk(c, buf);
         c.SetSize(storedSize);
         chunks.AddChunk(c);
         delete [] buf;

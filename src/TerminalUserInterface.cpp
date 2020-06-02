@@ -21,6 +21,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
     char *destination = nullptr;
     char *name        = nullptr;
     char *configPath  = nullptr;
+    bool compress     = true;
     int  index;
     int  c;
 
@@ -30,7 +31,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
     // parse arguments: options need to be parsed first, then commands
 
-    while ((c = getopt (argc, argv, "s:d:n:c:")) != -1)
+    while ((c = getopt (argc, argv, "s:d:n:c:x")) != -1)
         switch (c) {
             case 's':
                 source = optarg;
@@ -43,6 +44,9 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 break;
             case 'c':
                 configPath = optarg;
+                break;
+            case 'x':
+                compress = false;
                 break;
             case '?':
                 if (optopt == 's' || optopt == 'd' || optopt == 'n' || optopt == 'c')
@@ -66,7 +70,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 return 1;
             }
 
-            add(source, destination, name, configPath);
+            add(source, destination, name, configPath, compress);
         } else if (command == "run") {
             if (!name) {
                 cerr << "Specifying backup name (-n) is required." << endl;
@@ -119,15 +123,15 @@ int TerminalUserInterface::list (char* configPath) {
 
     cout << left << setw(TABLE_FIELD_LENGTH) << "name"
          << setw(TABLE_FIELD_LENGTH) << "source" << setw(TABLE_FIELD_LENGTH) <<
-            "destination" << setw(TABLE_FIELD_LENGTH) << "incremental" << endl;
+            "destination" << setw(TABLE_FIELD_LENGTH) << "compressed" << endl;
 
     // todo improve table... (setw should be longest displayed value)
     // todo refactor into table function
     while (!it.End()) {
         cout << left << setw(TABLE_FIELD_LENGTH) << it.GetName()
-                     << setw(TABLE_FIELD_LENGTH) << it.GetSource()
-                     << setw(TABLE_FIELD_LENGTH) << it.GetDestination()
-                     << setw(TABLE_FIELD_LENGTH) << boolalpha << it.GetIncremental() << endl;
+             << setw(TABLE_FIELD_LENGTH) << it.GetSource()
+             << setw(TABLE_FIELD_LENGTH) << it.GetDestination()
+             << setw(TABLE_FIELD_LENGTH) << boolalpha << it.IsCompressed() << endl;
         it++;
     }
 
@@ -168,7 +172,8 @@ int TerminalUserInterface::help () {
     cout << "  -c\tspecify config directory" << endl <<
             "  -n\tspecify new backup job name" << endl <<
             "  -s\tspecify new backup job source path" << endl <<
-            "  -d\tspecify new backup job destination path" << endl;
+            "  -d\tspecify new backup job destination path" << endl <<
+            "  -x\tdisable compression (when adding a new backub job)" << endl;
     return 0;
 }
 
@@ -176,11 +181,11 @@ string TerminalUserInterface::getVersion () {
     return "dev";
 }
 
-int TerminalUserInterface::add (char* source, char* destination, char* name, char* configPath) {
+int TerminalUserInterface::add (char* source, char* destination, char* name, char* configPath, bool compress) {
+    // todo convert to absolute path
     ConfigProvider* config = getConfigProvider(configPath);
 
-    // todo support non-incremental
-    BackupJob* job = new BackupJob(source, destination, name, true);
+    BackupJob* job = new BackupJob(source, destination, name, compress);
 
     try {
         config->AddBackupJob(job);

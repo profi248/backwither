@@ -28,8 +28,8 @@ std::string BackupPlanIterator::GetName () const {
     return m_Plan->m_Jobs[m_Pos]->m_Name;
 }
 
-bool BackupPlanIterator::GetIncremental () const {
-    return m_Plan->m_Jobs[m_Pos]->m_Incremental;
+bool BackupPlanIterator::IsCompressed () const {
+    return m_Plan->m_Jobs[m_Pos]->m_Compressed;
 }
 
 BackupPlanIterator BackupPlanIterator::operator ++ (int) {

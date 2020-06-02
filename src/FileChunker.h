@@ -10,7 +10,7 @@ public:
     static constexpr int MAX_CHUNK_SIZE = CHUNK_SIZE;
     // todo refactor config provider to member var
     static void SaveFileChunks (std::string inFile, int64_t fileID, std::string outFolder, int64_t snapshotId,
-                                ConfigProvider* config);
+                                ConfigProvider* config, bool compressed);
     ~FileChunker ();
 
 private:

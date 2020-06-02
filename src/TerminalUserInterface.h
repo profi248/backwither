@@ -20,7 +20,7 @@ private:
     int         list (char* configPath);
     int         help ();
     std::string getVersion ();
-    int         add (char* source, char* destination, char* name, char* configPath);
+    int         add (char* source, char* destination, char* name, char* configPath, bool compress);
     int         run (char* name, char* configPath);
     int         restore (char* name, char* configPath);
     std::string humanFileSize (size_t bytes);

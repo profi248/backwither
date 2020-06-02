@@ -9,11 +9,11 @@
 
 namespace fs = std::filesystem;
 
-BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool incremental, int64_t id) :
+BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id) :
         m_SourcePath (std::move(source)),
         m_DestinationPath (std::move(destination)),
         m_Name (std::move(name)),
-        m_Incremental (incremental),
+        m_Compressed (compressed),
         m_ID (id) {}
 
 int BackupJob::Backup (ConfigProvider* config, UserInterface* ui) {
@@ -22,9 +22,6 @@ int BackupJob::Backup (ConfigProvider* config, UserInterface* ui) {
 
     FilesystemUtils::VerifySourceDirectory(source);
     FilesystemUtils::VerifyOrCreateDestinationDirectory(destination);
-
-    if (!GetIncremental())
-        throw std::logic_error("Not implemented"); // fixme implement !incremental
 
     Directory prevState = config->LoadSnapshotFileIndex(this);
     Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
@@ -40,7 +37,8 @@ int BackupJob::Backup (ConfigProvider* config, UserInterface* ui) {
     while (!it.End()) {
         if (ui)
             ui->UpdateProgress(cnt, 0, it.GetPath(), it.GetSize());
-        FileChunker::SaveFileChunks(source / it.GetPath(), it.GetID(), destination, newSnapshotId, config);
+        FileChunker::SaveFileChunks(source / it.GetPath(), it.GetID(), destination,
+                                    newSnapshotId, config, IsCompressed());
         it++;
         cnt++;
     }
@@ -56,9 +54,6 @@ int BackupJob::Restore (ConfigProvider* config, UserInterface* ui, int64_t snaps
     FilesystemUtils::VerifySourceDirectory(restoreFrom);
     FilesystemUtils::VerifyOrCreateDestinationDirectory(restoreTo);
 
-    if (!GetIncremental())
-        throw std::logic_error("Not implemented"); // fixme implement !incremental
-
     Directory snapshotFiles = config->LoadSnapshotFileIndex(this, -1); // todo fix this snapshotID trash
 
     DirectoryIterator it(& snapshotFiles);
@@ -68,7 +63,8 @@ int BackupJob::Restore (ConfigProvider* config, UserInterface* ui, int64_t snaps
         if (ui)
             ui->UpdateProgress(cnt, 0, it.GetPath(), it.GetSize());
         ChunkList fileChunks = config->RetrieveFileChunks(this, snapshotId, it.GetID());
-        FilesystemUtils::RestoreFileFromChunks(restoreFrom, restoreTo, fileChunks, restoreTo / it.GetPath());
+        FilesystemUtils::RestoreFileFromChunks(restoreFrom, restoreTo, fileChunks,
+                                               restoreTo / it.GetPath(), IsCompressed());
         it++;
         cnt++;
     }
@@ -88,8 +84,8 @@ std::string BackupJob::GetName () const {
     return m_Name;
 }
 
-bool BackupJob::GetIncremental () const {
-    return m_Incremental;
+bool BackupJob::IsCompressed () const {
+    return m_Compressed;
 }
 
 int64_t BackupJob::GetID () const {

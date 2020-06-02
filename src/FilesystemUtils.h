@@ -23,7 +23,8 @@ public:
     static std::string NormalizeDirectoryPath (std::string path);
     static std::string GetDirectoryOfFilePath (std::string path);
     static void
-    RestoreFileFromChunks (std::string source, std::string destination, ChunkList chunks, std::string filePath);
+    RestoreFileFromChunks (std::string source, std::string destination, ChunkList chunks,
+                           std::string filePath, bool compressed);
 };
 
 
