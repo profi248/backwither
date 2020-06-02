@@ -24,7 +24,7 @@ private:
     int         run (char* name, char* configPath);
     int         restore (char* name, char* configPath);
     std::string humanFileSize (size_t bytes);
-
+    std::string format (std::string in, int & formatChars, bool bold = true, int color = -1);
     ConfigProvider* getConfigProvider (const char* configPath) const;
 };
 

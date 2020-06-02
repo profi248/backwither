@@ -7,6 +7,7 @@
 #include "SQLiteConfigProvider.h"
 #include "BackupPlanIterator.h"
 #include "BackupJob.h"
+#include "FilesystemUtils.h"
 
 using namespace std;
 
@@ -17,10 +18,10 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
     opterr = 0;
 
-    char *source      = nullptr;
-    char *destination = nullptr;
-    char *name        = nullptr;
-    char *configPath  = nullptr;
+    char* source      = nullptr;
+    char* destination = nullptr;
+    char* name        = nullptr;
+    char* configPath  = nullptr;
     bool compress     = true;
     int  index;
     int  c;
@@ -98,6 +99,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 }
 
 int TerminalUserInterface::list (char* configPath) {
+    // add last started column
     ConfigProvider* config = getConfigProvider(configPath);
 
     BackupPlan* plan;
@@ -117,21 +119,39 @@ int TerminalUserInterface::list (char* configPath) {
         delete plan;
         delete config;
         return 0;
-    } else {
-        cout << "Backup jobs:" << endl;
     }
 
-    cout << left << setw(TABLE_FIELD_LENGTH) << "name"
-         << setw(TABLE_FIELD_LENGTH) << "source" << setw(TABLE_FIELD_LENGTH) <<
-            "destination" << setw(TABLE_FIELD_LENGTH) << "compressed" << endl;
+    int widthOffset; // offset accounting for hidden formatting characters, in this case identical for all headers
+    string nameHdr = format("name", widthOffset, true);
+    string srcHdr  = format("source", widthOffset, true);
+    string dstHdr  = format("destination", widthOffset, true);
+    string compHdr = format("compressed", widthOffset, true);
 
-    // todo improve table... (setw should be longest displayed value)
-    // todo refactor into table function
+    unsigned long nameCol = nameHdr.length(), srcCol = srcHdr.length(),
+                  dstCol = dstHdr.length(), compCol = compHdr.length();
+
     while (!it.End()) {
-        cout << left << setw(TABLE_FIELD_LENGTH) << it.GetName()
-             << setw(TABLE_FIELD_LENGTH) << it.GetSource()
-             << setw(TABLE_FIELD_LENGTH) << it.GetDestination()
-             << setw(TABLE_FIELD_LENGTH) << boolalpha << it.IsCompressed() << endl;
+        nameCol = max(it.GetName().length(), nameCol);
+        srcCol  = max(it.GetSource().length(), srcCol);
+        dstCol  = max(it.GetDestination().length(), dstCol);
+        it++;
+    }
+
+    it.Rewind();
+    // column padding
+    nameCol += 2;
+    srcCol  += 2;
+    dstCol  += 2;
+
+    cout << left << setw(nameCol + widthOffset) << nameHdr
+         << setw(srcCol + widthOffset) << srcHdr << setw(dstCol + widthOffset)
+         << dstHdr << setw(compCol + widthOffset) << compHdr << endl;
+
+    while (!it.End()) {
+        cout << left << setw(nameCol) << it.GetName()
+             << setw(srcCol) << it.GetSource()
+             << setw(dstCol) << it.GetDestination()
+             << setw(compCol) << boolalpha << it.IsCompressed() << endl;
         it++;
     }
 
@@ -254,27 +274,44 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
 
     // todo check if dir is empty
     string answer;
-    cout << "WARNING! ALL files in backup source (" << job->GetSource() << ") will be replaced by versions from the snapshot you selected!"
-            " Continue? [N/y] " << flush;
-    while (answer != "n" && answer != "y" && answer != "N" && answer != "Y") {
-        getline(cin, answer);
-        if (answer == "n" || answer == "N" || answer.empty()) {
-            delete job;
-            delete config;
-            return 0;
-        } else if (answer == "y" || answer == "Y") {
-            try {
-                job->Restore(this, 0); // todo pass snapshot id
-            } catch (runtime_error & e) {
-                cerr << "Fatal error: " << e.what() << endl;
+    int formattedChars;
+
+    if (!FilesystemUtils::IsDirectoryEmpty(job->GetSource())) {
+        cout << format("WARNING!", formattedChars) << " Restore foler is not empty. All files in backup source ("
+             << job->GetSource() << ") will be replaced by versions from the snapshot you selected! Continue? [N/y] "
+             << flush;
+
+        while (answer != "n" && answer != "y" && answer != "N" && answer != "Y") {
+            getline(cin, answer);
+
+            if (answer == "n" || answer == "N" || answer.empty()) {
                 delete job;
                 delete config;
-                return 2;
+                return 0;
+            } else if (answer == "y" || answer == "Y") {
+                try {
+                    job->Restore(this, 0); // todo pass snapshot id
+                } catch (runtime_error & e) {
+                    cerr << "Fatal error: " << e.what() << endl;
+                    delete job;
+                    delete config;
+                    return 2;
+                }
+            } else {
+                cout << "Invalid answer. Do you want to replace all files? [N/y] " << flush;
             }
-        } else {
-            cout << "Invalid answer. Do you want to replace all files? [N/y] " << flush;
+        }
+    } else {
+        try {
+            job->Restore(this, 0); // todo pass snapshot id
+        } catch (runtime_error & e) {
+            cerr << "Fatal error: " << e.what() << endl;
+            delete job;
+            delete config;
+            return 2;
         }
     }
+
 
     delete job;
     delete config;
@@ -338,4 +375,13 @@ std::string TerminalUserInterface::humanFileSize (size_t bytes) {
     }
 
     return oss.str();
+}
+
+std::string TerminalUserInterface::format (std::string in, int & formatChars, bool bold, int color) {
+    if (bold) {
+        formatChars = 8;
+        return "\033[1m" + in + "\033[0m";
+    }
+
+    return in;
 }
