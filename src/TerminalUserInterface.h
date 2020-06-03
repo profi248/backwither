@@ -21,10 +21,11 @@ private:
     int         help ();
     std::string getVersion ();
     int         add (char* source, char* destination, char* name, char* configPath, bool compress);
-    int         run (char* name, char* configPath);
+    int         backup (char* name, char* configPath);
     int         restore (char* name, char* configPath);
     std::string humanFileSize (size_t bytes);
     std::string format (std::string in, int & formatChars, bool bold = true, int color = -1);
+    bool        yesNoPrompt ();
     ConfigProvider* getConfigProvider (const char* configPath) const;
 };
 

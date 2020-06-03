@@ -72,13 +72,13 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             }
 
             add(source, destination, name, configPath, compress);
-        } else if (command == "run") {
+        } else if (command == "backup") {
             if (!name) {
                 cerr << "Specifying backup name (-n) is required." << endl;
                 return 1;
             }
 
-            run(name, configPath);
+            backup(name, configPath);
         } else if (command == "restore") {
             // todo support specifing snapshot
             if (!name) {
@@ -224,7 +224,8 @@ int TerminalUserInterface::add (char* source, char* destination, char* name, cha
     return 0;
 }
 
-int TerminalUserInterface::run (char* name, char* configPath) {
+int TerminalUserInterface::backup (char* name, char* configPath) {
+    // add potential not enough space warning
     ConfigProvider* config = getConfigProvider(configPath);
     BackupJob* job;
 
@@ -276,32 +277,27 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
     }
 
     // todo check if dir is empty
-    string answer;
     int formattedChars;
 
     try {
         if (!FilesystemUtils::IsDirectoryEmpty(job->GetSource())) {
             cout << format("WARNING!", formattedChars) << " Restore foler is not empty. All files in backup source ("
                  << job->GetSource()
-                 << ") will be replaced by versions from the snapshot you selected! Continue? [N/y] "
+                 << ") will be replaced by versions from the snapshot you selected! Continue? [y/N] "
                  << flush;
 
-            while (answer != "n" && answer != "y" && answer != "N" && answer != "Y") {
-                getline(cin, answer);
-
-                if (answer == "n" || answer == "N" || answer.empty()) {
-                    delete job;
-                    delete config;
-                    return 0;
-                } else if (answer == "y" || answer == "Y") {
-                    job->Restore(this, -1); // todo pass snapshot id
-                } else {
-                    cout << "Invalid answer. Do you want to replace all files? [N/y] " << flush;
-                }
+            if (yesNoPrompt()) {
+                job->Restore(this, -1); // todo pass snapshot id
+            } else {
+                delete job;
+                delete config;
+                return 0;
             }
+
         } else {
             job->Restore(this, -1); // todo pass snapshot id
         }
+
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
@@ -381,4 +377,21 @@ std::string TerminalUserInterface::format (std::string in, int & formatChars, bo
     }
 
     return in;
+}
+
+bool TerminalUserInterface::yesNoPrompt () {
+    string answer;
+    while (answer != "n" && answer != "y" && answer != "N" && answer != "Y") {
+        getline(cin, answer);
+
+        if (answer == "n" || answer == "N" || answer.empty()) {
+            return false;
+        } else if (answer == "y" || answer == "Y") {
+            return true;
+        } else {
+            cout << "Invalid answer. Please only type \"y\" for yes or \"n\" for no. [y/N] " << flush;
+        }
+    }
+
+    return false;
 }

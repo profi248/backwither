@@ -35,6 +35,7 @@ int BackupJob::Backup (UserInterface* ui) {
     // Directory diff = currentState - prevState;
     // todo improve
     // add file comparator
+    // implement ignores
 
     int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState);
 
