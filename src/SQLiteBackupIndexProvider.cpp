@@ -38,18 +38,23 @@ bool SQLiteBackupIndexProvider::initConfig () {
 
         "create table settings (key text unique, value);"
 
-        "create table snapshots (snapshot_id integer primary key asc, creation integer);"
+        "create table snapshots (snapshot_id integer primary key asc, creation integer, finished integer);"
 
-        "create table files (file_id integer primary key asc, path text unique, size integer,"
+        "create table filepaths (path_id integer primary key asc, path text unique);"
+
+        "create table files (file_id integer primary key asc, path_id integer references filepaths (path_id), size integer,"
         "mtime integer, ctime integer, snapshot_id integer references snapshots (snapshot_id));"
 
-        "create table chunks (hash text, size integer,"
-        "file_id integer references files (file_id),"
-        "snapshot_id integer references snapshots (snapshot_id),"
-        "position integer);"
+        "create table chunkhashes (hash_id integer primary key asc, hash text unique, size integer);"
 
-        "create index chunks_idx on chunks (hash, file_id, position);"
-        "create index file_idx on files (snapshot_id, path);"
+        "create table chunks (hash_id integer references chunkhashes (hash_id),"
+        "snapshot_id integer references snapshots (snapshot_id), position integer,"
+        "file_id integer references files (file_id));"
+
+        "create index chunkhashes_idx on chunkhashes (hash);"
+        "create index chunks_idx on chunks (hash_id, file_id, position);"
+        "create index filepaths_idx on filepaths (path);"
+        "create index file_idx on files (path_id, snapshot_id);"
 
         "insert into settings (key, value) values ('version', 1)",
 
@@ -140,50 +145,71 @@ int64_t SQLiteBackupIndexProvider::SaveSnapshotFileIndex (Directory & fld) {
     sqlite3_finalize(addSnapshotStmt);
 
     DirectoryIterator it (& fld);
+    sqlite3_stmt* addPathStmt;
+    sqlite3_stmt* pathIdLookbackStmt;
     sqlite3_stmt* addFileStmt;
-    sqlite3_stmt* fileIdLookbackStmt;
 
     sqlite3_prepare_v2(m_DB,
-       "insert or ignore into files (path, size, mtime, snapshot_id) values (?, ?, ?, ?);",
+       "insert or ignore into filepaths (path) values (?);",
+       SQLITE_NULL_TERMINATED, & addPathStmt, nullptr);
+
+    sqlite3_prepare_v2(m_DB,
+       "select path_id from filepaths where path = ?;",
+       SQLITE_NULL_TERMINATED, & pathIdLookbackStmt, nullptr);
+
+    sqlite3_prepare_v2(m_DB,
+       "insert into files (path_id, size, mtime, snapshot_id) values (?, ?, ?, ?);",
        SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
-
-    sqlite3_prepare_v2(m_DB,
-       "select file_id from files where path = ?;",
-       SQLITE_NULL_TERMINATED, & fileIdLookbackStmt, nullptr);
-
 
     while (!it.End()) {
         // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
-        sqlite3_bind_text(addFileStmt, 1, it.GetPath().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
-        sqlite3_bind_int64(addFileStmt, 2, it.GetSize());
-        sqlite3_bind_int64(addFileStmt, 3, it.GetMtime());
-        sqlite3_bind_int64(addFileStmt, 4, snapshotID);
+        sqlite3_bind_text(addPathStmt, 1, it.GetPath().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
 
-
-        if (sqlite3_step(addFileStmt) != SQLITE_DONE) {
+        if (sqlite3_step(addPathStmt) != SQLITE_DONE) {
             const char * err = sqlite3_errmsg(m_DB);
+            sqlite3_finalize(addPathStmt);
+            sqlite3_finalize(pathIdLookbackStmt);
             sqlite3_finalize(addFileStmt);
-            sqlite3_finalize(fileIdLookbackStmt);
             sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
             throw std::runtime_error("Database error when adding a file: " + std::string(err) + ".");
         } else {
-            sqlite3_bind_text(fileIdLookbackStmt, 1, it.GetPath().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
-            if (sqlite3_step(fileIdLookbackStmt) != SQLITE_ROW) {
+            sqlite3_bind_text(pathIdLookbackStmt, 1, it.GetPath().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+            if (sqlite3_step(pathIdLookbackStmt) != SQLITE_ROW) {
+                sqlite3_finalize(addPathStmt);
+                sqlite3_finalize(pathIdLookbackStmt);
                 sqlite3_finalize(addFileStmt);
-                sqlite3_finalize(fileIdLookbackStmt);
+
                 throw std::runtime_error("Database error when adding a file.");
             }
-            int64_t newFileID = sqlite3_column_int64(fileIdLookbackStmt, 0);
-            it.SetID(newFileID);
+            int64_t newPathId = sqlite3_column_int64(pathIdLookbackStmt, 0);
+
+            sqlite3_bind_int64(addFileStmt, 1, newPathId);
+            sqlite3_bind_int64(addFileStmt, 2, it.GetSize());
+            sqlite3_bind_int64(addFileStmt, 3, it.GetMtime());
+            sqlite3_bind_int64(addFileStmt, 4, snapshotID);
+
+            if (sqlite3_step(addFileStmt) != SQLITE_DONE) {
+                const char * err = sqlite3_errmsg(m_DB);
+                sqlite3_finalize(addPathStmt);
+                sqlite3_finalize(pathIdLookbackStmt);
+                sqlite3_finalize(addFileStmt);
+                sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
+                throw std::runtime_error("Database error when adding a file: " + std::string(err) + ".");
+            }
+            int64_t newFileId = sqlite3_last_insert_rowid(m_DB);
+            it.SetID(newFileId);
         }
 
+        sqlite3_reset(addPathStmt);
+        sqlite3_reset(pathIdLookbackStmt);
         sqlite3_reset(addFileStmt);
-        sqlite3_reset(fileIdLookbackStmt);
         it++;
     }
 
+    sqlite3_finalize(addPathStmt);
+    sqlite3_finalize(pathIdLookbackStmt);
     sqlite3_finalize(addFileStmt);
-    sqlite3_finalize(fileIdLookbackStmt);
+
     if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK)
         throw std::runtime_error("Database error when creating a snapshot.");
 
@@ -203,13 +229,16 @@ Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) 
 
         }
         sqlite3_prepare_v2(m_DB,
-           "select path, size, mtime, file_id from files where snapshot_id = ?;",
+           "select path, size, mtime, file_id from files "
+            "join filepaths using (path_id) "
+            "where snapshot_id = ?;",
            SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
 
         sqlite3_bind_int64(loadFilesStmt, 1, snapshotID);
     } else { // all files from all snapshots for this backup job
         sqlite3_prepare_v2(m_DB,
-           "select path, mtime, size, file_id from files;",
+          "select path, size, mtime, file_id from files "
+           "join filepaths using (path_id);",
            SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
     }
 
@@ -248,39 +277,85 @@ int64_t SQLiteBackupIndexProvider::getLastSnapshotId (const BackupJob* job) {
 void SQLiteBackupIndexProvider::SaveFileChunks (ChunkList chunks, int64_t snapshotId) {
     ChunkListIterator it (& chunks);
     sqlite3_stmt* saveChunksStmt;
+    sqlite3_stmt* saveChunkHashesStmt;
+    sqlite3_stmt* chunkHashLookbackStmt;
 
     if (sqlite3_exec(m_DB, "begin transaction;", nullptr, nullptr, nullptr) != SQLITE_OK) {
         throw std::runtime_error("Database error initializing saving chunks.");
     }
 
     sqlite3_prepare_v2(m_DB,
-       "insert into chunks (hash, size, file_id, snapshot_id, position) values (?, ?, ?, ?, ?);",
+        "insert or ignore into chunkhashes (hash, size) values (?, ?);",
+       SQLITE_NULL_TERMINATED, & saveChunkHashesStmt, nullptr);
+
+    sqlite3_prepare_v2(m_DB,
+        "insert into chunks (hash_id, file_id, snapshot_id, position) values (?, ?, ?, ?);",
        SQLITE_NULL_TERMINATED, & saveChunksStmt, nullptr);
+
+    sqlite3_prepare_v2(m_DB,
+        "select hash_id from chunkhashes where hash = ? limit 1;",
+       SQLITE_NULL_TERMINATED, & chunkHashLookbackStmt, nullptr);
 
 
     size_t pos = 1;
+    int64_t chunkId = -1;
     while (!it.End()) {
         // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
-        sqlite3_bind_text(saveChunksStmt, 1, it.GetHash().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
-        sqlite3_bind_int64(saveChunksStmt, 2, it.GetSize());
-        sqlite3_bind_int64(saveChunksStmt, 3, chunks.GetFileID());
-        sqlite3_bind_int64(saveChunksStmt, 4, snapshotId);
-        sqlite3_bind_int64(saveChunksStmt, 5, pos);
+        sqlite3_bind_text(saveChunkHashesStmt, 1, it.GetHash().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(saveChunkHashesStmt, 2, it.GetSize());
+
+        if (sqlite3_step(saveChunkHashesStmt) != SQLITE_DONE) {
+
+            const char * err = sqlite3_errmsg(m_DB);
+            sqlite3_finalize(saveChunksStmt);
+            sqlite3_finalize(saveChunkHashesStmt);
+            sqlite3_finalize(chunkHashLookbackStmt);
+            sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
+
+            throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
+        } else {
+            sqlite3_bind_text(chunkHashLookbackStmt, 1, it.GetHash().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+
+            if (sqlite3_step(chunkHashLookbackStmt) != SQLITE_ROW) {
+                const char * err = sqlite3_errmsg(m_DB);
+                sqlite3_finalize(saveChunksStmt);
+                sqlite3_finalize(chunkHashLookbackStmt);
+                sqlite3_finalize(saveChunkHashesStmt);
+                sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
+
+                throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
+            } else {
+                chunkId = sqlite3_column_int64(chunkHashLookbackStmt, 0);
+            }
+
+        }
+
+        sqlite3_bind_int64(saveChunksStmt, 1, chunkId);
+        sqlite3_bind_int64(saveChunksStmt, 2, chunks.GetFileID());
+        sqlite3_bind_int64(saveChunksStmt, 3, snapshotId);
+        sqlite3_bind_int64(saveChunksStmt, 4, pos);
 
         if (sqlite3_step(saveChunksStmt) != SQLITE_DONE) {
             const char * err = sqlite3_errmsg(m_DB);
             sqlite3_finalize(saveChunksStmt);
+            sqlite3_finalize(saveChunkHashesStmt);
+            sqlite3_finalize(chunkHashLookbackStmt);
             sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
 
             throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
         }
 
+        sqlite3_reset(saveChunkHashesStmt);
         sqlite3_reset(saveChunksStmt);
+        sqlite3_reset(chunkHashLookbackStmt);
         it++;
         pos++;
     }
 
     sqlite3_finalize(saveChunksStmt);
+    sqlite3_finalize(saveChunkHashesStmt);
+    sqlite3_finalize(chunkHashLookbackStmt);
+
     if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK) {
         const char * err = sqlite3_errmsg(m_DB);
         throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
@@ -294,7 +369,10 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
 
     if (snapshotId != -1) {
         sqlite3_prepare_v2(m_DB,
-           "select hash, size from chunks where file_id = ? and snapshot_id = ? order by position;",
+           "select hash, size from chunks "
+           "join chunkhashes using (hash_id) "
+           "where file_id = ? and snapshot_id = ? "
+           "order by position;",
            SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
         if (snapshotId == 0) {
             snapshotId = getLastSnapshotId(job);
@@ -308,7 +386,10 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
 
     } else {
         sqlite3_prepare_v2(m_DB,
-           "select hash, size from chunks where file_id = ? order by position;",
+           "select hash, size from chunks "
+           "join chunkhashes using (hash_id) "
+           "where file_id = ? "
+           "order by position;",
            SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
     }
 
@@ -340,9 +421,9 @@ sqlite3* SQLiteBackupIndexProvider::openDB () {
 
     int result = sqlite3_exec(db,
         "pragma encoding     = 'UTF-8';"
-            "pragma foreign_keys = 1;"
-            "pragma journal_mode = WAL;"   // more optimized writes
-            "pragma synchronous  = NORMAL", nullptr, nullptr, nullptr);
+        "pragma foreign_keys = 1;"
+        "pragma journal_mode = WAL;"   // more optimized writes
+        "pragma synchronous  = NORMAL", nullptr, nullptr, nullptr);
     if (result != SQLITE_OK)
         throw std::runtime_error("Cannot set database parameters.");
 
