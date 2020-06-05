@@ -14,7 +14,7 @@ FILES= \
 	src/bin/intermediate/Chunk.o src/bin/intermediate/ChunkList.o src/bin/intermediate/ChunkListIterator.o \
 	src/bin/intermediate/SQLiteBackupIndexProvider.o
 
-.PHONY: all clean run doc
+.PHONY: all clean run doc prepare
 
 all: compile doc
 
@@ -25,15 +25,18 @@ compile: CXXFLAGS += -O3
 doc:
 	doxygen
 
-debug: backwither
+debug: prepare backwither
 
-compile: backwither
+compile: prepare backwither
 	cp src/bin/backwither kostada2
 
-run: backwither
+prepare:
+	mkdir -p src/bin/intermediate > /dev/null  2>&1
+
+run: prepare backwither
 	src/bin/backwither
 
-test: backwither
+test: prepaare  backwither
 	$(CXX) $(CXXFLAGS) -o src/bin/test src/tests/test.cpp
 	src/bin/test
 
