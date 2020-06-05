@@ -30,12 +30,16 @@ int BackupJob::Backup (UserInterface* ui) {
     std::unique_ptr<BackupIndexProvider> config = std::unique_ptr<SQLiteBackupIndexProvider>
             (new SQLiteBackupIndexProvider(this));
 
+    if (ui)
+        ui->UpdateProgress(0, 0, "starting backup", 0);
+
     Directory prevState = config->LoadSnapshotFileIndex(-1);
     Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
     // Directory diff = currentState - prevState;
     // todo improve
     // add file comparator
     // implement ignores
+    // handle interruption in the middle of backup (mark snapshot as incomplete)
 
     int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState);
 

@@ -317,8 +317,8 @@ void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std
         oss << "[" << current << "/" << expected << "] ";
     else
         oss << "[" << current << "...] ";
-
-    oss << status << " (" << humanFileSize(fileSize) << ")";
+    if (fileSize)
+        oss << status << " (" << humanFileSize(fileSize) << ")";
     cout << left << setw(m_LastStatusLength) << setfill(' ') << oss.str() << '\r' << flush;
     // cout << m_LastStatusLength;
     m_LastStatusLength = oss.str().length();
