@@ -21,8 +21,10 @@ size_t FilesystemChunkStorageProvider::StoreChunk (Chunk & metadata, char* data)
     if (!fs::exists(chunkFile)) {
         fstream file (chunkFile, ios::out | ios::binary);
         file.write(data, metadata.GetSize());
-        if (!file.good())
+        if (!file.good()) {
+            delete [] data;
             throw runtime_error("Cannot write in " + chunkFile + ".");
+        }
     }
 
     return metadata.GetSize();
