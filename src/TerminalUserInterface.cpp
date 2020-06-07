@@ -1,13 +1,10 @@
 #include <getopt.h>
 #include <iostream>
 #include <iomanip>
-#include <exception>
 
 #include "TerminalUserInterface.h"
 #include "SQLiteConfigProvider.h"
 #include "SQLiteBackupIndexProvider.h"
-#include "BackupPlanIterator.h"
-#include "BackupJob.h"
 #include "FilesystemUtils.h"
 #include "SnapshotListIterator.h"
 

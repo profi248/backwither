@@ -1,8 +1,6 @@
 #include <iostream>
-#include <exception>
 
 #include "FilesystemUtils.h"
-#include "SQLiteConfigProvider.h"
 #include "TerminalUserInterface.h"
 
 int main (int argc, char** argv) {

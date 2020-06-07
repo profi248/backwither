@@ -2,11 +2,8 @@
 #include <stdexcept>
 #include <filesystem>
 #include <sqlite3.h>
-#include <ctime>
 #include <memory>
 #include "SQLiteConfigProvider.h"
-#include "FilesystemEntity.h"
-#include "File.h"
 #include "ChunkListIterator.h"
 
 SQLiteConfigProvider::SQLiteConfigProvider (std::string path) {
@@ -133,7 +130,6 @@ std::string SQLiteConfigProvider::getDbPath () const {
         return m_Path + std::string(CONFIG_DATABASE_FILENAME);
 }
 
-
 void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
      sqlite3_stmt* addJobStmt;
 
@@ -206,7 +202,6 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     return plan;
 }
 
-
 sqlite3* SQLiteConfigProvider::openDB () {
     if (!configExists())
         initConfig();
@@ -229,4 +224,3 @@ sqlite3* SQLiteConfigProvider::openDB () {
 SQLiteConfigProvider::~SQLiteConfigProvider () {
     sqlite3_close(m_DB);
 }
-

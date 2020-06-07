@@ -1,7 +1,6 @@
 #include <memory>
 
 #include "BackupPlanIterator.h"
-#include "DirectoryIterator.h"
 #include "File.h"
 
 DirectoryIterator::DirectoryIterator (Directory * dir) :

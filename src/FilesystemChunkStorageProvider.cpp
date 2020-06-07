@@ -1,5 +1,4 @@
 #include <filesystem>
-#include <stdexcept>
 #include <fstream>
 #include "FilesystemChunkStorageProvider.h"
 #include "FilesystemUtils.h"

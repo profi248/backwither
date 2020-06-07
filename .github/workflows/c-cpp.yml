@@ -1,0 +1,21 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: sudo apt install build-essential sqlite3 libsqlite3-dev openssl libssl-dev zlib1g-dev doxygen graphviz
+    - name: make
+      run: make -j2
+    - name: run binary
+      run: ./kostada2
