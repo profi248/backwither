@@ -12,7 +12,8 @@ FILES= \
 	src/bin/intermediate/FileComparator.o src/bin/intermediate/HashFileComparator.o src/bin/intermediate/TimeFileComparator.o \
 	src/bin/intermediate/BackupPlanIterator.o src/bin/intermediate/DirectoryIterator.o src/bin/intermediate/FileChunker.o \
 	src/bin/intermediate/Chunk.o src/bin/intermediate/ChunkList.o src/bin/intermediate/ChunkListIterator.o \
-	src/bin/intermediate/SQLiteBackupIndexProvider.o
+	src/bin/intermediate/SQLiteBackupIndexProvider.o src/bin/intermediate/Snapshot.o \
+	src/bin/intermediate/SnapshotList.o src/bin/intermediate/SnapshotListIterator.o
 
 .PHONY: all clean run doc prepare
 

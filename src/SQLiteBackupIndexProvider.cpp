@@ -409,6 +409,29 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
     return chunks;
 }
 
+SnapshotList* SQLiteBackupIndexProvider::LoadSnapshotList () {
+    SnapshotList* snapshots = new SnapshotList();
+    sqlite3_stmt* loadSnapshotsStmt;
+
+
+    sqlite3_prepare_v2(m_DB,
+       "select snapshot_id, creation from snapshots;",
+       SQLITE_NULL_TERMINATED, & loadSnapshotsStmt, nullptr);
+
+    while (sqlite3_step(loadSnapshotsStmt) == SQLITE_ROW) {
+        // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
+
+        auto snapshot = Snapshot(
+            sqlite3_column_int64(loadSnapshotsStmt, 0), // id
+            sqlite3_column_int64(loadSnapshotsStmt, 1)  // creation
+        );
+
+        snapshots->AddSnapshot(snapshot);
+    }
+
+    sqlite3_finalize(loadSnapshotsStmt);
+    return snapshots;
+}
 
 sqlite3* SQLiteBackupIndexProvider::openDB () {
     if (!configExists())

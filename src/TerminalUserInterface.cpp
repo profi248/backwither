@@ -5,9 +5,11 @@
 
 #include "TerminalUserInterface.h"
 #include "SQLiteConfigProvider.h"
+#include "SQLiteBackupIndexProvider.h"
 #include "BackupPlanIterator.h"
 #include "BackupJob.h"
 #include "FilesystemUtils.h"
+#include "SnapshotListIterator.h"
 
 using namespace std;
 
@@ -65,6 +67,13 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
         // apparently we can't use switch for strings...
         if (command == "list") {
             list(configPath);
+        } else if (command == "history") {
+            if (!name) {
+                cerr << "Specifying backup name (-n) is required." << endl;
+                return 1;
+            }
+
+            history(configPath, name);
         } else if (command == "add") {
             if (!source || !destination || !name) {
                 cerr << "Specifying backup source path (-s), destination path (-d) and name (-n) is required." << endl;
@@ -110,6 +119,7 @@ int TerminalUserInterface::list (char* configPath) {
         delete config;
         return 2;
     }
+    // todo refactor table printing! (Iterator baseclass)
     BackupPlanIterator it(plan);
 
     if (it.Empty()) {
@@ -160,6 +170,71 @@ int TerminalUserInterface::list (char* configPath) {
     return 0;
 }
 
+// todo refactor
+int TerminalUserInterface::history (char* configPath, char* backupName) {
+    BackupJob* job = nullptr;
+    ConfigProvider* config = nullptr;
+    BackupIndexProvider* indexProvider = nullptr;
+    SnapshotList* snapshots = nullptr;
+    try {
+        config = getConfigProvider(configPath);
+        job = config->GetBackupJob(backupName);
+        indexProvider = new SQLiteBackupIndexProvider(job);
+        snapshots = indexProvider->LoadSnapshotList();
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete job;
+        delete snapshots;
+        delete config;
+        delete indexProvider;
+        return 2;
+    }
+
+    SnapshotListIterator it(snapshots);
+
+    if (it.Empty()) {
+        cout << "No backups run yet." << endl;
+
+        delete job;
+        delete snapshots;
+        delete config;
+        delete indexProvider;
+        return 0;
+    }
+
+    int widthOffset; // offset accounting for hidden formatting characters, in this case identical for all headers
+    string idHdr = format("ID", widthOffset, true);
+    string crHdr  = format("creation", widthOffset, true);
+
+    unsigned long idCol = idHdr.length(), crCol = crHdr.length();
+
+    while (!it.End()) {
+        idCol = max(to_string(it.GetID()).length(), idCol);
+        crCol  = max(to_string(it.GetCretion()).length(), crCol);
+        it++;
+    }
+
+    it.Rewind();
+    // column padding
+    idCol += 2;
+    crCol += 2;
+
+    cout << left << setw(idCol + widthOffset) << idHdr
+         << setw(crCol + widthOffset) << crHdr << endl;
+
+    while (!it.End()) {
+        cout << left << setw(idCol) << it.GetID()
+             << setw(crCol) << it.GetCretion() << endl;
+        it++;
+    }
+
+    delete job;
+    delete snapshots;
+    delete config;
+    delete indexProvider;
+    return 0;
+}
+
 ConfigProvider* TerminalUserInterface::getConfigProvider (const char* configPath) const {
     ConfigProvider* config;
 
@@ -177,14 +252,14 @@ int TerminalUserInterface::help () {
     cout << "Commands" << endl;
     cout << "  list\t\tshow backup jobs" << endl <<
             "  add\t\tadd new backup job" << endl <<
-            "  edit\t\tedit backup job" << endl <<
-            "  remove\tremove backup job" << endl <<
+            // "  edit\t\tedit backup job" << endl <<
+            // "  remove\tremove backup job" << endl <<
             "  backup\trun backup job" << endl <<
             "  restore\trestore backup" << endl <<
-            "  rollback\trollback a file to older version" << endl <<
-            "  diff\t\tshow difference between backups" << endl <<
+            // "  rollback\trollback a file to older version" << endl <<
+            // "  diff\t\tshow difference between backups" << endl <<
             "  history\tpast backups history" << endl <<
-            "  run-cron\trun planned backups" << endl <<
+            // "  run-cron\trun planned backups" << endl <<
             "  help\t\tshow this help message" << endl << endl;
 
     cout << "Options" << endl;
@@ -395,3 +470,4 @@ bool TerminalUserInterface::yesNoPrompt () {
 
     return false;
 }
+
