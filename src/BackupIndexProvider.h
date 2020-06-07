@@ -16,7 +16,7 @@ public:
     virtual void          SaveFileChunks (ChunkList chunks, int64_t snapshotId) = 0;
     virtual ChunkList     RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) = 0;
     virtual SnapshotList* LoadSnapshotList () = 0;
-};e
+};
 
 
 #endif //BACKWITHER_BACKUPINDEXPROVIDER_H
