@@ -11,12 +11,12 @@ class BackupIndexProvider {
 public:
     virtual ~BackupIndexProvider () = default;
 
-    virtual int64_t      SaveSnapshotFileIndex (Directory & fld) = 0;
-    virtual Directory    LoadSnapshotFileIndex (int64_t snapshotID) = 0;
-    virtual void         SaveFileChunks (ChunkList chunks, int64_t snapshotId) = 0;
-    virtual ChunkList    RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) = 0;
+    virtual int64_t       SaveSnapshotFileIndex (Directory & fld) = 0;
+    virtual Directory     LoadSnapshotFileIndex (int64_t snapshotID) = 0;
+    virtual void          SaveFileChunks (ChunkList chunks, int64_t snapshotId) = 0;
+    virtual ChunkList     RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) = 0;
     virtual SnapshotList* LoadSnapshotList () = 0;
-};
+};e
 
 
 #endif //BACKWITHER_BACKUPINDEXPROVIDER_H

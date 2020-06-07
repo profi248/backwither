@@ -128,7 +128,7 @@ int TerminalUserInterface::list (char* configPath) {
 
     if (it.Empty()) {
         cout << "No backup jobs. Add a new job by running `add`." << endl
-             << "If you expect to see something, please verify that correct config is in place." << endl;
+             << "If you expected to see something, please verify that correct config is in place." << endl;
 
         delete plan;
         delete config;

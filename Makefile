@@ -37,7 +37,7 @@ prepare:
 run: prepare backwither
 	src/bin/backwither
 
-test: prepaare  backwither
+test: prepare backwither
 	$(CXX) $(CXXFLAGS) -o src/bin/test src/tests/test.cpp
 	src/bin/test
 
