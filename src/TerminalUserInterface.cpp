@@ -361,7 +361,7 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* config
 
     try {
         if (!FilesystemUtils::IsDirectoryEmpty(job->GetSource())) {
-            cout << format("WARNING!", formattedChars) << " Restore foler is not empty. All files in backup source ("
+            cout << format("WARNING!", formattedChars) << " Restore directory is not empty. All files in backup source ("
                  << job->GetSource()
                  << ") will be replaced by versions from the snapshot you selected! Continue? [y/N] "
                  << flush;
