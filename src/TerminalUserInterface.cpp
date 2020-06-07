@@ -356,7 +356,6 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* config
         return 1;
     }
 
-    // todo check if dir is empty
     int formattedChars;
 
     try {
