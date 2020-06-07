@@ -6,11 +6,13 @@
 class Snapshot {
     int64_t   m_ID;
     long long m_Created;
+    long long m_Completed;
 public:
-    Snapshot (int64_t id, long long created);
+    Snapshot (int64_t id, long long created, long long completed);
 
     int64_t   GetID () const;
     long long GetCreation () const;
+    long long GetCompletion () const;
 };
 
 

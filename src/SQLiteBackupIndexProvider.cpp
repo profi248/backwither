@@ -412,7 +412,7 @@ SnapshotList* SQLiteBackupIndexProvider::LoadSnapshotList () {
 
 
     sqlite3_prepare_v2(m_DB,
-       "select snapshot_id, creation from snapshots;",
+       "select snapshot_id, creation, finished from snapshots;",
        SQLITE_NULL_TERMINATED, & loadSnapshotsStmt, nullptr);
 
     while (sqlite3_step(loadSnapshotsStmt) == SQLITE_ROW) {
@@ -420,7 +420,8 @@ SnapshotList* SQLiteBackupIndexProvider::LoadSnapshotList () {
 
         auto snapshot = Snapshot(
             sqlite3_column_int64(loadSnapshotsStmt, 0), // id
-            sqlite3_column_int64(loadSnapshotsStmt, 1)  // creation
+            sqlite3_column_int64(loadSnapshotsStmt, 1),  // creation
+            sqlite3_column_int64(loadSnapshotsStmt, 2)  // completion
         );
 
         snapshots->AddSnapshot(snapshot);
@@ -480,4 +481,6 @@ sqlite3* SQLiteBackupIndexProvider::openDB () {
 SQLiteBackupIndexProvider::~SQLiteBackupIndexProvider () {
     sqlite3_close(m_DB);
 }
+
+
 

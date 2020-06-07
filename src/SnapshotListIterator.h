@@ -5,13 +5,15 @@
 class SnapshotListIterator {
     SnapshotList * m_SnapshotList;
     size_t         m_Pos;
+
 public:
     explicit SnapshotListIterator (SnapshotList * list);
 
     void      Next ();
     void      Rewind ();
     int64_t   GetID () const;
-    long long GetCretion () const;
+    long long GetCreation () const;
+    long long GetCompletion () const;
     bool      End () const;
     bool      Empty () const;
 

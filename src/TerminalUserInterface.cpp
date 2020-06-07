@@ -208,13 +208,21 @@ int TerminalUserInterface::history (char* configPath, char* backupName) {
 
     int widthOffset; // offset accounting for hidden formatting characters, in this case identical for all headers
     string idHdr = format("ID", widthOffset, true);
-    string crHdr  = format("creation", widthOffset, true);
+    string crHdr  = format("completed", widthOffset, true);
 
     unsigned long idCol = idHdr.length(), crCol = crHdr.length();
 
     while (!it.End()) {
+        string completion;
+        if (!it.GetCompletion())
+            completion = "never completed";
+        else {
+            time_t time = static_cast<time_t>(it.GetCompletion());
+            completion = ctime(&time);
+        }
+
         idCol = max(to_string(it.GetID()).length(), idCol);
-        crCol  = max(to_string(it.GetCretion()).length(), crCol);
+        crCol  = max(completion.length(), crCol);
         it++;
     }
 
@@ -226,9 +234,18 @@ int TerminalUserInterface::history (char* configPath, char* backupName) {
     cout << left << setw(idCol + widthOffset) << idHdr
          << setw(crCol + widthOffset) << crHdr << endl;
 
+    // todo replace with strftime
     while (!it.End()) {
+        string completion;
+        if (!it.GetCompletion())
+            completion = "never completed";
+        else {
+            time_t time = static_cast<time_t>(it.GetCompletion());
+            completion = ctime(&time);
+        }
+
         cout << left << setw(idCol) << it.GetID()
-             << setw(crCol) << it.GetCretion() << endl;
+             << setw(crCol) << completion << endl;
         it++;
     }
 

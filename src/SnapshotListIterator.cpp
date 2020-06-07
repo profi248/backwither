@@ -24,8 +24,13 @@ int64_t SnapshotListIterator::GetID () const {
     return m_SnapshotList->m_Snapshots[m_Pos].GetID();
 }
 
-long long SnapshotListIterator::GetCretion() const {
+long long SnapshotListIterator::GetCreation() const {
     return m_SnapshotList->m_Snapshots[m_Pos].GetCreation();
+}
+
+
+long long SnapshotListIterator::GetCompletion () const {
+    return m_SnapshotList->m_Snapshots[m_Pos].GetCompletion();
 }
 
 
