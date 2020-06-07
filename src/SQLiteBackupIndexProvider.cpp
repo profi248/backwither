@@ -380,9 +380,8 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
                 sqlite3_finalize(retrieveChunksStmt);
                 throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
             }
-
-            sqlite3_bind_int64(retrieveChunksStmt, 2, snapshotId);
         }
+            sqlite3_bind_int64(retrieveChunksStmt, 2, snapshotId);
 
     } else {
         sqlite3_prepare_v2(m_DB,

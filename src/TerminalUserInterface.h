@@ -22,7 +22,7 @@ private:
     std::string     getVersion ();
     int             add (char* source, char* destination, char* name, char* configPath, bool compress);
     int             backup (char* name, char* configPath);
-    int             restore (char* name, char* configPath);
+    int             restore (char* name, int64_t snapshotId, char* configPath);
     std::string     humanFileSize (size_t bytes);
     std::string     format (std::string in, int & formatChars, bool bold = true, int color = -1);
     bool            yesNoPrompt ();

@@ -20,6 +20,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
     opterr = 0;
 
+    char* id          = nullptr;
     char* source      = nullptr;
     char* destination = nullptr;
     char* name        = nullptr;
@@ -34,8 +35,11 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
     // parse arguments: options need to be parsed first, then commands
 
-    while ((c = getopt (argc, argv, "s:d:n:c:x")) != -1)
+    while ((c = getopt (argc, argv, "i:s:d:n:c:x")) != -1)
         switch (c) {
+            case 'i':
+                id = optarg;
+                break;
             case 's':
                 source = optarg;
                 break;
@@ -52,7 +56,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 compress = false;
                 break;
             case '?':
-                if (optopt == 's' || optopt == 'd' || optopt == 'n' || optopt == 'c')
+                if (optopt == 'i' || optopt == 's' || optopt == 'd' || optopt == 'n' || optopt == 'c')
                     cerr << "Option -" << (char) optopt << " requires an argument." << endl;
                 else
                     cerr << "Unknown option -" << (char) optopt << "." << endl;
@@ -94,8 +98,11 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 cerr << "Specifying backup name (-n) is required." << endl;
                 return 1;
             }
+            int64_t snapshotId = 0;
+            if (id)
+                snapshotId = strtoll(id, nullptr, 10);
 
-            restore(name, configPath);
+            restore(name, snapshotId, configPath);
         } else if (command == "help") {
             help();
         } else {
@@ -265,6 +272,7 @@ int TerminalUserInterface::help () {
     cout << "Options" << endl;
 
     cout << "  -c\tspecify config directory" << endl <<
+            "  -i\tspecify snapshot ID to restore" << endl <<
             "  -n\tspecify new backup job name" << endl <<
             "  -s\tspecify new backup job source path" << endl <<
             "  -d\tspecify new backup job destination path" << endl <<
@@ -332,7 +340,7 @@ int TerminalUserInterface::backup (char* name, char* configPath) {
     return 0;
 }
 
-int TerminalUserInterface::restore (char* name, char* configPath) {
+int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* configPath) {
     // todo refactor job lookup
     ConfigProvider* config = getConfigProvider(configPath);
     BackupJob* job;
@@ -362,7 +370,7 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
                  << flush;
 
             if (yesNoPrompt()) {
-                job->Restore(this, 0); // todo pass snapshot id
+                job->Restore(this, snapshotId);
             } else {
                 delete job;
                 delete config;
@@ -370,7 +378,7 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
             }
 
         } else {
-            job->Restore(this, 0); // todo pass snapshot id
+            job->Restore(this, snapshotId);
         }
 
     } catch (runtime_error & e) {
