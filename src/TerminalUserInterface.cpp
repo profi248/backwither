@@ -287,7 +287,7 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
                  << flush;
 
             if (yesNoPrompt()) {
-                job->Restore(this, -1); // todo pass snapshot id
+                job->Restore(this, 0); // todo pass snapshot id
             } else {
                 delete job;
                 delete config;
@@ -295,7 +295,7 @@ int TerminalUserInterface::restore (char* name, char* configPath) {
             }
 
         } else {
-            job->Restore(this, -1); // todo pass snapshot id
+            job->Restore(this, 0); // todo pass snapshot id
         }
 
     } catch (runtime_error & e) {

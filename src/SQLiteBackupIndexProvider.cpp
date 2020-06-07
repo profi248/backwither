@@ -225,7 +225,7 @@ Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) 
         if (snapshotID == 0) {
             snapshotID = getLastSnapshotId(m_Job);
             if (snapshotID < 0)
-                throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+                return dir;
 
         }
         sqlite3_prepare_v2(m_DB,
@@ -247,8 +247,8 @@ Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) 
 
         auto file = std::make_shared<File> (File(
             std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadFilesStmt, 0))), // path
-            sqlite3_column_int64(loadFilesStmt, 1), // size
             sqlite3_column_int64(loadFilesStmt, 2),  // mtime
+            sqlite3_column_int64(loadFilesStmt, 1), // size
             sqlite3_column_int64(loadFilesStmt, 3)  // id
         ));
 

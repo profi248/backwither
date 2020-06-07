@@ -33,7 +33,7 @@ int BackupJob::Backup (UserInterface* ui) {
     if (ui)
         ui->UpdateProgress(0, 0, "starting backup", 0);
 
-    Directory prevState = config->LoadSnapshotFileIndex(-1);
+    Directory prevState = config->LoadSnapshotFileIndex(0);
     Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
     // Directory diff = currentState - prevState;
     // todo improve
@@ -57,6 +57,7 @@ int BackupJob::Backup (UserInterface* ui) {
         cnt++;
     }
 
+    // do WAL checkpoint https://www.sqlite.org/pragma.html#pragma_wal_checkpoint
     return 0;
 }
 
@@ -73,18 +74,10 @@ int BackupJob::Restore (UserInterface* ui, int64_t snapshotId) {
     std::unique_ptr<BackupIndexProvider> config =  std::unique_ptr<SQLiteBackupIndexProvider>
             (new SQLiteBackupIndexProvider(this));
 
-    Directory snapshotFiles = config->LoadSnapshotFileIndex(-1); // todo fix this snapshotID trash
+    Directory snapshotFiles = config->LoadSnapshotFileIndex(snapshotId);
 
     DirectoryIterator it(& snapshotFiles);
     size_t cnt = 0;
-
-    // TODO IMPORTANT FIX SNAPSHOTS
-    // do something about selecting a snapshot - default should be everyhing from LAST snapshot
-    // chunks and files need to match up
-    // currently files are added and saved with a snapshot number, but we don't know when they are removed
-    // possibly store list of ALL files in every snapshot again and again and change id of snapshot to path of file
-    // also, to reduce redundancy, store chunk hashes and file paths in separate tables
-    // current workaround is retrieving all data from all snapshots
 
     while (!it.End()) {
         if (ui)
