@@ -7,7 +7,6 @@
  * Implements config provider as a SQLite database.
  */
 class SQLiteBackupIndexProvider : public BackupIndexProvider {
-    const char* INDEX_DATABASE_FILENAME = "index.db";
     const int   SQLITE_NULL_TERMINATED = -1;
 
     BackupJob*  m_Job;
@@ -15,6 +14,8 @@ class SQLiteBackupIndexProvider : public BackupIndexProvider {
     sqlite3*    m_DB;
 
 public:
+    const char* INDEX_DATABASE_FILENAME = "index.db";
+
     SQLiteBackupIndexProvider (BackupJob* job);
     ~SQLiteBackupIndexProvider () override;
 

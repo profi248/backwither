@@ -11,7 +11,7 @@ class ChunkStorageProvider {
 public:
     virtual ~ChunkStorageProvider() = default;
 
-    virtual size_t StoreChunk (Chunk & metadata, char* data) = 0;
+    virtual size_t StoreChunk (Chunk & metadata, const char* data) = 0;
     virtual char* RetrieveChunk (Chunk & metadata) = 0;
 };
 

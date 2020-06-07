@@ -33,7 +33,7 @@ void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::strin
         file.read(buf, CHUNK_SIZE);
         chunkCnt++;
         size_t bytesRead = file.gcount();
-        string hash = chunkHashSha256(buf, bytesRead);
+        string hash = ChunkHashSha256(buf, bytesRead);
         Chunk c = Chunk(hash, bytesRead);
         size_t storedSize = storageProvider->StoreChunk(c, buf);
         c.SetSize(storedSize);
@@ -44,7 +44,7 @@ void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::strin
 }
 
 // https://stackoverflow.com/a/10632725/2465760
-std::string FileChunker::chunkHashSha256 (char* data, size_t size) {
+std::string FileChunker::ChunkHashSha256 (const char* data, size_t size) {
     unsigned char digest[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256Ctx;
     SHA256_Init(& sha256Ctx);

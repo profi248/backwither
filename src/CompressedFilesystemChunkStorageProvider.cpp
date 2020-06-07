@@ -4,7 +4,7 @@
 #include "CompressedFilesystemChunkStorageProvider.h"
 #include "FileChunker.h"
 
-size_t CompressedFilesystemChunkStorageProvider::StoreChunk (Chunk & metadata, char* data) {
+size_t CompressedFilesystemChunkStorageProvider::StoreChunk (Chunk & metadata, const char* data) {
     size_t compressedSize(compressBound(metadata.GetSize()));
     char* compressed = new char[compressedSize];
     int result = compress2(reinterpret_cast<Bytef*>(compressed), reinterpret_cast<uLongf*>(& compressedSize),

@@ -9,14 +9,14 @@
  */
 
 class FilesystemChunkStorageProvider : public ChunkStorageProvider {
-    const std::string CHUNK_FOLDER = "chunks/";
-
     std::string m_OutputPath;
     std::string m_ChunkDir;
 public:
+    const std::string CHUNK_FOLDER = "chunks/";
+
     FilesystemChunkStorageProvider (std::string outPath);
     ~FilesystemChunkStorageProvider () override = default;
-    size_t StoreChunk (Chunk & metadata, char* data) override;
+    size_t StoreChunk (Chunk & metadata, const char* data) override;
     char* RetrieveChunk (Chunk & metadata) override;
 };
 

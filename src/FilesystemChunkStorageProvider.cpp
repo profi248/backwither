@@ -16,7 +16,7 @@ FilesystemChunkStorageProvider::FilesystemChunkStorageProvider (std::string out)
         throw runtime_error("Cannot create directory " + m_ChunkDir + ".");
 }
 
-size_t FilesystemChunkStorageProvider::StoreChunk (Chunk & metadata, char* data) {
+size_t FilesystemChunkStorageProvider::StoreChunk (Chunk & metadata, const char* data) {
     string chunkFile = m_ChunkDir + metadata.GetHash();
     if (!fs::exists(chunkFile)) {
         fstream file (chunkFile, ios::out | ios::binary);
