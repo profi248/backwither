@@ -19,8 +19,9 @@ class Directory : public FilesystemEntity {
 public:
     Directory(std::string path);
     ~Directory() override;
-    void AddFilesystemEntity(std::shared_ptr<FilesystemEntity>);
-    Directory operator - (Directory const & dir) const;
+    void        AddFilesystemEntity(std::shared_ptr<FilesystemEntity>);
+    size_t      EntityCount();
+    Directory   operator - (Directory const & dir) const;
     Directory & operator = (Directory const & dir);
 
     friend class DirectoryIterator;

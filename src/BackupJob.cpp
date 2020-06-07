@@ -48,7 +48,7 @@ int BackupJob::Backup (UserInterface* ui) {
 
     while (!it.End()) {
         if (ui)
-            ui->UpdateProgress(cnt, 0, it.GetPath(), it.GetSize());
+            ui->UpdateProgress(cnt, currentState.EntityCount(), it.GetPath(), it.GetSize());
         // if (FilesystemUtils::ArePathsEqual(it.GetPath(), destination))
         //    throw std::runtime_error("Link in source directory (" + it.GetPath() + ") leads to destination directory");
         FileChunker::SaveFileChunks(source / it.GetPath(), it.GetID(), destination,
@@ -81,7 +81,7 @@ int BackupJob::Restore (UserInterface* ui, int64_t snapshotId) {
 
     while (!it.End()) {
         if (ui)
-            ui->UpdateProgress(cnt, 0, it.GetPath(), it.GetSize());
+            ui->UpdateProgress(cnt, snapshotFiles.EntityCount(), it.GetPath(), it.GetSize());
         ChunkList fileChunks = config->RetrieveFileChunks(this, snapshotId, it.GetID());
         FilesystemUtils::RestoreFileFromChunks(restoreFrom, restoreTo, fileChunks,
                                                restoreTo / it.GetPath(), IsCompressed());

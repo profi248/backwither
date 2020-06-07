@@ -54,3 +54,7 @@ bool Directory::compare (const std::shared_ptr <FilesystemEntity> & a,
                          const std::shared_ptr <FilesystemEntity> & b) {
     return a->Path() < b->Path();
 }
+
+size_t Directory::EntityCount () {
+    return m_Contents.size();
+}
