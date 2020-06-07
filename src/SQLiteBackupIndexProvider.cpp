@@ -430,6 +430,33 @@ SnapshotList* SQLiteBackupIndexProvider::LoadSnapshotList () {
     return snapshots;
 }
 
+void SQLiteBackupIndexProvider::FinalizeBackup (BackupJob* job) {
+    int64_t lastSnapshotId = getLastSnapshotId (job);
+    sqlite3_stmt* completeSnapshotStmt;
+
+    sqlite3_prepare_v2(m_DB,
+       "update snapshots set finished = ? "
+            "where snapshot_id = ?;",
+       SQLITE_NULL_TERMINATED, & completeSnapshotStmt, nullptr);
+    sqlite3_bind_int64(completeSnapshotStmt, 1, std::time(nullptr));
+    sqlite3_bind_int64(completeSnapshotStmt, 2, lastSnapshotId);
+    if (sqlite3_step(completeSnapshotStmt) != SQLITE_DONE) {
+        const char* err = sqlite3_errmsg(m_DB);
+        sqlite3_finalize(completeSnapshotStmt);
+        throw std::runtime_error("Database error finalizing backup: " + std::string(err) + ".");
+    }
+
+    sqlite3_finalize(completeSnapshotStmt);
+
+    int ret = sqlite3_exec(m_DB, "pragma wal_checkpoint;", nullptr, nullptr, nullptr);
+    if (ret != SQLITE_OK)
+        throw std::runtime_error("Database error finalizing backup.");
+
+    ret = sqlite3_exec(m_DB, "vacuum;", nullptr, nullptr, nullptr);
+    if (ret != SQLITE_OK)
+        throw std::runtime_error("Database error finalizing backup.");
+}
+
 sqlite3* SQLiteBackupIndexProvider::openDB () {
     if (!configExists())
         initConfig();

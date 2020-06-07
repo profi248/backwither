@@ -55,7 +55,7 @@ int BackupJob::Backup (UserInterface* ui) {
         cnt++;
     }
 
-    // do WAL checkpoint https://www.sqlite.org/pragma.html#pragma_wal_checkpoint
+    config->FinalizeBackup(this);
     return 0;
 }
 
