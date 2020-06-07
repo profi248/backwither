@@ -42,7 +42,7 @@ int BackupJob::Backup (UserInterface* ui) {
     int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState);
 
     DirectoryIterator it(& currentState);
-    size_t cnt = 0;
+    size_t cnt = 1;
 
     while (!it.End()) {
         if (ui)
@@ -75,7 +75,7 @@ int BackupJob::Restore (UserInterface* ui, int64_t snapshotId) {
     Directory snapshotFiles = config->LoadSnapshotFileIndex(snapshotId);
 
     DirectoryIterator it(& snapshotFiles);
-    size_t cnt = 0;
+    size_t cnt = 1;
 
     while (!it.End()) {
         if (ui)
