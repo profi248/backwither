@@ -504,7 +504,7 @@ Snapshot SQLiteBackupIndexProvider::GetSnapshot (int64_t id) {
 
     if (sqlite3_step(getSnapshotsStmt) == SQLITE_ROW) {
         long long created = sqlite3_column_int64(getSnapshotsStmt, 0);
-        long long completed = sqlite3_column_int64(getSnapshotsStmt, 0);
+        long long completed = sqlite3_column_int64(getSnapshotsStmt, 1);
         sqlite3_finalize(getSnapshotsStmt);
         return Snapshot(id, created, completed);
     } else {

@@ -303,9 +303,19 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* config
         return 1;
     }
 
+    BackupIndexProvider* indexProvider = nullptr;
+    long long completion;
+    try {
+        indexProvider = new SQLiteBackupIndexProvider(job);
+        completion = indexProvider->GetSnapshot(snapshotId).GetCompletion();
+    } catch (std::runtime_error & e) {
+        completion = -2;
+    }
+
+    delete indexProvider;
     int formattedChars;
 
-    if (job->m_LastCompleted <= 0) {
+    if (completion <= 0) {
         cout << format("WARNING!", formattedChars) << " Snapshot you are restoring is not completed. Some files might not have been backed up." << endl;
     }
 
