@@ -5,6 +5,7 @@
 #include <memory>
 #include "SQLiteConfigProvider.h"
 #include "ChunkListIterator.h"
+#include "SQLiteBackupIndexProvider.h"
 
 SQLiteConfigProvider::SQLiteConfigProvider (std::string path) {
     if (!path.empty())
@@ -170,7 +171,8 @@ BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
 
         sqlite3_finalize(getBackupJobStmt);
 
-        return new BackupJob(source, destination, name, compressed, id);
+        BackupJob* job = new BackupJob(source, destination, name, compressed, id);
+        return job;
     } else {
         sqlite3_finalize(getBackupJobStmt);
         return nullptr;
@@ -183,17 +185,28 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     sqlite3_stmt* loadPlanStmt;
 
     sqlite3_prepare_v2(m_DB,
-       "select source, destination, name, compressed from backups order by name;",
+       "select source, destination, name, compressed, backup_id from backups order by name;",
        SQLITE_NULL_TERMINATED, & loadPlanStmt, nullptr);
-
     while (sqlite3_step(loadPlanStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
-        BackupJob* job = new BackupJob (
-            std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 0))), // source
-            std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 1))), // destination
-            std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 2))), // name
-            static_cast<bool>(sqlite3_column_int(loadPlanStmt, 3))  // compressed
-        );
+        BackupJob* job = new BackupJob(
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 0))), // source
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 1))), // destination
+                std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 2))), // name
+                static_cast<bool>(sqlite3_column_int(loadPlanStmt, 3)),  // compressed
+                sqlite3_column_int(loadPlanStmt, 3),
+                -1);
+
+        BackupIndexProvider* indexProvider = nullptr;
+        try {
+            indexProvider = new SQLiteBackupIndexProvider(job);
+            long long completion = indexProvider->GetSnapshot(0).GetCompletion(); // last snapshot
+            job->m_LastCompleted = completion;
+        } catch (std::runtime_error & e) {
+            job->m_LastCompleted = -2;
+        }
+
+        delete indexProvider;
 
         plan->AddBackup(job);
     }

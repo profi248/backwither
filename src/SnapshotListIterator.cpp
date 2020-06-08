@@ -1,4 +1,5 @@
 #include "SnapshotListIterator.h"
+#include "TimeUtils.h"
 
 SnapshotListIterator::SnapshotListIterator (SnapshotList * list) :
         m_SnapshotList (list),
@@ -34,7 +35,16 @@ long long SnapshotListIterator::GetCompletion () const {
 }
 
 
-SnapshotListIterator SnapshotListIterator::operator ++ (int) {
+void SnapshotListIterator::operator ++ (int) {
     Next();
-    return *this;
+}
+
+std::vector<std::string> SnapshotListIterator::TableHeader () const {
+    return { "ID", "started", "completed" };
+}
+
+std::vector<std::string> SnapshotListIterator::TableRow () const {
+        return { std::to_string(GetID()),
+                 TimeUtils::HumanDateTime(GetCreation()),
+                 TimeUtils::HumanDateTime(GetCompletion()) };
 }

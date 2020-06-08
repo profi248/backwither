@@ -24,6 +24,7 @@ public:
     void          SaveFileChunks (ChunkList chunks, int64_t snapshotId) override;
     ChunkList     RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) override;
     SnapshotList* LoadSnapshotList () override;
+    Snapshot      GetSnapshot (int64_t id) override;
     void          FinalizeBackup (BackupJob* job) override;
 
 private:

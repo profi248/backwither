@@ -8,6 +8,8 @@
 
 class TimedBackupJob : public BackupJob {
 public:
+    TimedBackupJob () : BackupJob(std::string(), std::string(), std::string(), false, 0, -1) {}
+
     enum weekday_t {MON, TUE, WED, THU, FRI, SAT, SUN};
 private:
     weekday_t m_TriggerDayOfWeek;

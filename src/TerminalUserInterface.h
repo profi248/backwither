@@ -3,6 +3,7 @@
 #include "UserInterface.h"
 #include "BackupJob.h"
 #include "ConfigProvider.h"
+#include "SimpleIterator.h"
 /**
  * Implements user interface as terminal applicatiopn.
  */
@@ -25,6 +26,7 @@ private:
     int             restore (char* name, int64_t snapshotId, char* configPath);
     std::string     humanFileSize (size_t bytes);
     std::string     format (std::string in, int & formatChars, bool bold = true, int color = -1);
+    void            printTable (SimpleIterator* it);
     bool            yesNoPrompt ();
     ConfigProvider* getConfigProvider (const char* configPath) const;
 };

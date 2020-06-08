@@ -2,6 +2,7 @@
 #define BACKWITHER_BACKUPPLANITERATOR_H
 #include "BackupPlan.h"
 #include "BackupJob.h"
+#include "SimpleIterator.h"
 
 class BackupPlan;
 
@@ -9,7 +10,7 @@ class BackupPlan;
  * Allow iterating over backup jobs.
  */
 
-class BackupPlanIterator {
+class BackupPlanIterator : public SimpleIterator {
     BackupPlan * m_Plan;
     size_t       m_Pos;
 public:
@@ -25,7 +26,9 @@ public:
     bool End () const;
     bool Empty () const;
 
-    BackupPlanIterator operator ++ (int);
+    std::vector<std::string> TableHeader () const override;
+    std::vector<std::string> TableRow () const override;
+    void operator ++ (int);
 };
 
 

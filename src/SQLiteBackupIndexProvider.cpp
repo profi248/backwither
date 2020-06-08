@@ -484,5 +484,34 @@ SQLiteBackupIndexProvider::~SQLiteBackupIndexProvider () {
     sqlite3_close(m_DB);
 }
 
+Snapshot SQLiteBackupIndexProvider::GetSnapshot (int64_t id) {
+    sqlite3_stmt* getSnapshotsStmt;
+
+    sqlite3_prepare_v2(m_DB,
+       "select creation, finished from snapshots where snapshot_id = ? limit 1;",
+       SQLITE_NULL_TERMINATED, & getSnapshotsStmt, nullptr);
+
+
+    if (id == 0) {
+        id = getLastSnapshotId(m_Job);
+        if (id < 0) {
+            sqlite3_finalize(getSnapshotsStmt);
+            throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+        }
+    }
+
+    sqlite3_bind_int64(getSnapshotsStmt, 1, id);
+
+    if (sqlite3_step(getSnapshotsStmt) == SQLITE_ROW) {
+        long long created = sqlite3_column_int64(getSnapshotsStmt, 0);
+        long long completed = sqlite3_column_int64(getSnapshotsStmt, 0);
+        sqlite3_finalize(getSnapshotsStmt);
+        return Snapshot(id, created, completed);
+    } else {
+        sqlite3_finalize(getSnapshotsStmt);
+        throw std::runtime_error("Error when getting snapshot.");
+    }
+}
+
 
 

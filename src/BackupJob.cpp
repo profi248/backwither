@@ -8,12 +8,14 @@
 
 namespace fs = std::filesystem;
 
-BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id) :
+BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id,
+                      long long lastFinished) :
         m_SourcePath (std::move(source)),
         m_DestinationPath (std::move(destination)),
         m_Name (std::move(name)),
         m_Compressed (compressed),
-        m_ID (id) {}
+        m_ID (id),
+        m_LastCompleted (0) {}
 
 int BackupJob::Backup (UserInterface* ui) {
     fs::path source = fs::path(GetSource());

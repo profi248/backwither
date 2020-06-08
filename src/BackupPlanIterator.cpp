@@ -1,4 +1,5 @@
 #include "BackupPlanIterator.h"
+#include "TimeUtils.h"
 
 BackupPlanIterator::BackupPlanIterator (BackupPlan * plan) :
         m_Plan (plan),
@@ -38,7 +39,16 @@ bool BackupPlanIterator::IsCompressed () const {
     return m_Plan->m_Jobs[m_Pos]->m_Compressed;
 }
 
-BackupPlanIterator BackupPlanIterator::operator ++ (int) {
+void BackupPlanIterator::operator ++ (int) {
     Next();
-    return *this;
+}
+
+std::vector<std::string> BackupPlanIterator::TableRow () const {
+    return { GetName(), GetSource(), GetDestination(),
+             IsCompressed() ? "true" : "false",
+             TimeUtils::HumanDateTime(m_Plan->m_Jobs[m_Pos]->m_LastCompleted) };
+}
+
+std::vector<std::string> BackupPlanIterator::TableHeader () const {
+    return { "name", "source", "destination", "compressed", "last run" };
 }

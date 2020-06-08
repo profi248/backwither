@@ -123,58 +123,27 @@ int TerminalUserInterface::list (char* configPath) {
         delete config;
         return 2;
     }
-    // todo refactor table printing! (Iterator baseclass)
-    BackupPlanIterator it(plan);
 
-    if (it.Empty()) {
+    BackupPlanIterator* it = new BackupPlanIterator(plan);
+
+    if (it->Empty()) {
         cout << "No backup jobs. Add a new job by running `add`." << endl
              << "If you expected to see something, please verify that correct config is in place." << endl;
 
+        delete it;
         delete plan;
         delete config;
         return 0;
     }
 
-    int widthOffset; // offset accounting for hidden formatting characters, in this case identical for all headers
-    string nameHdr = format("name", widthOffset, true);
-    string srcHdr  = format("source", widthOffset, true);
-    string dstHdr  = format("destination", widthOffset, true);
-    string compHdr = format("compressed", widthOffset, true);
+    printTable(it);
 
-    unsigned long nameCol = nameHdr.length(), srcCol = srcHdr.length(),
-                  dstCol = dstHdr.length(), compCol = compHdr.length();
-
-    while (!it.End()) {
-        nameCol = max(it.GetName().length(), nameCol);
-        srcCol  = max(it.GetSource().length(), srcCol);
-        dstCol  = max(it.GetDestination().length(), dstCol);
-        it++;
-    }
-
-    it.Rewind();
-    // column padding
-    nameCol += 2;
-    srcCol  += 2;
-    dstCol  += 2;
-
-    cout << left << setw(nameCol + widthOffset) << nameHdr
-         << setw(srcCol + widthOffset) << srcHdr << setw(dstCol + widthOffset)
-         << dstHdr << setw(compCol + widthOffset) << compHdr << endl;
-
-    while (!it.End()) {
-        cout << left << setw(nameCol) << it.GetName()
-             << setw(srcCol) << it.GetSource()
-             << setw(dstCol) << it.GetDestination()
-             << setw(compCol) << boolalpha << it.IsCompressed() << endl;
-        it++;
-    }
-
+    delete it;
     delete plan;
     delete config;
     return 0;
 }
 
-// todo refactor
 int TerminalUserInterface::history (char* configPath, char* backupName) {
     BackupJob* job = nullptr;
     ConfigProvider* config = nullptr;
@@ -194,11 +163,12 @@ int TerminalUserInterface::history (char* configPath, char* backupName) {
         return 2;
     }
 
-    SnapshotListIterator it(snapshots);
+    SnapshotListIterator* it = new SnapshotListIterator(snapshots);
 
-    if (it.Empty()) {
+    if (it->Empty()) {
         cout << "No backups run yet." << endl;
 
+        delete it;
         delete job;
         delete snapshots;
         delete config;
@@ -206,49 +176,9 @@ int TerminalUserInterface::history (char* configPath, char* backupName) {
         return 0;
     }
 
-    int widthOffset; // offset accounting for hidden formatting characters, in this case identical for all headers
-    string idHdr = format("ID", widthOffset, true);
-    string crHdr  = format("completed", widthOffset, true);
+    printTable(it);
 
-    unsigned long idCol = idHdr.length(), crCol = crHdr.length();
-
-    while (!it.End()) {
-        string completion;
-        if (!it.GetCompletion())
-            completion = "never completed";
-        else {
-            time_t time = static_cast<time_t>(it.GetCompletion());
-            completion = ctime(&time);
-        }
-
-        idCol = max(to_string(it.GetID()).length(), idCol);
-        crCol  = max(completion.length(), crCol);
-        it++;
-    }
-
-    it.Rewind();
-    // column padding
-    idCol += 2;
-    crCol += 2;
-
-    cout << left << setw(idCol + widthOffset) << idHdr
-         << setw(crCol + widthOffset) << crHdr << endl;
-
-    // todo replace with strftime
-    while (!it.End()) {
-        string completion;
-        if (!it.GetCompletion())
-            completion = "never completed";
-        else {
-            time_t time = static_cast<time_t>(it.GetCompletion());
-            completion = ctime(&time);
-        }
-
-        cout << left << setw(idCol) << it.GetID()
-             << setw(crCol) << completion << endl;
-        it++;
-    }
-
+    delete it;
     delete job;
     delete snapshots;
     delete config;
@@ -375,6 +305,10 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* config
 
     int formattedChars;
 
+    if (job->m_LastCompleted <= 0) {
+        cout << format("WARNING!", formattedChars) << " Snapshot you are restoring is not completed. Some files might not have been backed up." << endl;
+    }
+
     try {
         if (!FilesystemUtils::IsDirectoryEmpty(job->GetSource())) {
             cout << format("WARNING!", formattedChars) << " Restore directory is not empty. All files in backup source ("
@@ -490,5 +424,56 @@ bool TerminalUserInterface::yesNoPrompt () {
     }
 
     return false;
+}
+
+void TerminalUserInterface::printTable (SimpleIterator* it) {
+    if (!it)
+        return;
+
+    int colPadding = 2;
+
+    vector<string> hdrs = it->TableHeader();
+    vector<size_t> colHdrWidths;
+    colHdrWidths.reserve(hdrs.size());
+    vector<size_t> colWidths;
+
+
+    if (it->TableRow().size() != hdrs.size())
+        throw std::logic_error("Number of columns in header doesn't match number of coulumns in row.");
+
+    for (auto & hdr : hdrs) {
+        colHdrWidths.push_back(hdr.length() + colPadding);
+    }
+
+    colWidths = colHdrWidths;
+
+    while (!it->End()) {
+        size_t i = 0;
+        for (auto & val : it->TableRow()) {
+            colWidths[i] = max(colWidths[i], val.length() + colPadding);
+            i++;
+        }
+        (*it)++;
+    }
+
+    it->Rewind();
+
+    size_t i = 0;
+    int formatChars;
+    for (auto & hdr : hdrs) {
+        string formatted = format(hdr, formatChars);
+        cout << left << setw(colWidths[i++] + formatChars) << formatted;
+    }
+
+    cout << endl;
+    i = 0;
+
+    while (!it->End()) {
+        for (auto & col : it->TableRow())
+            cout << left << setw(colWidths[i++]) << col;
+        i = 0;
+        cout << endl;
+        (*it)++;
+    }
 }
 
