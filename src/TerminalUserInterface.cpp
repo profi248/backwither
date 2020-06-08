@@ -1,6 +1,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <iomanip>
+#include <filesystem>
 
 #include "TerminalUserInterface.h"
 #include "SQLiteConfigProvider.h"
@@ -157,6 +158,13 @@ int TerminalUserInterface::history (char* configPath, char* backupName) {
             cerr << "Backup job named \"" << backupName << "\" not found." << endl;
             delete config;
             return 1;
+        }
+
+        if (!std::filesystem::exists(job->GetDestination())) {
+            cerr << "Backup destination folder " << job->GetDestination() << " not found. Maybe no backups have been run yet." << endl;
+            delete config;
+            delete job;
+            return 2;
         }
 
         indexProvider = new SQLiteBackupIndexProvider(job);
