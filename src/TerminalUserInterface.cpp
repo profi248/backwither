@@ -152,6 +152,13 @@ int TerminalUserInterface::history (char* configPath, char* backupName) {
     try {
         config = getConfigProvider(configPath);
         job = config->GetBackupJob(backupName);
+
+        if (!job) {
+            cerr << "Backup job named \"" << backupName << "\" not found." << endl;
+            delete config;
+            return 1;
+        }
+
         indexProvider = new SQLiteBackupIndexProvider(job);
         snapshots = indexProvider->LoadSnapshotList();
     } catch (runtime_error & e) {
