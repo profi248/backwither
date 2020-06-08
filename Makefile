@@ -24,12 +24,13 @@ test: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
 debug: CXXFLAGS += -fsanitize=address -g
 debug: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
 
-compile: CXXFLAGS +=
+debug-noasan:  CXXFLAGS += -g
 
 doc:
 	doxygen
 
 debug: prepare backwither
+debug-noasan: prepare backwither
 
 compile: prepare backwither
 	cp src/bin/backwither kostada2
