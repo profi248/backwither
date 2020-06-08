@@ -8,6 +8,7 @@
 
 namespace fs = std::filesystem;
 
+// todo handle multiple instances running on one folder (locking)
 BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id,
                       long long lastFinished) :
         m_SourcePath (std::move(source)),

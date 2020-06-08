@@ -17,6 +17,7 @@ public:
     virtual ChunkList     RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) = 0;
     virtual SnapshotList* LoadSnapshotList () = 0;
     virtual Snapshot      GetSnapshot (int64_t id) = 0;
+    virtual long long     LastSuccessfulCompletion () = 0;
     virtual void          FinalizeBackup (BackupJob* job) = 0;
 };
 

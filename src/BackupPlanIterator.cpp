@@ -50,5 +50,5 @@ std::vector<std::string> BackupPlanIterator::TableRow () const {
 }
 
 std::vector<std::string> BackupPlanIterator::TableHeader () const {
-    return { "name", "source", "destination", "compressed", "last run" };
+    return { "name", "source", "destination", "compressed", "last successful run" };
 }

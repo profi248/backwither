@@ -200,7 +200,7 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
         BackupIndexProvider* indexProvider = nullptr;
         try {
             indexProvider = new SQLiteBackupIndexProvider(job);
-            long long completion = indexProvider->GetSnapshot(0).GetCompletion(); // last snapshot
+            long long completion = indexProvider->LastSuccessfulCompletion();
             job->m_LastCompleted = completion;
         } catch (std::runtime_error & e) {
             job->m_LastCompleted = -2;

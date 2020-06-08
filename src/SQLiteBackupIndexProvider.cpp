@@ -223,7 +223,7 @@ Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) 
 
     if (snapshotID != -1) {
         if (snapshotID == 0) {
-            snapshotID = getLastSnapshotId(m_Job);
+            snapshotID = getLastSnapshotId();
             if (snapshotID < 0)
                 return dir;
 
@@ -259,7 +259,7 @@ Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) 
     return dir;
 }
 
-int64_t SQLiteBackupIndexProvider::getLastSnapshotId (const BackupJob* job) {
+int64_t SQLiteBackupIndexProvider::getLastSnapshotId () {
     int64_t snapshotID;
     sqlite3_stmt* getSnapshotStmt;
     sqlite3_prepare_v2(m_DB,
@@ -375,7 +375,7 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
            "order by position;",
            SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
         if (snapshotId == 0) {
-            snapshotId = getLastSnapshotId(job);
+            snapshotId = getLastSnapshotId();
             if (snapshotId < 0) {
                 sqlite3_finalize(retrieveChunksStmt);
                 throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
@@ -432,9 +432,54 @@ SnapshotList* SQLiteBackupIndexProvider::LoadSnapshotList () {
     sqlite3_finalize(loadSnapshotsStmt);
     return snapshots;
 }
+Snapshot SQLiteBackupIndexProvider::GetSnapshot (int64_t id) {
+    sqlite3_stmt* getSnapshotsStmt;
+
+    sqlite3_prepare_v2(m_DB,
+                       "select creation, finished from snapshots where snapshot_id = ? limit 1;",
+                       SQLITE_NULL_TERMINATED, & getSnapshotsStmt, nullptr);
+
+
+    if (id == 0) {
+        id = getLastSnapshotId();
+        if (id < 0) {
+            sqlite3_finalize(getSnapshotsStmt);
+            throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+        }
+    }
+
+    sqlite3_bind_int64(getSnapshotsStmt, 1, id);
+
+    if (sqlite3_step(getSnapshotsStmt) == SQLITE_ROW) {
+        long long created = sqlite3_column_int64(getSnapshotsStmt, 0);
+        long long completed = sqlite3_column_int64(getSnapshotsStmt, 1);
+        sqlite3_finalize(getSnapshotsStmt);
+        return Snapshot(id, created, completed);
+    } else {
+        sqlite3_finalize(getSnapshotsStmt);
+        throw std::runtime_error("Error when getting snapshot.");
+    }
+}
+
+long long SQLiteBackupIndexProvider::LastSuccessfulCompletion () {
+    sqlite3_stmt* getLastSuccessStmt;
+
+    sqlite3_prepare_v2(m_DB,
+       "select finished from snapshots order by finished desc limit 1;",
+       SQLITE_NULL_TERMINATED, & getLastSuccessStmt, nullptr);
+
+    if (sqlite3_step(getLastSuccessStmt) == SQLITE_ROW) {
+        int64_t finished = sqlite3_column_int64(getLastSuccessStmt, 0);
+        sqlite3_finalize(getLastSuccessStmt);
+        return finished;
+    }
+
+    return -1;
+}
+
 
 void SQLiteBackupIndexProvider::FinalizeBackup (BackupJob* job) {
-    int64_t lastSnapshotId = getLastSnapshotId (job);
+    int64_t lastSnapshotId = getLastSnapshotId();
     sqlite3_stmt* completeSnapshotStmt;
 
     sqlite3_prepare_v2(m_DB,
@@ -483,35 +528,3 @@ sqlite3* SQLiteBackupIndexProvider::openDB () {
 SQLiteBackupIndexProvider::~SQLiteBackupIndexProvider () {
     sqlite3_close(m_DB);
 }
-
-Snapshot SQLiteBackupIndexProvider::GetSnapshot (int64_t id) {
-    sqlite3_stmt* getSnapshotsStmt;
-
-    sqlite3_prepare_v2(m_DB,
-       "select creation, finished from snapshots where snapshot_id = ? limit 1;",
-       SQLITE_NULL_TERMINATED, & getSnapshotsStmt, nullptr);
-
-
-    if (id == 0) {
-        id = getLastSnapshotId(m_Job);
-        if (id < 0) {
-            sqlite3_finalize(getSnapshotsStmt);
-            throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
-        }
-    }
-
-    sqlite3_bind_int64(getSnapshotsStmt, 1, id);
-
-    if (sqlite3_step(getSnapshotsStmt) == SQLITE_ROW) {
-        long long created = sqlite3_column_int64(getSnapshotsStmt, 0);
-        long long completed = sqlite3_column_int64(getSnapshotsStmt, 1);
-        sqlite3_finalize(getSnapshotsStmt);
-        return Snapshot(id, created, completed);
-    } else {
-        sqlite3_finalize(getSnapshotsStmt);
-        throw std::runtime_error("Error when getting snapshot.");
-    }
-}
-
-
-

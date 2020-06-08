@@ -25,6 +25,7 @@ public:
     ChunkList     RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) override;
     SnapshotList* LoadSnapshotList () override;
     Snapshot      GetSnapshot (int64_t id) override;
+    long long     LastSuccessfulCompletion () override;
     void          FinalizeBackup (BackupJob* job) override;
 
 private:
@@ -32,7 +33,7 @@ private:
     bool        configExists ();
     bool        initConfig ();
     sqlite3*    openDB ();
-    int64_t     getLastSnapshotId (const BackupJob* job);
+    int64_t     getLastSnapshotId ();
 };
 
 #endif //BACKUP_SQLITEBACKUPINDEXPROVIDER_H
