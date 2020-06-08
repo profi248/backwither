@@ -197,16 +197,14 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
                 sqlite3_column_int(loadPlanStmt, 3),
                 -1);
 
-        BackupIndexProvider* indexProvider = nullptr;
+        std::unique_ptr<BackupIndexProvider> indexProvider;
         try {
-            indexProvider = new SQLiteBackupIndexProvider(job);
+            indexProvider = std::make_unique<SQLiteBackupIndexProvider>(SQLiteBackupIndexProvider(job));
             long long completion = indexProvider->LastSuccessfulCompletion();
             job->m_LastCompleted = completion;
         } catch (std::runtime_error & e) {
             job->m_LastCompleted = -2;
         }
-
-        delete indexProvider;
 
         plan->AddBackup(job);
     }
