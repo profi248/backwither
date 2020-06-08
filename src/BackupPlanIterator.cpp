@@ -45,7 +45,7 @@ void BackupPlanIterator::operator ++ (int) {
 
 std::vector<std::string> BackupPlanIterator::TableRow () const {
     return { GetName(), GetSource(), GetDestination(),
-             IsCompressed() ? "true" : "false",
+             IsCompressed() ? "yes" : "no",
              TimeUtils::HumanDateTime(m_Plan->m_Jobs[m_Pos]->m_LastCompleted) };
 }
 
