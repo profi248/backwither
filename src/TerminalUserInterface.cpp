@@ -113,7 +113,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 }
 
 int TerminalUserInterface::list (char* configPath) {
-    // add last started column
+    // show that destination is inaccessible
     ConfigProvider* config = getConfigProvider(configPath);
 
     BackupPlan* plan;
@@ -370,10 +370,14 @@ void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std
     stringstream oss;
     if (expected > 0)
         oss << "[" << current << "/" << expected << "] ";
-    else
+    else if (current > 0)
         oss << "[" << current << "...] ";
+    else
+        oss << "[...]";
+
+    oss << status;
     if (fileSize)
-        oss << status << " (" << humanFileSize(fileSize) << ")";
+         oss << " (" << humanFileSize(fileSize) << ")";
     cerr << left << setw(m_LastStatusLength) << setfill(' ') << oss.str() << '\r' << flush;
     m_LastStatusLength = oss.str().length();
 

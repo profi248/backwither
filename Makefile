@@ -1,7 +1,7 @@
 # based on makefile from proseminar
 CXX=g++
 LD=g++
-CXXFLAGS=-std=c++17 -Wall -pedantic
+CXXFLAGS=-std=c++17 -Wall -pedantic -O3
 LDFLAGS=-lsqlite3 -lcrypto -lz -lstdc++fs
 FILES= \
 	src/bin/intermediate/FilesystemEntity.o src/bin/intermediate/File.o src/bin/intermediate/Directory.o \
@@ -24,7 +24,7 @@ test: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
 debug: CXXFLAGS += -fsanitize=address -g
 debug: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
 
-compile: CXXFLAGS += -O3
+compile: CXXFLAGS +=
 
 doc:
 	doxygen

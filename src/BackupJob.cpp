@@ -62,6 +62,7 @@ int BackupJob::Backup (UserInterface* ui) {
     return 0;
 }
 
+// check if backup is compressed when having identical destination folders for more backups
 int BackupJob::Restore (UserInterface* ui, int64_t snapshotId) {
     fs::path restoreFrom = fs::path(GetDestination());
     fs::path restoreTo = fs::path(GetSource());
