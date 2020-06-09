@@ -85,7 +85,7 @@ int BackupJob::Restore (UserInterface* ui, int64_t snapshotId) {
         if (ui)
             ui->UpdateProgress(cnt, snapshotFiles.EntityCount(), it.GetPath(), it.GetSize());
         ChunkList fileChunks = config->RetrieveFileChunks(this, snapshotId, it.GetID());
-        FilesystemUtils::RestoreFileFromChunks(restoreFrom, restoreTo, fileChunks,
+        FileChunker::RestoreFileFromChunks(restoreFrom, restoreTo, fileChunks,
                                                restoreTo / it.GetPath(), IsCompressed());
         it++;
         cnt++;

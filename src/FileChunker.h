@@ -14,6 +14,8 @@ public:
     // todo refactor config provider to member var
     static void SaveFileChunks (std::string inFile, int64_t fileID, std::string outFolder, int64_t snapshotId,
                                 std::unique_ptr<BackupIndexProvider> & config, bool compressed);
+    static void RestoreFileFromChunks (std::string source, std::string destination, ChunkList chunks,
+                                       std::string filePath, bool compressed);
 
     static std::string ChunkHashSha256(const char* data, size_t size);
 };

@@ -96,40 +96,6 @@ bool FilesystemUtils::IsDirectoryEmpty (string path) {
     return fs::begin(fs::directory_iterator(path)) == fs::end(fs::directory_iterator(path));
 }
 
-void FilesystemUtils::RestoreFileFromChunks (std::string source, std::string destination, ChunkList chunks,
-                                             std::string filePath, bool compressed) {
-    ChunkListIterator it(& chunks);
-    // string destinationFile = NormalizeDirectoryPath(destination) + filePath;
-    if (fs::exists(filePath))
-        fs::remove(filePath);
-    else
-        fs::create_directories(GetDirectoryOfFilePath(filePath));
-
-
-    std::unique_ptr<ChunkStorageProvider> storageProvider;
-
-    if (compressed)
-        storageProvider = std::make_unique<CompressedFilesystemChunkStorageProvider>
-                (CompressedFilesystemChunkStorageProvider(source));
-    else
-        storageProvider = std::make_unique<FilesystemChunkStorageProvider>
-                (FilesystemChunkStorageProvider(source));
-
-    fstream file (filePath, ios::out | ios::binary);
-    if (!file.is_open())
-        throw runtime_error("Cannot open file " + filePath + ".");
-
-    while (!it.End()) {
-        Chunk current = it.Current();
-        char* data = storageProvider->RetrieveChunk(current);
-        file.write(data, current.GetSize());
-        delete [] data;
-        if (!file.good())
-            throw runtime_error("Cannot write to file " + filePath + ".");
-        it++;
-    }
-}
-
 string FilesystemUtils::AbsolutePath (std::string path, bool create) {
     if (fs::exists(path))
         return fs::absolute(path);

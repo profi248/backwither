@@ -5,8 +5,11 @@
 #include "FileChunker.h"
 #include "FilesystemChunkStorageProvider.h"
 #include "CompressedFilesystemChunkStorageProvider.h"
+#include "ChunkListIterator.h"
+#include "FilesystemUtils.h"
 
 using namespace std;
+namespace fs = filesystem;
 
 char* FileChunker::buf = nullptr;
 
@@ -58,4 +61,37 @@ std::string FileChunker::ChunkHashSha256 (const char* data, size_t size) {
 
 FileChunker::~FileChunker () {
     delete [] buf;
+}
+
+void FileChunker::RestoreFileFromChunks (string source, string destination, ChunkList chunks,
+                                             string filePath, bool compressed) {
+    ChunkListIterator it(& chunks);
+    // string destinationFile = NormalizeDirectoryPath(destination) + filePath;
+    if (fs::exists(filePath))
+        fs::remove(filePath);
+    else
+        fs::create_directories(FilesystemUtils::GetDirectoryOfFilePath(filePath));
+
+    unique_ptr<ChunkStorageProvider> storageProvider;
+
+    if (compressed)
+        storageProvider = make_unique<CompressedFilesystemChunkStorageProvider>
+                (CompressedFilesystemChunkStorageProvider(source));
+    else
+        storageProvider = make_unique<FilesystemChunkStorageProvider>
+                (FilesystemChunkStorageProvider(source));
+
+    fstream file (filePath, ios::out | ios::binary);
+    if (!file.is_open())
+        throw runtime_error("Cannot open file " + filePath + ".");
+
+    while (!it.End()) {
+        Chunk current = it.Current();
+        char* data = storageProvider->RetrieveChunk(current);
+        file.write(data, current.GetSize());
+        delete [] data;
+        if (!file.good())
+            throw runtime_error("Cannot write to file " + filePath + ".");
+        it++;
+    }
 }
