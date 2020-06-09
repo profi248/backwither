@@ -7,12 +7,11 @@
  */
 
 class File : public FilesystemEntity {
-    size_t  m_Size  =  0;
-    size_t  m_Ctime =  0;
-    size_t  m_Mtime =  0;
-    int64_t m_ID    = -1;
+    size_t     m_Size  =  0;
+    long long  m_Mtime =  0;
+    int64_t    m_ID    = -1;
 public:
-    File (std::string path, size_t mtime, size_t size, int64_t id = -1);
+    File (std::string path, long long mtime, size_t size, int64_t id = -1);
     ~File() override = default;
     size_t  GetSize ();
     size_t  GetMtime ();

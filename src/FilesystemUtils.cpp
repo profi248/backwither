@@ -8,6 +8,7 @@
 #include "ChunkListIterator.h"
 #include "FilesystemChunkStorageProvider.h"
 #include "CompressedFilesystemChunkStorageProvider.h"
+#include "TimeUtils.h"
 
 using namespace std;
 namespace fs = filesystem;
@@ -26,14 +27,9 @@ Directory FilesystemUtils::BrowseFolderRecursive (string path_str) {
         if (item.is_regular_file()) {
             fs::path filePath = item.path();
             root.AddFilesystemEntity(
-                    make_shared<File>(File(filePath.lexically_proximate(path_str),
-                            // time_point -> duration -> seconds
-                            // https://gist.github.com/kantoniak/d58103623d0d7a7748fbc2040810428f
-                            // fixme broken !!!
-                            // fuck this
-                           chrono::duration_cast<chrono::seconds>(
-                                   item.last_write_time().time_since_epoch()).count(),
-                           item.file_size(), -1))
+                make_shared<File>(File(filePath.lexically_proximate(path_str),
+                    static_cast<long long>(TimeUtils::toTimeT(item.last_write_time())),
+                    item.file_size()))
             );
         }
 

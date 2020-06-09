@@ -1,5 +1,5 @@
 #include "File.h"
-File::File (std::string path, size_t mtime, size_t size, int64_t id) :
+File::File (std::string path, long long mtime, size_t size, int64_t id) :
     m_Size (size),
     m_Mtime (mtime),
     m_ID (id) { m_Path = path; }
