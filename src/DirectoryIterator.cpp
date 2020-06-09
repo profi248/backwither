@@ -1,7 +1,9 @@
 #include <memory>
-
-#include "BackupPlanIterator.h"
 #include "File.h"
+#include "DirectoryIterator.h"
+#include "UserInterface.h"
+#include "TimeUtils.h"
+
 
 DirectoryIterator::DirectoryIterator (Directory * dir) :
         m_Directory(dir),
@@ -17,6 +19,10 @@ bool DirectoryIterator::End () const {
 
 bool DirectoryIterator::Empty () const {
     return m_Directory->m_Contents.empty();
+}
+
+void DirectoryIterator::Rewind () {
+    m_DirectoryIt = m_Directory->m_Contents.begin();
 }
 
 std::string DirectoryIterator::GetPath () const {
@@ -51,8 +57,15 @@ void DirectoryIterator::SetID (int64_t id) {
 
 
 
-DirectoryIterator DirectoryIterator::operator ++ (int) {
+void DirectoryIterator::operator ++ (int) {
     Next();
-    return *this;
+}
+
+std::vector<std::string> DirectoryIterator::TableHeader () const {
+    return { "path", "size", "last modified" };
+}
+
+std::vector<std::string> DirectoryIterator::TableRow () const {
+    return { GetPath(), UserInterface::HumanFileSize(GetSize()), TimeUtils::HumanDateTime(GetMtime()) };
 }
 

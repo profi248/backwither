@@ -12,7 +12,7 @@
 using namespace std;
 
 const int TABLE_FIELD_LENGTH = 20;
-
+// todo refactor config
 int TerminalUserInterface::StartInterface (int argc, char** argv) {
     // example from https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html#Using-Getopt
 
@@ -91,7 +91,6 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
             backup(name, configPath);
         } else if (command == "restore") {
-            // todo support specifing snapshot
             if (!name) {
                 cerr << "Specifying backup name (-n) is required." << endl;
                 return 1;
@@ -101,6 +100,26 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 snapshotId = strtoll(id, nullptr, 10);
 
             restore(name, snapshotId, configPath);
+        } else if (command == "diff") {
+            if (!id | !name) {
+                cerr << "Specifying backup name (-n) and snapshot ID (-i) is required." << endl;
+                return 1;
+            }
+            int64_t snapshotIdA = 0, snapshotIdB = 0;
+            if (id)
+                snapshotIdB = strtoll(id, nullptr, 10);
+
+            diff(name, snapshotIdA, snapshotIdB, configPath);
+        } else if (command == "show") {
+            if (!id | !name) {
+                cerr << "Specifying backup name (-n) and snapshot ID (-i) is required." << endl;
+                return 1;
+            }
+
+            int64_t snapshotId = 0;
+            snapshotId = strtoll(id, nullptr, 10);
+
+            show(name, snapshotId, configPath);
         } else if (command == "help") {
             help();
         } else {
@@ -224,15 +243,16 @@ int TerminalUserInterface::help () {
             "  restore\trestore backup" << endl <<
             // "  rollback\trollback a file to older version" << endl <<
             // "  diff\t\tshow difference between backups" << endl <<
-            "  history\tpast backups history" << endl <<
+            "  show\t\tshow files in specified snapshot" << endl <<
+            "  history\tshow snapshots in a specified backup job" << endl <<
             // "  run-cron\trun planned backups" << endl <<
             "  help\t\tshow this help message" << endl << endl;
 
     cout << "Options" << endl;
 
     cout << "  -c\tspecify config directory" << endl <<
-            "  -i\tspecify snapshot ID to restore" << endl <<
-            "  -n\tspecify new backup job name" << endl <<
+            "  -i\tspecify snapshot ID (to restore)" << endl <<
+            "  -n\tspecify backup job name" << endl <<
             "  -s\tspecify new backup job source path" << endl <<
             "  -d\tspecify new backup job destination path" << endl <<
             "  -x\tdisable compression (when adding a new backub job)" << endl;
@@ -296,6 +316,94 @@ int TerminalUserInterface::backup (char* name, char* configPath) {
 
     delete job;
     delete config;
+    return 0;
+}
+
+int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB, char* configPath) {
+    BackupIndexProvider* indexProvider = nullptr;
+    ConfigProvider* config = getConfigProvider(configPath);
+    BackupJob* job = nullptr;
+    DirectoryIterator* it = nullptr;
+    //DirectoryIterator* it2 = nullptr;
+
+    try {
+        job = config->GetBackupJob(name);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete config;
+        return 2;
+    }
+
+    if (!job) {
+        cerr << "Backup job named \"" << name << "\" not found." << endl;
+        delete config;
+        return 1;
+    }
+
+    try {
+        indexProvider = new SQLiteBackupIndexProvider(job);
+        Directory a = indexProvider->LoadSnapshotFileIndex(snapshotIdA);
+        Directory b = indexProvider->LoadSnapshotFileIndex(snapshotIdB);
+        Directory diff = a - b;
+        Directory diff2 = b - a;
+        it = new DirectoryIterator(& diff);
+        //it2 = new DirectoryIterator(& diff);
+        printTable(it);
+        //printTable(it2);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete job;
+        delete indexProvider;
+        delete config;
+        delete it;
+        return 2;
+    }
+
+    delete job;
+    delete indexProvider;
+    delete config;
+    delete it;
+    return 0;
+}
+
+int TerminalUserInterface::show (char* name, int64_t snapshotId, char* configPath) {
+    BackupIndexProvider* indexProvider = nullptr;
+    ConfigProvider* config = getConfigProvider(configPath);
+    BackupJob* job = nullptr;
+    DirectoryIterator* it = nullptr;
+
+    try {
+        job = config->GetBackupJob(name);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete config;
+        return 2;
+    }
+
+    if (!job) {
+        cerr << "Backup job named \"" << name << "\" not found." << endl;
+        delete config;
+        return 1;
+    }
+
+    try {
+        indexProvider = new SQLiteBackupIndexProvider(job);
+        Directory files = indexProvider->LoadSnapshotFileIndex(snapshotId);
+        it = new DirectoryIterator(& files);
+        printTable(it);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete job;
+        delete indexProvider;
+        delete config;
+        delete it;
+        return 2;
+    }
+
+    delete job;
+    delete indexProvider;
+    delete config;
+    delete it;
     return 0;
 }
 
@@ -377,55 +485,10 @@ void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std
 
     oss << status;
     if (fileSize)
-         oss << " (" << humanFileSize(fileSize) << ")";
+         oss << " (" << UserInterface::HumanFileSize(fileSize) << ")";
     cerr << left << setw(m_LastStatusLength) << setfill(' ') << oss.str() << '\r' << flush;
     m_LastStatusLength = oss.str().length();
 
-}
-
-std::string TerminalUserInterface::humanFileSize (size_t bytes) {
-    ostringstream oss;
-
-    // bypass float if division not needed
-    if (bytes < 1024) {
-        oss << bytes << " B";
-        return oss.str();
-    }
-
-    double size = bytes;
-    int divisions = 0;
-    while (size >= 1024) {
-        size /= 1024;
-        divisions++;
-    }
-
-    int precision = (divisions < 2) ? 2 : 3;
-
-    oss << setprecision(precision) << size;
-    switch (divisions) {
-        case 1:
-            oss << " KiB";
-            break;
-        case 2:
-            oss << " MiB";
-            break;
-        case 3:
-            oss << " GiB";
-            break;
-        case 4:
-            oss << " TiB";
-            break;
-        case 5:
-            oss << " PiB";
-            break;
-        case 6:
-            oss << " EiB";
-            break;
-        default:
-            throw bad_exception();
-    }
-
-    return oss.str();
 }
 
 std::string TerminalUserInterface::format (std::string in, int & formatChars, bool bold, int color) {
@@ -455,7 +518,7 @@ bool TerminalUserInterface::yesNoPrompt () {
 }
 
 void TerminalUserInterface::printTable (SimpleIterator* it) {
-    if (!it)
+    if (!it | it->Empty())
         return;
 
     int colPadding = 2;
@@ -469,10 +532,12 @@ void TerminalUserInterface::printTable (SimpleIterator* it) {
     if (it->TableRow().size() != hdrs.size())
         throw std::logic_error("Number of columns in header doesn't match number of coulumns in row.");
 
+    // compute initial miniumum widths (header lengths)
     for (auto & hdr : hdrs) {
         colHdrWidths.push_back(hdr.length() + colPadding);
     }
 
+    // compute widths of columns with data
     colWidths = colHdrWidths;
 
     while (!it->End()) {
@@ -486,6 +551,7 @@ void TerminalUserInterface::printTable (SimpleIterator* it) {
 
     it->Rewind();
 
+    // print headers
     size_t i = 0;
     int formatChars;
     for (auto & hdr : hdrs) {
@@ -496,6 +562,7 @@ void TerminalUserInterface::printTable (SimpleIterator* it) {
     cout << endl;
     i = 0;
 
+    // print data
     while (!it->End()) {
         for (auto & col : it->TableRow())
             cout << left << setw(colWidths[i++]) << col;
@@ -504,4 +571,3 @@ void TerminalUserInterface::printTable (SimpleIterator* it) {
         (*it)++;
     }
 }
-

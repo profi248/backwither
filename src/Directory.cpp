@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <iostream>
 #include "Directory.h"
+#include "File.h"
 
 Directory::Directory (std::string path) {
     m_Path = path;
@@ -17,7 +18,7 @@ Directory Directory::operator - (const Directory & dir) const {
 
     Directory diff(m_Path);
 
-    std::set_difference(m_Contents.begin(), m_Contents.end(),
+    std::set_symmetric_difference(m_Contents.begin(), m_Contents.end(),
                         dir.m_Contents.begin(), dir.m_Contents.end(),
                         std::inserter(diff.m_Contents, diff.m_Contents.begin()),
                         Directory::compare);
@@ -52,6 +53,10 @@ Directory & Directory::operator = (Directory const & dir) {
 
 bool Directory::compare (const std::shared_ptr <FilesystemEntity> & a,
                          const std::shared_ptr <FilesystemEntity> & b) {
+    // auto fileA = dynamic_<std::shared_ptr<File>>(a);
+    // if (a->Path() < b->Path())
+    //  return true;
+    // else if (a->S)
     return a->Path() < b->Path();
 }
 
