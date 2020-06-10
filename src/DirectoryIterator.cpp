@@ -69,3 +69,7 @@ std::vector<std::string> DirectoryIterator::TableRow () const {
     return { GetPath(), UserInterface::HumanFileSize(GetSize()), TimeUtils::HumanDateTime(GetMtime()) };
 }
 
+std::shared_ptr<FilesystemEntity> DirectoryIterator::Current () const {
+    return *m_DirectoryIt;
+}
+

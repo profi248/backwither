@@ -14,7 +14,7 @@ add_executable(backwither
         FilesystemUtils.cpp FilesystemUtils.h ChunkStorageProvider.cpp
         ChunkStorageProvider.h FilesystemChunkStorageProvider.cpp FilesystemChunkStorageProvider.h
         UserInterface.cpp UserInterface.h TerminalUserInterface.cpp TerminalUserInterface.h
-        FileComparator.cpp FileComparator.h HashFileComparator.cpp HashFileComparator.h TimeFileComparator.cpp TimeFileComparator.h
+        FileComparator.h HashFileComparator.cpp HashFileComparator.h TimeFileComparator.cpp TimeFileComparator.h
         BackupPlanIterator.cpp BackupPlanIterator.h DirectoryIterator.cpp DirectoryIterator.h
         FileChunker.cpp FileChunker.h Chunk.cpp Chunk.h ChunkList.cpp ChunkList.h SQLiteBackupIndexProvider.cpp SQLiteBackupIndexProvider.h
         ChunkListIterator.cpp ChunkListIterator.h CompressedFilesystemChunkStorageProvider.cpp CompressedFilesystemChunkStorageProvider.h BackupIndexProvider.h SnapshotList.cpp SnapshotList.h Snapshot.h Snapshot.cpp SnapshotListIterator.cpp SnapshotListIterator.h SimpleIterator.h TimeUtils.cpp TimeUtils.h)

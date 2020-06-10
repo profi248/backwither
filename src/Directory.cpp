@@ -18,7 +18,7 @@ Directory Directory::operator - (const Directory & dir) const {
 
     Directory diff(m_Path);
 
-    std::set_symmetric_difference(m_Contents.begin(), m_Contents.end(),
+    std::set_difference(m_Contents.begin(), m_Contents.end(),
                         dir.m_Contents.begin(), dir.m_Contents.end(),
                         std::inserter(diff.m_Contents, diff.m_Contents.begin()),
                         Directory::compare);
@@ -62,4 +62,15 @@ bool Directory::compare (const std::shared_ptr <FilesystemEntity> & a,
 
 size_t Directory::EntityCount () {
     return m_Contents.size();
+}
+
+Directory Directory::operator + (const Directory & dir) const {
+    Directory merged(m_Path);
+
+    std::merge(m_Contents.begin(), m_Contents.end(),
+                    dir.m_Contents.begin(), dir.m_Contents.end(),
+                    std::inserter(merged.m_Contents, merged.m_Contents.begin()),
+                    Directory::compare);
+
+    return merged;
 }

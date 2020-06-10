@@ -17,15 +17,16 @@ public:
     explicit DirectoryIterator (Directory * dir);
     ~DirectoryIterator () override = default;
 
-    void        Next () override;
-    void        Rewind () override;
-    std::string GetPath () const;
-    int64_t     GetMtime () const;
-    int64_t     GetSize () const;
-    int64_t     GetID () const;
-    void        SetID (int64_t id);
-    bool        End () const override;
-    bool        Empty () const override;
+    void                               Next () override;
+    void                               Rewind () override;
+    std::shared_ptr<FilesystemEntity>  Current () const;
+    std::string                        GetPath () const;
+    int64_t                            GetMtime () const;
+    int64_t                            GetSize () const;
+    int64_t                            GetID () const;
+    void                               SetID (int64_t id);
+    bool                               End () const override;
+    bool                               Empty () const override;
 
     std::vector<std::string> TableHeader () const override;
     std::vector<std::string> TableRow () const override;

@@ -41,15 +41,15 @@ bool SQLiteBackupIndexProvider::initConfig () {
         "create table filepaths (path_id integer primary key asc, path text unique);"
 
         "create table files (file_id integer primary key asc, path_id integer references filepaths (path_id), size integer,"
-        "mtime integer, ctime integer, snapshot_id integer references snapshots (snapshot_id));"
+        "mtime integer, snapshot_id integer references snapshots (snapshot_id));"
 
-        "create table chunkhashes (hash_id integer primary key asc, hash text unique, size integer);"
+        "create table chunkdata (hash_id integer primary key asc, hash text unique, size integer);"
 
-        "create table chunks (hash_id integer references chunkhashes (hash_id),"
+        "create table chunks (hash_id integer references chunkdata (hash_id),"
         "snapshot_id integer references snapshots (snapshot_id), position integer,"
-        "file_id integer references files (file_id));"
+        "path_id integer references filepaths (path_id), file_id integer references files (file_id));"
 
-        "create index chunkhashes_idx on chunkhashes (hash);"
+        "create index chunkdata_idx on chunkdata (hash);"
         "create index chunks_idx on chunks (hash_id, file_id, position);"
         "create index filepaths_idx on filepaths (path);"
         "create index file_idx on files (path_id, snapshot_id);"
@@ -285,15 +285,17 @@ void SQLiteBackupIndexProvider::SaveFileChunks (ChunkList chunks, int64_t snapsh
     }
 
     sqlite3_prepare_v2(m_DB,
-        "insert or ignore into chunkhashes (hash, size) values (?, ?);",
+        "insert or ignore into chunkdata (hash, size) values (?, ?);",
        SQLITE_NULL_TERMINATED, & saveChunkHashesStmt, nullptr);
 
     sqlite3_prepare_v2(m_DB,
-        "insert into chunks (hash_id, file_id, snapshot_id, position) values (?, ?, ?, ?);",
+        "insert into chunks (hash_id, file_id, path_id, snapshot_id, position) "
+        "select ?, ?, path_id, ?, ? "
+        "from files where file_id = ?;",
        SQLITE_NULL_TERMINATED, & saveChunksStmt, nullptr);
 
     sqlite3_prepare_v2(m_DB,
-        "select hash_id from chunkhashes where hash = ? limit 1;",
+        "select hash_id from chunkdata where hash = ? limit 1;",
        SQLITE_NULL_TERMINATED, & chunkHashLookbackStmt, nullptr);
 
 
@@ -334,6 +336,7 @@ void SQLiteBackupIndexProvider::SaveFileChunks (ChunkList chunks, int64_t snapsh
         sqlite3_bind_int64(saveChunksStmt, 2, chunks.GetFileID());
         sqlite3_bind_int64(saveChunksStmt, 3, snapshotId);
         sqlite3_bind_int64(saveChunksStmt, 4, pos);
+        sqlite3_bind_int64(saveChunksStmt, 5, chunks.GetFileID());
 
         if (sqlite3_step(saveChunksStmt) != SQLITE_DONE) {
             const char * err = sqlite3_errmsg(m_DB);
@@ -370,8 +373,13 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
     if (snapshotId != -1) {
         sqlite3_prepare_v2(m_DB,
            "select hash, size from chunks "
-           "join chunkhashes using (hash_id) "
-           "where file_id = ? and snapshot_id = ? "
+           "join chunkdata using (hash_id) "
+           "where path_id = "
+           "    (select path_id from files where file_id = ?) "
+           "and snapshot_id = "
+           "    (select snapshot_id from chunks where path_id = "
+           "        (select path_id from files where file_id = ?) "
+           "     and snapshot_id <= ? order by snapshot_id desc limit 1) "
            "order by position;",
            SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
         if (snapshotId == 0) {
@@ -381,18 +389,19 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
                 throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
             }
         }
-            sqlite3_bind_int64(retrieveChunksStmt, 2, snapshotId);
+            sqlite3_bind_int64(retrieveChunksStmt, 3, snapshotId);
 
     } else {
         sqlite3_prepare_v2(m_DB,
            "select hash, size from chunks "
-           "join chunkhashes using (hash_id) "
+           "join chunkdata using (hash_id) "
            "where file_id = ? "
            "order by position;",
            SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
     }
 
     sqlite3_bind_int64(retrieveChunksStmt, 1, fileId);
+    sqlite3_bind_int64(retrieveChunksStmt, 2, fileId);
 
     while (sqlite3_step(retrieveChunksStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)

@@ -5,6 +5,7 @@
 #include "FilesystemUtils.h"
 #include "FileChunker.h"
 #include "SQLiteBackupIndexProvider.h"
+#include "TimeFileComparator.h"
 
 namespace fs = std::filesystem;
 
@@ -36,15 +37,16 @@ int BackupJob::Backup (UserInterface* ui) {
 
     Directory prevState = config->LoadSnapshotFileIndex(0);
     Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
-    // Directory diff = currentState - prevState;
     // todo improve
     // add file comparator
     // implement ignores
-    // handle interruption in the middle of backup (mark snapshot as incomplete)
 
     int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState);
 
-    DirectoryIterator it(& currentState);
+    TimeFileComparator comp;
+    Directory toBackup = comp.CompareDirs(prevState, currentState);
+    DirectoryIterator it(& toBackup);
+
     size_t cnt = 1;
 
     while (!it.End()) {

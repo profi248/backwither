@@ -12,7 +12,7 @@ class HashFileComparator : public FileComparator {
      * Compare files using hashes.
      * @return bool true if identical
      */
-    bool CompareFiles() override;
+    bool CompareFiles();
 };
 
 
