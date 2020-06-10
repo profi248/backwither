@@ -370,6 +370,7 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
     ChunkList chunks(fileId);
     sqlite3_stmt* retrieveChunksStmt;
 
+    // select chunks from file in specific path from snapshot we are restoring or older (because they were not modified)
     if (snapshotId != -1) {
         sqlite3_prepare_v2(m_DB,
            "select hash, size from chunks "

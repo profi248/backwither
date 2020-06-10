@@ -23,7 +23,6 @@ public:
     size_t      EntityCount();
     Directory   operator - (Directory const & dir) const;
     Directory   operator + (Directory const & dir) const;
-    Directory & operator = (Directory const & dir);
 
     friend class DirectoryIterator;
 

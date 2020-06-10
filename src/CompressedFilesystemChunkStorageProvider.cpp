@@ -8,7 +8,7 @@ size_t CompressedFilesystemChunkStorageProvider::StoreChunk (Chunk & metadata, c
     size_t compressedSize(compressBound(metadata.GetSize()));
     char* compressed = new char[compressedSize];
     int result = compress2(reinterpret_cast<Bytef*>(compressed), reinterpret_cast<uLongf*>(& compressedSize),
-                           reinterpret_cast<const Bytef*>(data), metadata.GetSize(), Z_DEFAULT_COMPRESSION);
+                           reinterpret_cast<const Bytef*>(data), metadata.GetSize(), m_CompressionLevel);
     if (result != Z_OK) {
         delete [] compressed;
         delete [] data;

@@ -14,7 +14,7 @@ using namespace std;
 const int TABLE_FIELD_LENGTH = 20;
 // todo refactor config
 int TerminalUserInterface::StartInterface (int argc, char** argv) {
-    // example from https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html#Using-Getopt
+    // example from documentation (https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html#Using-Getopt)
 
     opterr = 0;
 

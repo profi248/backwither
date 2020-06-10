@@ -4,11 +4,13 @@
 #include "ChunkStorageProvider.h"
 #include "ChunkList.h"
 #include "FilesystemChunkStorageProvider.h"
+#include <zlib.h>
 #include <string>
 
 class CompressedFilesystemChunkStorageProvider : public FilesystemChunkStorageProvider {
     std::string m_OutputPath;
     std::string m_ChunkDir;
+    int         m_CompressionLevel = Z_DEFAULT_COMPRESSION;
 public:
     const std::string CHUNK_FOLDER = "chunks/";
 

@@ -30,33 +30,8 @@ Directory::~Directory () {
     m_Contents.clear();
 }
 
-Directory & Directory::operator = (Directory const & dir) {
-
-    if (& dir == this)
-        return *this;
-    /*
-    for (auto & it : m_Contents) {
-        delete it;
-    }
-
-    m_Contents.clear();
-
-    for (auto & it : dir.m_Contents) {
-        m_Contents.insert(new FilesystemEntity(*it));
-    }
-
-    return *this;
-     */
-
-    return *this;
-}
-
 bool Directory::compare (const std::shared_ptr <FilesystemEntity> & a,
                          const std::shared_ptr <FilesystemEntity> & b) {
-    // auto fileA = dynamic_<std::shared_ptr<File>>(a);
-    // if (a->Path() < b->Path())
-    //  return true;
-    // else if (a->S)
     return a->Path() < b->Path();
 }
 
