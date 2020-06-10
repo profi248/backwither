@@ -1,5 +1,6 @@
 #include "TimeFileComparator.h"
 
+// todo it might be broken...
 Directory TimeFileComparator::CompareDirs (Directory prev, Directory curr) {
     Directory changedFiles("/");
     Directory newFiles = curr - prev;

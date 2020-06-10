@@ -2,12 +2,18 @@
 #include <iostream>
 #include <iomanip>
 #include <filesystem>
+#include <unistd.h>
 
 #include "TerminalUserInterface.h"
 #include "SQLiteConfigProvider.h"
 #include "SQLiteBackupIndexProvider.h"
 #include "FilesystemUtils.h"
 #include "SnapshotListIterator.h"
+#include "TimeFileComparator.h"
+
+const int TERM_RED = 31;
+const int TERM_GREEN = 32;
+const int TERM_BLUE = 34;
 
 using namespace std;
 
@@ -23,6 +29,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
     char* destination = nullptr;
     char* name        = nullptr;
     char* configPath  = nullptr;
+    char* comparePair = nullptr;
     bool compress     = true;
     int  index;
     int  c;
@@ -33,7 +40,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
     // parse arguments: options need to be parsed first, then commands
 
-    while ((c = getopt (argc, argv, "i:s:d:n:c:x")) != -1)
+    while ((c = getopt (argc, argv, "i:s:d:n:c:p:x")) != -1)
         switch (c) {
             case 'i':
                 id = optarg;
@@ -43,6 +50,9 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 break;
             case 'd':
                 destination = optarg;
+                break;
+            case 'p':
+                comparePair = optarg;
                 break;
             case 'n':
                 name = optarg;
@@ -54,7 +64,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 compress = false;
                 break;
             case '?':
-                if (optopt == 'i' || optopt == 's' || optopt == 'd' || optopt == 'n' || optopt == 'c')
+                if (optopt == 'p' || optopt == 'i' || optopt == 's' || optopt == 'd' || optopt == 'n' || optopt == 'c')
                     cerr << "Option -" << (char) optopt << " requires an argument." << endl;
                 else
                     cerr << "Unknown option -" << (char) optopt << "." << endl;
@@ -101,13 +111,43 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
             restore(name, snapshotId, configPath);
         } else if (command == "diff") {
-            if (!id | !name) {
-                cerr << "Specifying backup name (-n) and snapshot ID (-i) is required." << endl;
+            if (!comparePair | !name) {
+                cerr << "Specifying backup name (-n) and snapshot comparison pair (-p) is required." << endl;
                 return 1;
             }
-            int64_t snapshotIdA = 0, snapshotIdB = 0;
-            if (id)
-                snapshotIdB = strtoll(id, nullptr, 10);
+            string rawSnapshotIdA, rawSnapshotIdB;
+            int64_t snapshotIdA, snapshotIdB;
+            bool second = false;
+
+            for (char ch : string(comparePair)) {
+                if (ch == ':') {
+                    second = true;
+                    continue;
+                }
+
+                if (!second)
+                    rawSnapshotIdA += ch;
+                else
+                    rawSnapshotIdB += ch;
+            }
+
+            if (!second) {
+                cerr << "Invalid snapshot pair format supplied. Example of a correct format is 4:6." << endl;
+                return 1;
+            }
+
+            try {
+                snapshotIdA = stoll(rawSnapshotIdA);
+                snapshotIdB = stoll(rawSnapshotIdB);
+            } catch (exception &) {
+                cerr << "Supplied snapshot ID is not numeric." << endl;
+                return 1;
+            }
+
+            if (snapshotIdA == snapshotIdB) {
+                cerr << "Compared snapshot IDs must differ." << endl;
+                return 1;
+            }
 
             diff(name, snapshotIdA, snapshotIdB, configPath);
         } else if (command == "show") {
@@ -242,7 +282,7 @@ int TerminalUserInterface::help () {
             "  backup\trun backup job" << endl <<
             "  restore\trestore backup" << endl <<
             // "  rollback\trollback a file to older version" << endl <<
-            // "  diff\t\tshow difference between backups" << endl <<
+            "  diff\t\tshow difference between snapshots" << endl <<
             "  show\t\tshow files in specified snapshot" << endl <<
             "  history\tshow snapshots in a specified backup job" << endl <<
             // "  run-cron\trun planned backups" << endl <<
@@ -319,12 +359,14 @@ int TerminalUserInterface::backup (char* name, char* configPath) {
     return 0;
 }
 
+// todo better handle incorrect input (nonexistent snapshots/internal values)
 int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB, char* configPath) {
     BackupIndexProvider* indexProvider = nullptr;
     ConfigProvider* config = getConfigProvider(configPath);
     BackupJob* job = nullptr;
-    DirectoryIterator* it = nullptr;
-    //DirectoryIterator* it2 = nullptr;
+    DirectoryIterator* itAdded = nullptr;
+    DirectoryIterator* itRemoved = nullptr;
+    DirectoryIterator* itModified = nullptr;
 
     try {
         job = config->GetBackupJob(name);
@@ -341,28 +383,58 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
     }
 
     try {
+        if (snapshotIdA < snapshotIdB) {
+            int64_t tmp = snapshotIdB;
+            snapshotIdB = snapshotIdA;
+            snapshotIdA = tmp;
+        }
+
         indexProvider = new SQLiteBackupIndexProvider(job);
         Directory a = indexProvider->LoadSnapshotFileIndex(snapshotIdA);
         Directory b = indexProvider->LoadSnapshotFileIndex(snapshotIdB);
-        Directory diff = a - b;
-        Directory diff2 = b - a;
-        it = new DirectoryIterator(& diff);
-        //it2 = new DirectoryIterator(& diff);
-        printTable(it);
-        //printTable(it2);
+        Directory added = a - b;
+        Directory removed = b - a;
+        itAdded = new DirectoryIterator(& added);
+        itRemoved = new DirectoryIterator(& removed);
+        int formatChars;
+
+
+        cout << "comparing snapshots " << snapshotIdA << " and " << snapshotIdB << endl;
+        if (!itAdded->Empty()) {
+            cout << format("files added", formatChars, true, TERM_GREEN) << endl;
+            printTable(itAdded);
+            cout << endl;
+        }
+        if (!itRemoved->Empty()) {
+            cout << format("files removed", formatChars, true, TERM_RED) << endl;
+            printTable(itRemoved);
+            cout << endl;
+        }
+
+        TimeFileComparator comp;
+        Directory modified = comp.CompareDirs(b, a) - added - removed;
+        itModified = new DirectoryIterator(& modified);
+        if (!itModified->Empty()) {
+            cout << format("files modified", formatChars, true, TERM_BLUE) << endl;
+            printTable(itModified);
+        }
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
         delete indexProvider;
         delete config;
-        delete it;
+        delete itAdded;
+        delete itRemoved;
+        delete itModified;
         return 2;
     }
 
     delete job;
     delete indexProvider;
     delete config;
-    delete it;
+    delete itAdded;
+    delete itRemoved;
+    delete itModified;
     return 0;
 }
 
@@ -481,7 +553,7 @@ void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std
     else if (current > 0)
         oss << "[" << current << "...] ";
     else
-        oss << "[...]";
+        oss << "[...] ";
 
     oss << status;
     if (fileSize)
@@ -492,12 +564,29 @@ void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std
 }
 
 std::string TerminalUserInterface::format (std::string in, int & formatChars, bool bold, int color) {
-    if (bold) {
-        formatChars = 8;
-        return "\033[1m" + in + "\033[0m";
+    formatChars = 0;
+    if (!isatty(fileno(stdout)))
+        return in;
+
+    string prefix = "\033[";
+    formatChars += 2;
+
+    if (color > 0) {
+        string strCode = to_string(color);
+        formatChars += strCode.length();
+        prefix += strCode;
     }
 
-    return in;
+    if (bold) {
+        formatChars += 1;
+        prefix += ";";
+        formatChars += 1;
+        prefix += "1";
+    }
+
+    prefix += "m";
+    formatChars += 1 + 4;
+    return prefix + in + "\033[0m";
 }
 
 bool TerminalUserInterface::yesNoPrompt () {
@@ -517,6 +606,7 @@ bool TerminalUserInterface::yesNoPrompt () {
     return false;
 }
 
+// setw broken in unicode
 void TerminalUserInterface::printTable (SimpleIterator* it) {
     if (!it | it->Empty())
         return;
@@ -570,4 +660,14 @@ void TerminalUserInterface::printTable (SimpleIterator* it) {
         cout << endl;
         (*it)++;
     }
+}
+
+// from https://stackoverflow.com/a/3586973/2465760
+size_t TerminalUserInterface::countUtf8Codepoints (std::string in) {
+    size_t count = 0;
+    for (unsigned char c : in)
+        count += ((c & 0xc0u) != 0x80);
+
+    cout << "UTF-8: " << count << " bytes: " << in.length() << endl;
+    return count;
 }

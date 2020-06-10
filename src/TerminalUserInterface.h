@@ -28,6 +28,7 @@ private:
     std::string     getVersion ();
     std::string     format (std::string in, int & formatChars, bool bold = true, int color = -1);
     void            printTable (SimpleIterator* it);
+    size_t          countUtf8Codepoints (std::string in);
     bool            yesNoPrompt ();
     ConfigProvider* getConfigProvider (const char* configPath) const;
 };
