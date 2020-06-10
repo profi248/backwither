@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <openssl/sha.h>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include "FileChunker.h"
 #include "FilesystemChunkStorageProvider.h"
