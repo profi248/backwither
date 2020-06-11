@@ -26,6 +26,7 @@ public:
     SnapshotList* LoadSnapshotList () override;
     Snapshot      GetSnapshot (int64_t id) override;
     long long     LastSuccessfulCompletion () override;
+    bool          DoesFileExistInSnapshot (int64_t snapshotId, std::string filePath) override;
     void          FinalizeBackup (BackupJob* job) override;
 
 private:

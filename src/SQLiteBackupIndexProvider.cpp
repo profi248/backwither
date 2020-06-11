@@ -484,7 +484,41 @@ long long SQLiteBackupIndexProvider::LastSuccessfulCompletion () {
         return finished;
     }
 
+    sqlite3_finalize(getLastSuccessStmt);
     return -1;
+}
+
+
+bool SQLiteBackupIndexProvider::DoesFileExistInSnapshot (int64_t snapshotId, std::string filePath) {
+    sqlite3_stmt* fileExistsStmt;
+
+    sqlite3_prepare_v2(m_DB,
+                       "select file_id from files "
+                       "join snapshots using (snapshot_id) "
+                       "join filepaths using (path_id)"
+                       "where snapshot_id = ? and path = ?;",
+                       SQLITE_NULL_TERMINATED, &fileExistsStmt, nullptr);
+
+    if (snapshotId == 0) {
+        snapshotId = getLastSnapshotId();
+        if (snapshotId < 0) {
+            sqlite3_finalize(fileExistsStmt);
+            throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
+        }
+    }
+
+    sqlite3_bind_int64(fileExistsStmt, 1, snapshotId);
+    sqlite3_bind_text(fileExistsStmt, 2, filePath.c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(fileExistsStmt) == SQLITE_ROW) {
+        int64_t id = sqlite3_column_int64(fileExistsStmt, 0);
+        sqlite3_finalize(fileExistsStmt);
+        if (id)
+            return true;
+
+    }
+    sqlite3_finalize(fileExistsStmt);
+    return false;
 }
 
 

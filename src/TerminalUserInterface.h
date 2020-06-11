@@ -23,7 +23,7 @@ private:
     int             help ();
     int             add (char* source, char* destination, char* name, char* configPath, bool compress);
     int             backup (char* name, char* configPath);
-    int             restore (char* name, int64_t snapshotId, char* configPath);
+    int             restore (char* name, int64_t snapshotId, char* filePath, char* configPath);
     int             diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB, char* configPath);
     int             show (char* name, int64_t snapshotId, char* configPath);
     std::string     getVersion ();

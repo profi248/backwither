@@ -65,7 +65,7 @@ int BackupJob::Backup (UserInterface* ui) {
 }
 
 // check if backup is compressed when having identical destination folders for more backups
-int BackupJob::Restore (UserInterface* ui, int64_t snapshotId) {
+int BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string filePath) {
     fs::path restoreFrom = fs::path(GetDestination());
     fs::path restoreTo = fs::path(GetSource());
 
@@ -82,10 +82,18 @@ int BackupJob::Restore (UserInterface* ui, int64_t snapshotId) {
 
     DirectoryIterator it(& snapshotFiles);
     size_t cnt = 1;
-
+    size_t total;
+    if (!filePath.empty())
+        total = snapshotFiles.EntityCount();
+    else
+        total = 1;
     while (!it.End()) {
+        if (!filePath.empty() && filePath != it.GetPath()) {
+            it++;
+            continue;
+        }
         if (ui)
-            ui->UpdateProgress(cnt, snapshotFiles.EntityCount(), it.GetPath(), it.GetSize());
+            ui->UpdateProgress(cnt, total, it.GetPath(), it.GetSize());
         ChunkList fileChunks = config->RetrieveFileChunks(this, snapshotId, it.GetID());
         FileChunker::RestoreFileFromChunks(restoreFrom, restoreTo, fileChunks,
                                                restoreTo / it.GetPath(), IsCompressed());

@@ -18,6 +18,7 @@ public:
     virtual SnapshotList* LoadSnapshotList () = 0;
     virtual Snapshot      GetSnapshot (int64_t id) = 0;
     virtual long long     LastSuccessfulCompletion () = 0;
+    virtual bool          DoesFileExistInSnapshot (int64_t snapshotId, std::string filePath) = 0;
     virtual void          FinalizeBackup (BackupJob* job) = 0;
 };
 

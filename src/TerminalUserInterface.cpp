@@ -30,6 +30,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
     char* name        = nullptr;
     char* configPath  = nullptr;
     char* comparePair = nullptr;
+    char* filePath    = nullptr;
     bool compress     = true;
     int  index;
     int  c;
@@ -40,13 +41,16 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
     // parse arguments: options need to be parsed first, then commands
 
-    while ((c = getopt (argc, argv, "i:s:d:n:c:p:x")) != -1)
+    while ((c = getopt (argc, argv, "i:s:d:n:c:p:f:x")) != -1)
         switch (c) {
             case 'i':
                 id = optarg;
                 break;
             case 's':
                 source = optarg;
+                break;
+            case 'f':
+                filePath = optarg;
                 break;
             case 'd':
                 destination = optarg;
@@ -64,7 +68,8 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 compress = false;
                 break;
             case '?':
-                if (optopt == 'p' || optopt == 'i' || optopt == 's' || optopt == 'd' || optopt == 'n' || optopt == 'c')
+                if (optopt == 'f' || optopt == 'p' || optopt == 'i' || optopt == 's' ||
+                    optopt == 'd' || optopt == 'n' || optopt == 'c')
                     cerr << "Option -" << (char) optopt << " requires an argument." << endl;
                 else
                     cerr << "Unknown option -" << (char) optopt << "." << endl;
@@ -109,7 +114,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             if (id)
                 snapshotId = strtoll(id, nullptr, 10);
 
-            restore(name, snapshotId, configPath);
+            restore(name, snapshotId, filePath, configPath);
         } else if (command == "diff") {
             if (!comparePair | !name) {
                 cerr << "Specifying backup name (-n) and snapshot comparison pair (-p) is required." << endl;
@@ -295,6 +300,7 @@ int TerminalUserInterface::help () {
             "  -n\tspecify backup job name" << endl <<
             "  -s\tspecify new backup job source path" << endl <<
             "  -d\tspecify new backup job destination path" << endl <<
+            "  -f\tspecify a path to a specific file (for restore)" << endl <<
             "  -x\tdisable compression (when adding a new backub job)" << endl;
     return 0;
 }
@@ -479,10 +485,11 @@ int TerminalUserInterface::show (char* name, int64_t snapshotId, char* configPat
     return 0;
 }
 
-int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* configPath) {
+int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePath, char* configPath) {
     // todo refactor job lookup
     ConfigProvider* config = getConfigProvider(configPath);
     BackupJob* job;
+    string file;
 
     try {
         job = config->GetBackupJob(name);
@@ -511,18 +518,30 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* config
     int formattedChars;
 
     if (completion <= 0) {
-        cout << format("WARNING!", formattedChars) << " Snapshot you are restoring is not completed. Some files might not have been backed up." << endl;
+        cerr << format("WARNING!", formattedChars) << " Snapshot you are restoring is not completed. Some files might not have been backed up." << endl;
     }
 
     try {
-        if (!FilesystemUtils::IsDirectoryEmpty(job->GetSource())) {
-            cout << format("WARNING!", formattedChars) << " Restore directory is not empty. All files in backup source ("
+        if (filePath) {
+            file = string(filePath);
+            BackupIndexProvider* indexProvider = new SQLiteBackupIndexProvider(job);
+            if (!indexProvider->DoesFileExistInSnapshot(snapshotId, file)) {
+                cerr << "The file you specified doesn't exist in selected snapshot." << endl;
+                delete indexProvider;
+                delete job;
+                delete config;
+                return 1;
+            }
+            delete indexProvider;
+        }
+        if (!FilesystemUtils::IsDirectoryEmpty(job->GetSource()) && !filePath) {
+            cerr << format("WARNING!", formattedChars) << " Restore directory is not empty. All files in backup source ("
                  << job->GetSource()
                  << ") will be replaced by versions from the snapshot you selected! Continue? [y/N] "
                  << flush;
 
             if (yesNoPrompt()) {
-                job->Restore(this, snapshotId);
+                job->Restore(this, snapshotId, file);
             } else {
                 delete job;
                 delete config;
@@ -530,7 +549,7 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* config
             }
 
         } else {
-            job->Restore(this, snapshotId);
+            job->Restore(this, snapshotId, file);
         }
 
     } catch (runtime_error & e) {
@@ -599,7 +618,7 @@ bool TerminalUserInterface::yesNoPrompt () {
         } else if (answer == "y" || answer == "Y") {
             return true;
         } else {
-            cout << "Invalid answer. Please only type \"y\" for yes or \"n\" for no. [y/N] " << flush;
+            cerr << "Invalid answer. Please only type \"y\" for yes or \"n\" for no. [y/N] " << flush;
         }
     }
 

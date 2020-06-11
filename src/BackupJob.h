@@ -31,7 +31,7 @@ public:
      */
 
     int Backup (UserInterface* ui);
-    int Restore (UserInterface* ui, int64_t snapshotId);
+    int Restore (UserInterface* ui, int64_t snapshotId, std::string filePath);
 
     std::string GetSource () const;
     std::string GetDestination () const;
