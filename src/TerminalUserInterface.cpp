@@ -565,7 +565,7 @@ void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std
 
 std::string TerminalUserInterface::format (std::string in, int & formatChars, bool bold, int color) {
     formatChars = 0;
-    if (!isatty(fileno(stdout)))
+    if (!isatty(fileno(stdout)) || !ENABLE_COLORS)
         return in;
 
     string prefix = "\033[";

@@ -11,6 +11,7 @@
 class TerminalUserInterface : public UserInterface {
     int m_LastStatusLength = 0;
 public:
+    const bool ENABLE_COLORS = true;
     ~TerminalUserInterface () override = default;
     int StartInterface (int argc, char** argv) override;
     void UpdateProgress (size_t current, size_t expected, std::string status, size_t fileSize) override;
