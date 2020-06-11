@@ -37,9 +37,7 @@ int BackupJob::Backup (UserInterface* ui) {
 
     Directory prevState = config->LoadSnapshotFileIndex(0);
     Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
-    // todo improve
-    // add file comparator
-    // implement ignores
+    // maybe implement ignores
 
     int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState);
 

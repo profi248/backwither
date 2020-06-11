@@ -15,12 +15,12 @@ public:
     ChunkListIterator (ChunkList * chunks);
     ~ChunkListIterator () = default;
 
-    void Next ();
+    void        Next ();
     std::string GetHash () const;
-    size_t GetSize () const;
-    Chunk Current () const;
-    bool End () const;
-    bool Empty () const;
+    size_t      GetSize () const;
+    Chunk       Current () const;
+    bool        End () const;
+    bool        Empty () const;
 
     ChunkListIterator operator ++ (int);
 };

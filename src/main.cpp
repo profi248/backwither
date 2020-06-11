@@ -14,6 +14,4 @@ int main (int argc, char** argv) {
         delete tui;
         std::cerr << "Unexpected fatal error: " << e.what() << std::endl;
     }
-
-    // Directory* root = FilesystemUtils::BrowseFolderRecursive("/var/home/david/ProgTest/PA2/kostada2/examples");
 }

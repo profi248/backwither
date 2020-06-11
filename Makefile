@@ -8,7 +8,7 @@ FILES= \
 	src/bin/intermediate/Link.o src/bin/intermediate/BackupJob.o src/bin/intermediate/BackupPlan.o src/bin/intermediate/TimedBackupJob.o \
 	src/bin/intermediate/SQLiteConfigProvider.o src/bin/intermediate/FilesystemUtils.o \
 	src/bin/intermediate/FilesystemChunkStorageProvider.o src/bin/intermediate/CompressedFilesystemChunkStorageProvider.o \
-	src/bin/intermediate/ChunkStorageProvider.o src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o \
+	src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o \
 	src/bin/intermediate/HashFileComparator.o src/bin/intermediate/TimeFileComparator.o \
 	src/bin/intermediate/BackupPlanIterator.o src/bin/intermediate/DirectoryIterator.o src/bin/intermediate/FileChunker.o \
 	src/bin/intermediate/Chunk.o src/bin/intermediate/ChunkList.o src/bin/intermediate/ChunkListIterator.o \

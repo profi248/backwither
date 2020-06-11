@@ -9,11 +9,9 @@ void BackupPlanIterator::Next () {
     m_Pos++;
 }
 
-
 void BackupPlanIterator::Rewind () {
     m_Pos = 0;
 }
-
 
 bool BackupPlanIterator::End () const {
     return m_Pos >= m_Plan->m_Jobs.size();

@@ -47,25 +47,8 @@ void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::strin
     config->SaveFileChunks(chunks, snapshotId);
 }
 
-// https://stackoverflow.com/a/10632725/2465760
-std::string FileChunker::ChunkHashSha256 (const char* data, size_t size) {
-    unsigned char digest[SHA256_DIGEST_LENGTH];
-    SHA256_CTX sha256Ctx;
-    SHA256_Init(& sha256Ctx);
-    SHA256_Update(& sha256Ctx, data, size);
-    SHA256_Final(digest, & sha256Ctx);
-    ostringstream oss;
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
-        oss << hex << setw(2) << setfill('0') << static_cast<int>(digest[i]);
-    return oss.str();
-}
-
-FileChunker::~FileChunker () {
-    delete [] buf;
-}
-
 void FileChunker::RestoreFileFromChunks (string source, string destination, ChunkList chunks,
-                                             string filePath, bool compressed) {
+                                         string filePath, bool compressed) {
     ChunkListIterator it(& chunks);
     // string destinationFile = NormalizeDirectoryPath(destination) + filePath;
     if (fs::exists(filePath))
@@ -95,4 +78,21 @@ void FileChunker::RestoreFileFromChunks (string source, string destination, Chun
             throw runtime_error("Cannot write to file " + filePath + ".");
         it++;
     }
+}
+
+// https://stackoverflow.com/a/10632725/2465760
+std::string FileChunker::ChunkHashSha256 (const char* data, size_t size) {
+    unsigned char digest[SHA256_DIGEST_LENGTH];
+    SHA256_CTX sha256Ctx;
+    SHA256_Init(& sha256Ctx);
+    SHA256_Update(& sha256Ctx, data, size);
+    SHA256_Final(digest, & sha256Ctx);
+    ostringstream oss;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+        oss << hex << setw(2) << setfill('0') << static_cast<int>(digest[i]);
+    return oss.str();
+}
+
+FileChunker::~FileChunker () {
+    delete [] buf;
 }

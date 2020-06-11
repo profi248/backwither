@@ -11,7 +11,7 @@ public:
     virtual ~FileComparator() = default;
     /**
      * Compare two directories.
-     * @return Directory with only new / modified files.
+     * @return Directory with only new + modified files.
      */
     virtual Directory CompareDirs(Directory prev, Directory curr) = 0;
 };

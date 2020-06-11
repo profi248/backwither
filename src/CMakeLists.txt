@@ -11,7 +11,7 @@ add_executable(backwither
         FilesystemEntity.h File.h Directory.h Link.h BackupJob.cpp
         BackupJob.h BackupPlan.cpp BackupPlan.h TimedBackupJob.cpp TimedBackupJob.h
         ConfigProvider.h SQLiteConfigProvider.cpp SQLiteConfigProvider.h
-        FilesystemUtils.cpp FilesystemUtils.h ChunkStorageProvider.cpp
+        FilesystemUtils.cpp FilesystemUtils.h
         ChunkStorageProvider.h FilesystemChunkStorageProvider.cpp FilesystemChunkStorageProvider.h
         UserInterface.cpp UserInterface.h TerminalUserInterface.cpp TerminalUserInterface.h
         FileComparator.h HashFileComparator.cpp HashFileComparator.h TimeFileComparator.cpp TimeFileComparator.h
