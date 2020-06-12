@@ -17,27 +17,15 @@ const int TERM_BLUE = 34;
 
 using namespace std;
 
-const int TABLE_FIELD_LENGTH = 20;
 // todo refactor config
 int TerminalUserInterface::StartInterface (int argc, char** argv) {
     // example from documentation (https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html#Using-Getopt)
-
     opterr = 0;
 
-    char* id          = nullptr;
-    char* source      = nullptr;
-    char* destination = nullptr;
-    char* name        = nullptr;
-    char* configPath  = nullptr;
-    char* comparePair = nullptr;
-    char* filePath    = nullptr;
-    bool compress     = true;
-    int  index;
-    int  c;
-
-    // default command is help
-    if (argc == 1)
-        help();
+    char *id = nullptr, *source = nullptr, *destination = nullptr;
+    char *name = nullptr, *comparePair = nullptr, *filePath = nullptr;
+    bool compress = true;
+    int  index, c;
 
     // parse arguments: options need to be parsed first, then commands
 
@@ -62,7 +50,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 name = optarg;
                 break;
             case 'c':
-                configPath = optarg;
+                m_ConfigPath = optarg;
                 break;
             case 'x':
                 compress = false;
@@ -83,28 +71,28 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
         string command(argv[index]);
         // apparently we can't use switch for strings...
         if (command == "list") {
-            list(configPath);
+            return list();
         } else if (command == "history") {
             if (!name) {
                 cerr << "Specifying backup name (-n) is required." << endl;
                 return 1;
             }
 
-            history(configPath, name);
+            return history(name);
         } else if (command == "add") {
             if (!source || !destination || !name) {
                 cerr << "Specifying backup source path (-s), destination path (-d) and name (-n) is required." << endl;
                 return 1;
             }
 
-            add(source, destination, name, configPath, compress);
+            return add(source, destination, name, compress);
         } else if (command == "backup") {
             if (!name) {
                 cerr << "Specifying backup name (-n) is required." << endl;
                 return 1;
             }
 
-            backup(name, configPath);
+            return backup(name);
         } else if (command == "restore") {
             if (!name) {
                 cerr << "Specifying backup name (-n) is required." << endl;
@@ -114,7 +102,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             if (id)
                 snapshotId = strtoll(id, nullptr, 10);
 
-            restore(name, snapshotId, filePath, configPath);
+            return restore(name, snapshotId, filePath);
         } else if (command == "diff") {
             if (!comparePair | !name) {
                 cerr << "Specifying backup name (-n) and snapshot comparison pair (-p) is required." << endl;
@@ -154,7 +142,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 return 1;
             }
 
-            diff(name, snapshotIdA, snapshotIdB, configPath);
+            return diff(name, snapshotIdA, snapshotIdB);
         } else if (command == "show") {
             if (!id | !name) {
                 cerr << "Specifying backup name (-n) and snapshot ID (-i) is required." << endl;
@@ -164,7 +152,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             int64_t snapshotId = 0;
             snapshotId = strtoll(id, nullptr, 10);
 
-            show(name, snapshotId, configPath);
+            return show(name, snapshotId);
         } else if (command == "help") {
             help();
         } else {
@@ -172,13 +160,14 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             return 1;
         }
     }
-
+    // default command
+    help();
     return 0;
 }
 
-int TerminalUserInterface::list (char* configPath) {
+int TerminalUserInterface::list () {
     // show that destination is inaccessible
-    ConfigProvider* config = getConfigProvider(configPath);
+    ConfigProvider* config = getConfigProvider();
 
     BackupPlan* plan;
     try {
@@ -209,24 +198,17 @@ int TerminalUserInterface::list (char* configPath) {
     return 0;
 }
 
-int TerminalUserInterface::history (char* configPath, char* backupName) {
-    BackupJob* job = nullptr;
-    ConfigProvider* config = nullptr;
+int TerminalUserInterface::history (char* backupName) {
     BackupIndexProvider* indexProvider = nullptr;
     SnapshotList* snapshots = nullptr;
+
+    BackupJob* job = findBackupJobByName(backupName);
+    if (!job)
+        return 2;
+
     try {
-        config = getConfigProvider(configPath);
-        job = config->GetBackupJob(backupName);
-
-        if (!job) {
-            cerr << "Backup job named \"" << backupName << "\" not found." << endl;
-            delete config;
-            return 1;
-        }
-
         if (!std::filesystem::exists(job->GetDestination())) {
             cerr << "Backup destination folder " << job->GetDestination() << " not found. Maybe no backups have been run yet." << endl;
-            delete config;
             delete job;
             return 2;
         }
@@ -237,7 +219,6 @@ int TerminalUserInterface::history (char* configPath, char* backupName) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
         delete snapshots;
-        delete config;
         delete indexProvider;
         return 2;
     }
@@ -250,7 +231,6 @@ int TerminalUserInterface::history (char* configPath, char* backupName) {
         delete it;
         delete job;
         delete snapshots;
-        delete config;
         delete indexProvider;
         return 0;
     }
@@ -260,16 +240,15 @@ int TerminalUserInterface::history (char* configPath, char* backupName) {
     delete it;
     delete job;
     delete snapshots;
-    delete config;
     delete indexProvider;
     return 0;
 }
 
-ConfigProvider* TerminalUserInterface::getConfigProvider (const char* configPath) const {
+ConfigProvider* TerminalUserInterface::getConfigProvider () const {
     ConfigProvider* config;
 
-    if (configPath)
-        config = new SQLiteConfigProvider(configPath);
+    if (!m_ConfigPath.empty())
+        config = new SQLiteConfigProvider(m_ConfigPath);
     else
         config = new SQLiteConfigProvider();
 
@@ -309,8 +288,8 @@ string TerminalUserInterface::getVersion () {
     return "dev";
 }
 
-int TerminalUserInterface::add (char* source, char* destination, char* name, char* configPath, bool compress) {
-    ConfigProvider* config = getConfigProvider(configPath);
+int TerminalUserInterface::add (char* source, char* destination, char* name, bool compress) {
+    ConfigProvider* config = getConfigProvider();
 
     BackupJob* job = nullptr;
     try {
@@ -332,24 +311,13 @@ int TerminalUserInterface::add (char* source, char* destination, char* name, cha
     return 0;
 }
 
-int TerminalUserInterface::backup (char* name, char* configPath) {
+int TerminalUserInterface::backup (char* name) {
     // add potential not enough space warning
-    ConfigProvider* config = getConfigProvider(configPath);
-    BackupJob* job;
+    ConfigProvider* config = getConfigProvider();
 
-    try {
-        job = config->GetBackupJob(name);
-    } catch (runtime_error & e) {
-        cerr << "Fatal error: " << e.what() << endl;
-        delete config;
+    BackupJob* job = findBackupJobByName(name);
+    if (!job)
         return 2;
-    }
-
-    if (!job) {
-        cerr << "Backup job named \"" << name << "\" not found." << endl;
-        delete config;
-        return 1;
-    }
 
     try {
         job->Backup(this);
@@ -366,27 +334,14 @@ int TerminalUserInterface::backup (char* name, char* configPath) {
 }
 
 // todo better handle incorrect input (nonexistent snapshots/internal values)
-int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB, char* configPath) {
+int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB) {
     BackupIndexProvider* indexProvider = nullptr;
-    ConfigProvider* config = getConfigProvider(configPath);
-    BackupJob* job = nullptr;
-    DirectoryIterator* itAdded = nullptr;
-    DirectoryIterator* itRemoved = nullptr;
-    DirectoryIterator* itModified = nullptr;
+    ConfigProvider* config = getConfigProvider();
+    DirectoryIterator *itAdded = nullptr, *itRemoved = nullptr, *itModified = nullptr;
 
-    try {
-        job = config->GetBackupJob(name);
-    } catch (runtime_error & e) {
-        cerr << "Fatal error: " << e.what() << endl;
-        delete config;
+    BackupJob* job = findBackupJobByName(name);
+    if (!job)
         return 2;
-    }
-
-    if (!job) {
-        cerr << "Backup job named \"" << name << "\" not found." << endl;
-        delete config;
-        return 1;
-    }
 
     try {
         if (snapshotIdA < snapshotIdB) {
@@ -444,25 +399,13 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
     return 0;
 }
 
-int TerminalUserInterface::show (char* name, int64_t snapshotId, char* configPath) {
+int TerminalUserInterface::show (char* name, int64_t snapshotId) {
     BackupIndexProvider* indexProvider = nullptr;
-    ConfigProvider* config = getConfigProvider(configPath);
-    BackupJob* job = nullptr;
     DirectoryIterator* it = nullptr;
 
-    try {
-        job = config->GetBackupJob(name);
-    } catch (runtime_error & e) {
-        cerr << "Fatal error: " << e.what() << endl;
-        delete config;
+    BackupJob* job = findBackupJobByName(name);
+    if (!job)
         return 2;
-    }
-
-    if (!job) {
-        cerr << "Backup job named \"" << name << "\" not found." << endl;
-        delete config;
-        return 1;
-    }
 
     try {
         indexProvider = new SQLiteBackupIndexProvider(job);
@@ -473,37 +416,22 @@ int TerminalUserInterface::show (char* name, int64_t snapshotId, char* configPat
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
         delete indexProvider;
-        delete config;
         delete it;
         return 2;
     }
 
     delete job;
     delete indexProvider;
-    delete config;
     delete it;
     return 0;
 }
 
-int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePath, char* configPath) {
-    // todo refactor job lookup
-    ConfigProvider* config = getConfigProvider(configPath);
-    BackupJob* job;
+int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePath) {
     string file;
 
-    try {
-        job = config->GetBackupJob(name);
-    } catch (runtime_error & e) {
-        cerr << "Fatal error: " << e.what() << endl;
-        delete config;
+    BackupJob* job = findBackupJobByName(name);
+    if (!job)
         return 2;
-    }
-
-    if (!job) {
-        cerr << "Backup job named \"" << name << "\" not found." << endl;
-        delete config;
-        return 1;
-    }
 
     BackupIndexProvider* indexProvider = nullptr;
     long long completion;
@@ -529,7 +457,6 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePa
                 cerr << "The file you specified doesn't exist in selected snapshot." << endl;
                 delete indexProvider;
                 delete job;
-                delete config;
                 return 1;
             }
             delete indexProvider;
@@ -544,7 +471,6 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePa
                 job->Restore(this, snapshotId, file);
             } else {
                 delete job;
-                delete config;
                 return 0;
             }
 
@@ -555,13 +481,10 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePa
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
-        delete config;
         return 2;
     }
 
-
     delete job;
-    delete config;
     return 0;
 }
 
@@ -689,4 +612,25 @@ size_t TerminalUserInterface::countUtf8Codepoints (std::string in) {
 
     cout << "UTF-8: " << count << " bytes: " << in.length() << endl;
     return count;
+}
+
+BackupJob* TerminalUserInterface::findBackupJobByName (char* name) {
+    ConfigProvider* config = getConfigProvider();
+    BackupJob* job;
+    try {
+        job = config->GetBackupJob(name);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete config;
+        return nullptr;
+    }
+
+    if (!job) {
+        cerr << "Backup job named \"" << name << "\" not found." << endl;
+        delete config;
+        return nullptr;
+    }
+
+    delete config;
+    return job;
 }
