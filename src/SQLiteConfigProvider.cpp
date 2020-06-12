@@ -85,8 +85,10 @@ bool SQLiteConfigProvider::initConfig () {
 
 bool SQLiteConfigProvider::configExists () {
     sqlite3* db;
-    if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK)
+    if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK) {
+        sqlite3_close(db);
         return false;
+    }
 
     sqlite3_stmt* checkTblStmt;
     sqlite3_prepare_v2(db,
