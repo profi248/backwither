@@ -22,6 +22,7 @@ public:
     std::string GetSource () const;
     std::string GetDestination () const;
     std::string GetName () const;
+    std::string GetPlan () const;
     bool        IsCompressed () const;
     bool        End () const;
     bool        Empty () const;

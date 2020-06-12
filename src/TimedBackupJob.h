@@ -1,25 +1,27 @@
 #ifndef BACKUP_TIMEDBACKUPJOB_H
 #define BACKUP_TIMEDBACKUPJOB_H
 #include "BackupJob.h"
-
+#include "TimeUtils.h"
 /**
  * Backup job with timed plan.
  */
 
 class TimedBackupJob : public BackupJob {
 public:
-    TimedBackupJob () : BackupJob(std::string(), std::string(), std::string(), false, 0, -1) {}
+    TimedBackupJob (std::string source, std::string destination, std::string name, bool compressed,
+                    TimeUtils::weekday_t day, int time, int64_t id = -1, long long lastFinished = -1);
 
-    enum weekday_t {MON, TUE, WED, THU, FRI, SAT, SUN};
 private:
-    weekday_t m_TriggerDayOfWeek;
-    int       m_TriggerSecondsSinceDayStarted;
+    TimeUtils::weekday_t m_PlanDayOfWeek;
+    int                  m_PlanSecondsSinceDayStarted;
 public:
+    virtual ~TimedBackupJob() = default;
     /**
      * Tells if job is due for backup.
      * @return Whether to do backup now.
      */
-    bool ShouldStartBackup ();
+    bool ShouldStartBackup () const override;
+    std::string GetPlan () const override;
 };
 
 

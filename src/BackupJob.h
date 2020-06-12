@@ -14,6 +14,7 @@ class UserInterface;
  */
 class BackupJob {
 public:
+    virtual ~BackupJob() = default;
     /** @var Path to files to back up. */
     std::string m_SourcePath;
     /** @var Path to where to save the backup. */
@@ -33,11 +34,13 @@ public:
     int Backup (UserInterface* ui);
     int Restore (UserInterface* ui, int64_t snapshotId, std::string filePath);
 
-    std::string GetSource () const;
-    std::string GetDestination () const;
-    std::string GetName () const;
-    bool        IsCompressed () const;
-    int64_t     GetID () const;
+    std::string         GetSource () const;
+    std::string         GetDestination () const;
+    std::string         GetName () const;
+    virtual std::string GetPlan () const;
+    virtual bool        ShouldStartBackup () const;
+    bool                IsCompressed () const;
+    int64_t             GetID () const;
 
     friend BackupPlanIterator;
 

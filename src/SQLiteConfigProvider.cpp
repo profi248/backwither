@@ -6,6 +6,8 @@
 #include "SQLiteConfigProvider.h"
 #include "ChunkListIterator.h"
 #include "SQLiteBackupIndexProvider.h"
+#include "TimedBackupJob.h"
+#include "TimeUtils.h"
 
 SQLiteConfigProvider::SQLiteConfigProvider (std::string path) {
     if (!path.empty())
@@ -63,7 +65,8 @@ bool SQLiteConfigProvider::initConfig () {
         "create table settings (key text unique, value);"
 
         "create table backups (backup_id integer primary key asc, source text,"
-        "destination text, name text unique, compressed integer);"
+        "destination text, name text unique, compressed integer, "
+        "planday integer, plantime integer);"
 
         "insert into settings (key, value) values ('version', 1)",
 
@@ -87,7 +90,7 @@ bool SQLiteConfigProvider::configExists () {
 
     sqlite3_stmt* checkTblStmt;
     sqlite3_prepare_v2(db,
-        "select 1 from sqlite_master where type='table' and name= 'settings';",
+        "select 1 from sqlite_master where type = 'table' and name = 'settings';",
     SQLITE_NULL_TERMINATED, & checkTblStmt, nullptr);
 
     if (sqlite3_step(checkTblStmt) != SQLITE_ROW || sqlite3_column_int(checkTblStmt, 0) != 1) {
@@ -145,9 +148,9 @@ void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
     sqlite3_bind_int(addJobStmt, 4, static_cast<int>(job->IsCompressed()));
 
     if (sqlite3_step(addJobStmt) != SQLITE_DONE) {
+        std::string err = sqlite3_errmsg(m_DB);
         sqlite3_finalize(addJobStmt);
-
-        throw std::runtime_error("Error when adding a new backup job. Name might already be taken.");
+        throw std::runtime_error(err+ "Error when adding a new backup job. Name might already be taken.");
 
     }
 
@@ -156,22 +159,30 @@ void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
 
 BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
     sqlite3_stmt* getBackupJobStmt;
+    BackupJob* job;
     sqlite3_prepare_v2(m_DB,
-        "select backup_id, source, destination, compressed from backups where name = ?;",
+        "select source, destination, name, compressed, backup_id, planday, plantime from backups where name = ?;",
         SQLITE_NULL_TERMINATED, & getBackupJobStmt, nullptr);
 
     // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
     sqlite3_bind_text(getBackupJobStmt, 1, name.c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
 
     if (sqlite3_step(getBackupJobStmt) == SQLITE_ROW) {
-        int64_t id = sqlite3_column_int64(getBackupJobStmt, 0); // first column
-        std::string source = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 1));
-        std::string destination = reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 2));
-        bool compressed = static_cast<bool>(sqlite3_column_int(getBackupJobStmt, 3));
+        // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
+        std::string src  = std::string(reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 0)));
+        std::string dst  = std::string(reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 1)));
+        std::string name = std::string(reinterpret_cast<const char*>(sqlite3_column_text(getBackupJobStmt, 2)));
+        bool compressed  = static_cast<bool>(sqlite3_column_int(getBackupJobStmt, 3));
+        int64_t id       = sqlite3_column_int64(getBackupJobStmt, 4);
+        int planDay      = sqlite3_column_int(getBackupJobStmt, 5);
+        int planTime     = sqlite3_column_int(getBackupJobStmt, 6);
 
+        if (planDay)
+            job = new TimedBackupJob(src, dst, name, compressed,
+                                     static_cast<TimeUtils::weekday_t>(planDay), planTime, id);
+        else
+            job = new BackupJob(src, dst, name, compressed, id);
         sqlite3_finalize(getBackupJobStmt);
-
-        BackupJob* job = new BackupJob(source, destination, name, compressed, id);
         return job;
     } else {
         sqlite3_finalize(getBackupJobStmt);
@@ -183,19 +194,26 @@ BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
 BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     BackupPlan* plan = new BackupPlan();
     sqlite3_stmt* loadPlanStmt;
+    BackupJob* job = nullptr;
 
     sqlite3_prepare_v2(m_DB,
-       "select source, destination, name, compressed, backup_id from backups order by name;",
+       "select source, destination, name, compressed, backup_id, planday, plantime from backups order by name;",
        SQLITE_NULL_TERMINATED, & loadPlanStmt, nullptr);
     while (sqlite3_step(loadPlanStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
-        BackupJob* job = new BackupJob(
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 0))), // source
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 1))), // destination
-                std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 2))), // name
-                static_cast<bool>(sqlite3_column_int(loadPlanStmt, 3)),  // compressed
-                sqlite3_column_int(loadPlanStmt, 3),
-                -1);
+        std::string src  = std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 0)));
+        std::string dst  = std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 1)));
+        std::string name = std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 2)));
+        bool compressed  = static_cast<bool>(sqlite3_column_int(loadPlanStmt, 3));
+        int64_t id       = sqlite3_column_int64(loadPlanStmt, 4);
+        int planDay      = sqlite3_column_int(loadPlanStmt, 5);
+        int planTime     = sqlite3_column_int(loadPlanStmt, 6);
+
+        if (planDay)
+            job = new TimedBackupJob(src, dst, name, compressed,
+                                     static_cast<TimeUtils::weekday_t>(planDay), planTime, id);
+        else
+            job = new BackupJob(src, dst, name, compressed, id);
 
         BackupIndexProvider* indexProvider = nullptr;
         try {

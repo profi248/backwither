@@ -6,6 +6,7 @@
 #include "FileChunker.h"
 #include "SQLiteBackupIndexProvider.h"
 #include "TimeFileComparator.h"
+#include "TimeUtils.h"
 
 namespace fs = std::filesystem;
 
@@ -120,4 +121,12 @@ bool BackupJob::IsCompressed () const {
 
 int64_t BackupJob::GetID () const {
     return m_ID;
+}
+
+std::string BackupJob::GetPlan () const {
+    return TimeUtils::ZERO;
+}
+
+bool BackupJob::ShouldStartBackup () const {
+    return false;
 }

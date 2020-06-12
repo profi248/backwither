@@ -33,6 +33,10 @@ std::string BackupPlanIterator::GetName () const {
     return m_Plan->m_Jobs[m_Pos]->m_Name;
 }
 
+std::string BackupPlanIterator::GetPlan () const {
+    return m_Plan->m_Jobs[m_Pos]->GetPlan();
+}
+
 bool BackupPlanIterator::IsCompressed () const {
     return m_Plan->m_Jobs[m_Pos]->m_Compressed;
 }
@@ -44,9 +48,10 @@ void BackupPlanIterator::operator ++ (int) {
 std::vector<std::string> BackupPlanIterator::TableRow () const {
     return { GetName(), GetSource(), GetDestination(),
              IsCompressed() ? "yes" : "no",
-             TimeUtils::HumanDateTime(m_Plan->m_Jobs[m_Pos]->m_LastCompleted) };
+             TimeUtils::HumanDateTime(m_Plan->m_Jobs[m_Pos]->m_LastCompleted),
+             GetPlan() };
 }
 
 std::vector<std::string> BackupPlanIterator::TableHeader () const {
-    return { "name", "source", "destination", "compressed", "last successful run" };
+    return { "name", "source", "destination", "compressed", "last successful run", "planned" };
 }
