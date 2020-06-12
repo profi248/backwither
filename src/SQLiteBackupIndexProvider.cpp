@@ -17,6 +17,23 @@ SQLiteBackupIndexProvider::SQLiteBackupIndexProvider (BackupJob* job) :
         m_DB   = openDB();
     }
 
+// make template overloads for sqlite3 functions to accept more statements, for cleaner code
+template<typename... Args>
+void sqlite3_finalize(sqlite3_stmt* a, Args... args) {
+    sqlite3_finalize(a);
+    sqlite3_finalize(args...);
+}
+
+template<typename... Args>
+void sqlite3_reset(sqlite3_stmt* a, Args... args) {
+    sqlite3_reset(a);
+    sqlite3_reset(args...);
+}
+
+int SQLiteBackupIndexProvider::prepareOne(const char* sql, sqlite3_stmt** stmt) {
+    return sqlite3_prepare_v2(m_DB, sql, SQLITE_NULL_TERMINATED, stmt, nullptr);
+}
+
 bool SQLiteBackupIndexProvider::initConfig () {
     sqlite3* db;
 
@@ -69,6 +86,7 @@ bool SQLiteBackupIndexProvider::initConfig () {
     return true;
 }
 
+// refactor to separate class
 bool SQLiteBackupIndexProvider::configExists () {
     sqlite3* db;
     if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK) {
@@ -127,9 +145,7 @@ int64_t SQLiteBackupIndexProvider::SaveSnapshotFileIndex (Directory & fld) {
         throw std::runtime_error("Database error initializing a snapshot: " + err + ".");
     }
 
-    sqlite3_prepare_v2(m_DB,
-       "insert into snapshots (creation) values (?);",
-       SQLITE_NULL_TERMINATED, & addSnapshotStmt, nullptr);
+    prepareOne("insert into snapshots (creation) values (?);", & addSnapshotStmt);
 
     sqlite3_bind_int64(addSnapshotStmt, 1, std::time(nullptr));
 
@@ -145,21 +161,11 @@ int64_t SQLiteBackupIndexProvider::SaveSnapshotFileIndex (Directory & fld) {
     sqlite3_finalize(addSnapshotStmt);
 
     DirectoryIterator it (& fld);
-    sqlite3_stmt* addPathStmt;
-    sqlite3_stmt* pathIdLookbackStmt;
-    sqlite3_stmt* addFileStmt;
+    sqlite3_stmt *addPathStmt, *pathIdLookbackStmt, *addFileStmt;
 
-    sqlite3_prepare_v2(m_DB,
-       "insert or ignore into filepaths (path) values (?);",
-       SQLITE_NULL_TERMINATED, & addPathStmt, nullptr);
-
-    sqlite3_prepare_v2(m_DB,
-       "select path_id from filepaths where path = ?;",
-       SQLITE_NULL_TERMINATED, & pathIdLookbackStmt, nullptr);
-
-    sqlite3_prepare_v2(m_DB,
-       "insert into files (path_id, size, mtime, snapshot_id) values (?, ?, ?, ?);",
-       SQLITE_NULL_TERMINATED, & addFileStmt, nullptr);
+    prepareOne("insert or ignore into filepaths (path) values (?);", & addPathStmt);
+    prepareOne("select path_id from filepaths where path = ?;", & pathIdLookbackStmt);
+    prepareOne("insert into files (path_id, size, mtime, snapshot_id) values (?, ?, ?, ?);", & addFileStmt);
 
     while (!it.End()) {
         // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
@@ -167,18 +173,13 @@ int64_t SQLiteBackupIndexProvider::SaveSnapshotFileIndex (Directory & fld) {
 
         if (sqlite3_step(addPathStmt) != SQLITE_DONE) {
             const char * err = sqlite3_errmsg(m_DB);
-            sqlite3_finalize(addPathStmt);
-            sqlite3_finalize(pathIdLookbackStmt);
-            sqlite3_finalize(addFileStmt);
+            sqlite3_finalize(addPathStmt, pathIdLookbackStmt, addFileStmt);
             sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
             throw std::runtime_error("Database error when adding a file: " + std::string(err) + ".");
         } else {
             sqlite3_bind_text(pathIdLookbackStmt, 1, it.GetPath().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
             if (sqlite3_step(pathIdLookbackStmt) != SQLITE_ROW) {
-                sqlite3_finalize(addPathStmt);
-                sqlite3_finalize(pathIdLookbackStmt);
-                sqlite3_finalize(addFileStmt);
-
+                sqlite3_finalize(addPathStmt, pathIdLookbackStmt, addFileStmt);
                 throw std::runtime_error("Database error when adding a file.");
             }
             int64_t newPathId = sqlite3_column_int64(pathIdLookbackStmt, 0);
@@ -190,9 +191,7 @@ int64_t SQLiteBackupIndexProvider::SaveSnapshotFileIndex (Directory & fld) {
 
             if (sqlite3_step(addFileStmt) != SQLITE_DONE) {
                 const char * err = sqlite3_errmsg(m_DB);
-                sqlite3_finalize(addPathStmt);
-                sqlite3_finalize(pathIdLookbackStmt);
-                sqlite3_finalize(addFileStmt);
+                sqlite3_finalize(addPathStmt, pathIdLookbackStmt, addFileStmt);
                 sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
                 throw std::runtime_error("Database error when adding a file: " + std::string(err) + ".");
             }
@@ -200,16 +199,11 @@ int64_t SQLiteBackupIndexProvider::SaveSnapshotFileIndex (Directory & fld) {
             it.SetID(newFileId);
         }
 
-        sqlite3_reset(addPathStmt);
-        sqlite3_reset(pathIdLookbackStmt);
-        sqlite3_reset(addFileStmt);
+        sqlite3_reset(addPathStmt, pathIdLookbackStmt, addFileStmt);
         it++;
     }
 
-    sqlite3_finalize(addPathStmt);
-    sqlite3_finalize(pathIdLookbackStmt);
-    sqlite3_finalize(addFileStmt);
-
+    sqlite3_finalize(addPathStmt, pathIdLookbackStmt, addFileStmt);
     if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK)
         throw std::runtime_error("Database error when creating a snapshot.");
 
@@ -226,20 +220,15 @@ Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) 
             snapshotID = getLastSnapshotId();
             if (snapshotID < 0)
                 return dir;
-
         }
-        sqlite3_prepare_v2(m_DB,
-           "select path, size, mtime, file_id from files "
-            "join filepaths using (path_id) "
-            "where snapshot_id = ?;",
-           SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
+        prepareOne("select path, size, mtime, file_id from files "
+                   "join filepaths using (path_id) "
+                   "where snapshot_id = ?;", & loadFilesStmt);
 
         sqlite3_bind_int64(loadFilesStmt, 1, snapshotID);
     } else { // all files from all snapshots for this backup job
-        sqlite3_prepare_v2(m_DB,
-          "select path, size, mtime, file_id from files "
-           "join filepaths using (path_id);",
-           SQLITE_NULL_TERMINATED, & loadFilesStmt, nullptr);
+        prepareOne("select path, size, mtime, file_id from files "
+                   "join filepaths using (path_id);", & loadFilesStmt);
     }
 
     while (sqlite3_step(loadFilesStmt) == SQLITE_ROW) {
@@ -276,28 +265,18 @@ int64_t SQLiteBackupIndexProvider::getLastSnapshotId () {
 
 void SQLiteBackupIndexProvider::SaveFileChunks (ChunkList chunks, int64_t snapshotId) {
     ChunkListIterator it (& chunks);
-    sqlite3_stmt* saveChunksStmt;
-    sqlite3_stmt* saveChunkHashesStmt;
-    sqlite3_stmt* chunkHashLookbackStmt;
+    sqlite3_stmt *saveChunksStmt, *saveChunkHashesStmt, *chunkHashLookbackStmt;
 
-    if (sqlite3_exec(m_DB, "begin transaction;", nullptr, nullptr, nullptr) != SQLITE_OK) {
+    if (sqlite3_exec(m_DB, "begin transaction;", nullptr, nullptr, nullptr) != SQLITE_OK)
         throw std::runtime_error("Database error initializing saving chunks.");
-    }
 
-    sqlite3_prepare_v2(m_DB,
-        "insert or ignore into chunkdata (hash, size) values (?, ?);",
-       SQLITE_NULL_TERMINATED, & saveChunkHashesStmt, nullptr);
+    prepareOne("insert or ignore into chunkdata (hash, size) values (?, ?);", & saveChunkHashesStmt);
 
-    sqlite3_prepare_v2(m_DB,
-        "insert into chunks (hash_id, file_id, path_id, snapshot_id, position) "
-        "select ?, ?, path_id, ?, ? "
-        "from files where file_id = ?;",
-       SQLITE_NULL_TERMINATED, & saveChunksStmt, nullptr);
+    prepareOne("insert into chunks (hash_id, file_id, path_id, snapshot_id, position) "
+               "select ?, ?, path_id, ?, ? "
+               "from files where file_id = ?;", & saveChunksStmt);
 
-    sqlite3_prepare_v2(m_DB,
-        "select hash_id from chunkdata where hash = ? limit 1;",
-       SQLITE_NULL_TERMINATED, & chunkHashLookbackStmt, nullptr);
-
+    prepareOne("select hash_id from chunkdata where hash = ? limit 1;", & chunkHashLookbackStmt);
 
     size_t pos = 1;
     int64_t chunkId = -1;
@@ -307,11 +286,8 @@ void SQLiteBackupIndexProvider::SaveFileChunks (ChunkList chunks, int64_t snapsh
         sqlite3_bind_int64(saveChunkHashesStmt, 2, it.GetSize());
 
         if (sqlite3_step(saveChunkHashesStmt) != SQLITE_DONE) {
-
             const char * err = sqlite3_errmsg(m_DB);
-            sqlite3_finalize(saveChunksStmt);
-            sqlite3_finalize(saveChunkHashesStmt);
-            sqlite3_finalize(chunkHashLookbackStmt);
+            sqlite3_finalize(saveChunksStmt, saveChunkHashesStmt, chunkHashLookbackStmt);
             sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
 
             throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
@@ -320,9 +296,7 @@ void SQLiteBackupIndexProvider::SaveFileChunks (ChunkList chunks, int64_t snapsh
 
             if (sqlite3_step(chunkHashLookbackStmt) != SQLITE_ROW) {
                 const char * err = sqlite3_errmsg(m_DB);
-                sqlite3_finalize(saveChunksStmt);
-                sqlite3_finalize(chunkHashLookbackStmt);
-                sqlite3_finalize(saveChunkHashesStmt);
+                sqlite3_finalize(saveChunksStmt, saveChunkHashesStmt, chunkHashLookbackStmt);
                 sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
 
                 throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
@@ -340,25 +314,18 @@ void SQLiteBackupIndexProvider::SaveFileChunks (ChunkList chunks, int64_t snapsh
 
         if (sqlite3_step(saveChunksStmt) != SQLITE_DONE) {
             const char * err = sqlite3_errmsg(m_DB);
-            sqlite3_finalize(saveChunksStmt);
-            sqlite3_finalize(saveChunkHashesStmt);
-            sqlite3_finalize(chunkHashLookbackStmt);
+            sqlite3_finalize(saveChunksStmt, saveChunkHashesStmt, chunkHashLookbackStmt);
             sqlite3_exec(m_DB, "rollback;", nullptr, nullptr, nullptr);
 
             throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
         }
 
-        sqlite3_reset(saveChunkHashesStmt);
-        sqlite3_reset(saveChunksStmt);
-        sqlite3_reset(chunkHashLookbackStmt);
+        sqlite3_reset(saveChunkHashesStmt, saveChunksStmt, chunkHashLookbackStmt);
         it++;
         pos++;
     }
 
-    sqlite3_finalize(saveChunksStmt);
-    sqlite3_finalize(saveChunkHashesStmt);
-    sqlite3_finalize(chunkHashLookbackStmt);
-
+    sqlite3_finalize(saveChunksStmt, saveChunkHashesStmt, chunkHashLookbackStmt);
     if (sqlite3_exec(m_DB, "commit;", nullptr, nullptr, nullptr) != SQLITE_OK) {
         const char * err = sqlite3_errmsg(m_DB);
         throw std::runtime_error("Database error when saving chunks: " + std::string(err) + ".");
@@ -372,17 +339,15 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
 
     // select chunks from file in specific path from snapshot we are restoring or older (because they were not modified)
     if (snapshotId != -1) {
-        sqlite3_prepare_v2(m_DB,
-           "select hash, size from chunks "
-           "join chunkdata using (hash_id) "
-           "where path_id = "
-           "    (select path_id from files where file_id = ?) "
-           "and snapshot_id = "
-           "    (select snapshot_id from chunks where path_id = "
-           "        (select path_id from files where file_id = ?) "
-           "     and snapshot_id <= ? order by snapshot_id desc limit 1) "
-           "order by position;",
-           SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
+        prepareOne("select hash, size from chunks "
+                   "join chunkdata using (hash_id) "
+                   "where path_id = "
+                   "    (select path_id from files where file_id = ?) "
+                   "and snapshot_id = "
+                   "    (select snapshot_id from chunks where path_id = "
+                   "        (select path_id from files where file_id = ?) "
+                   "     and snapshot_id <= ? order by snapshot_id desc limit 1) "
+                   "order by position;", & retrieveChunksStmt);
         if (snapshotId == 0) {
             snapshotId = getLastSnapshotId();
             if (snapshotId < 0) {
@@ -393,12 +358,10 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t
             sqlite3_bind_int64(retrieveChunksStmt, 3, snapshotId);
 
     } else {
-        sqlite3_prepare_v2(m_DB,
-           "select hash, size from chunks "
-           "join chunkdata using (hash_id) "
-           "where file_id = ? "
-           "order by position;",
-           SQLITE_NULL_TERMINATED, & retrieveChunksStmt, nullptr);
+        prepareOne("select hash, size from chunks "
+                       "join chunkdata using (hash_id) "
+                       "where file_id = ? "
+                       "order by position;", & retrieveChunksStmt);
     }
 
     sqlite3_bind_int64(retrieveChunksStmt, 1, fileId);
@@ -422,10 +385,7 @@ SnapshotList* SQLiteBackupIndexProvider::LoadSnapshotList () {
     SnapshotList* snapshots = new SnapshotList();
     sqlite3_stmt* loadSnapshotsStmt;
 
-
-    sqlite3_prepare_v2(m_DB,
-       "select snapshot_id, creation, finished from snapshots;",
-       SQLITE_NULL_TERMINATED, & loadSnapshotsStmt, nullptr);
+    prepareOne("select snapshot_id, creation, finished from snapshots;", & loadSnapshotsStmt);
 
     while (sqlite3_step(loadSnapshotsStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
@@ -445,10 +405,7 @@ SnapshotList* SQLiteBackupIndexProvider::LoadSnapshotList () {
 Snapshot SQLiteBackupIndexProvider::GetSnapshot (int64_t id) {
     sqlite3_stmt* getSnapshotsStmt;
 
-    sqlite3_prepare_v2(m_DB,
-                       "select creation, finished from snapshots where snapshot_id = ? limit 1;",
-                       SQLITE_NULL_TERMINATED, & getSnapshotsStmt, nullptr);
-
+    prepareOne("select creation, finished from snapshots where snapshot_id = ? limit 1;", & getSnapshotsStmt);
 
     if (id == 0) {
         id = getLastSnapshotId();
@@ -474,9 +431,7 @@ Snapshot SQLiteBackupIndexProvider::GetSnapshot (int64_t id) {
 long long SQLiteBackupIndexProvider::LastSuccessfulCompletion () {
     sqlite3_stmt* getLastSuccessStmt;
 
-    sqlite3_prepare_v2(m_DB,
-       "select finished from snapshots order by finished desc limit 1;",
-       SQLITE_NULL_TERMINATED, & getLastSuccessStmt, nullptr);
+    prepareOne("select finished from snapshots order by finished desc limit 1;",  & getLastSuccessStmt);
 
     if (sqlite3_step(getLastSuccessStmt) == SQLITE_ROW) {
         int64_t finished = sqlite3_column_int64(getLastSuccessStmt, 0);
@@ -492,12 +447,10 @@ long long SQLiteBackupIndexProvider::LastSuccessfulCompletion () {
 bool SQLiteBackupIndexProvider::DoesFileExistInSnapshot (int64_t snapshotId, std::string filePath) {
     sqlite3_stmt* fileExistsStmt;
 
-    sqlite3_prepare_v2(m_DB,
-                       "select file_id from files "
-                       "join snapshots using (snapshot_id) "
-                       "join filepaths using (path_id)"
-                       "where snapshot_id = ? and path = ?;",
-                       SQLITE_NULL_TERMINATED, &fileExistsStmt, nullptr);
+    prepareOne("select file_id from files "
+                   "join snapshots using (snapshot_id) "
+                   "join filepaths using (path_id)"
+                   "where snapshot_id = ? and path = ?;", & fileExistsStmt);
 
     if (snapshotId == 0) {
         snapshotId = getLastSnapshotId();
@@ -526,10 +479,8 @@ void SQLiteBackupIndexProvider::FinalizeBackup (BackupJob* job) {
     int64_t lastSnapshotId = getLastSnapshotId();
     sqlite3_stmt* completeSnapshotStmt;
 
-    sqlite3_prepare_v2(m_DB,
-       "update snapshots set finished = ? "
-            "where snapshot_id = ?;",
-       SQLITE_NULL_TERMINATED, & completeSnapshotStmt, nullptr);
+    prepareOne("update snapshots set finished = ? "
+               "where snapshot_id = ?;", & completeSnapshotStmt);
     sqlite3_bind_int64(completeSnapshotStmt, 1, std::time(nullptr));
     sqlite3_bind_int64(completeSnapshotStmt, 2, lastSnapshotId);
     if (sqlite3_step(completeSnapshotStmt) != SQLITE_DONE) {

@@ -30,11 +30,13 @@ public:
     void          FinalizeBackup (BackupJob* job) override;
 
 private:
+    int         prepareOne(const char* sql, sqlite3_stmt** stmt);
     std::string getDbPath () const;
     bool        configExists ();
     bool        initConfig ();
     sqlite3*    openDB ();
     int64_t     getLastSnapshotId ();
+
 };
 
 #endif //BACKUP_SQLITEBACKUPINDEXPROVIDER_H
