@@ -5,6 +5,7 @@
 #include "SimpleIterator.h"
 
 class BackupPlan;
+class BackupJob;
 
 /**
  * Allow iterating over backup jobs.
@@ -23,6 +24,7 @@ public:
     std::string GetDestination () const;
     std::string GetName () const;
     std::string GetPlan () const;
+    BackupJob*  Current () const;
     bool        IsCompressed () const;
     bool        End () const;
     bool        Empty () const;

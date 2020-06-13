@@ -41,6 +41,10 @@ bool BackupPlanIterator::IsCompressed () const {
     return m_Plan->m_Jobs[m_Pos]->m_Compressed;
 }
 
+BackupJob* BackupPlanIterator::Current () const {
+    return m_Plan->m_Jobs[m_Pos];
+}
+
 void BackupPlanIterator::operator ++ (int) {
     Next();
 }

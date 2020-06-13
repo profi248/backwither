@@ -7,7 +7,9 @@
 #include "SQLiteBackupIndexProvider.h"
 #include "File.h"
 #include "ChunkListIterator.h"
+#include "TimeUtils.h"
 
+// todo maybe add stmt wrapper class
 SQLiteBackupIndexProvider::SQLiteBackupIndexProvider (BackupJob* job) :
     m_Job (job) {
         m_Path = job->GetDestination();
@@ -147,7 +149,7 @@ int64_t SQLiteBackupIndexProvider::SaveSnapshotFileIndex (Directory & fld) {
 
     prepareOne("insert into snapshots (creation) values (?);", & addSnapshotStmt);
 
-    sqlite3_bind_int64(addSnapshotStmt, 1, std::time(nullptr));
+    sqlite3_bind_int64(addSnapshotStmt, 1, TimeUtils::GetUTCTimestamp());
 
     if (sqlite3_step(addSnapshotStmt) != SQLITE_DONE) {
         sqlite3_finalize(addSnapshotStmt);
@@ -481,7 +483,7 @@ void SQLiteBackupIndexProvider::FinalizeBackup (BackupJob* job) {
 
     prepareOne("update snapshots set finished = ? "
                "where snapshot_id = ?;", & completeSnapshotStmt);
-    sqlite3_bind_int64(completeSnapshotStmt, 1, std::time(nullptr));
+    sqlite3_bind_int64(completeSnapshotStmt, 1, TimeUtils::GetUTCTimestamp());
     sqlite3_bind_int64(completeSnapshotStmt, 2, lastSnapshotId);
     if (sqlite3_step(completeSnapshotStmt) != SQLITE_DONE) {
         const char* err = sqlite3_errmsg(m_DB);

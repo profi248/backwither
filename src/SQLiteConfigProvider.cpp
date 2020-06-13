@@ -150,10 +150,8 @@ void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
     sqlite3_bind_int(addJobStmt, 4, static_cast<int>(job->IsCompressed()));
 
     if (sqlite3_step(addJobStmt) != SQLITE_DONE) {
-        std::string err = sqlite3_errmsg(m_DB);
         sqlite3_finalize(addJobStmt);
-        throw std::runtime_error(err+ "Error when adding a new backup job. Name might already be taken.");
-
+        throw std::runtime_error("Error when adding a new backup job. Name might already be taken.");
     }
 
     sqlite3_finalize(addJobStmt);

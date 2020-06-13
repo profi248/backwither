@@ -10,6 +10,7 @@
 #include "FilesystemUtils.h"
 #include "SnapshotListIterator.h"
 #include "TimeFileComparator.h"
+#include "TimeUtils.h"
 
 const int TERM_RED = 31;
 const int TERM_GREEN = 32;
@@ -17,7 +18,6 @@ const int TERM_BLUE = 34;
 
 using namespace std;
 
-// todo refactor config
 int TerminalUserInterface::StartInterface (int argc, char** argv) {
     // example from documentation (https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html#Using-Getopt)
     opterr = 0;
@@ -66,7 +66,6 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 throw bad_exception();
         }
 
-    // todo change config to member var!
     for (index = optind; index < argc; index++) {
         string command(argv[index]);
         // apparently we can't use switch for strings...
@@ -153,6 +152,8 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             snapshotId = strtoll(id, nullptr, 10);
 
             return show(name, snapshotId);
+        } else if (command == "run-cron") {
+            return runCron();
         } else if (command == "help") {
             help();
         } else {
@@ -167,16 +168,9 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
 int TerminalUserInterface::list () {
     // show that destination is inaccessible
-    ConfigProvider* config = getConfigProvider();
-
-    BackupPlan* plan;
-    try {
-        plan = config->LoadBackupPlan();
-    } catch (runtime_error & e) {
-        cerr << "Fatal error: " << e.what() << endl;
-        delete config;
+    BackupPlan* plan = loadBackupPlan();
+    if (!plan)
         return 2;
-    }
 
     BackupPlanIterator* it = new BackupPlanIterator(plan);
 
@@ -186,7 +180,6 @@ int TerminalUserInterface::list () {
 
         delete it;
         delete plan;
-        delete config;
         return 0;
     }
 
@@ -194,7 +187,6 @@ int TerminalUserInterface::list () {
 
     delete it;
     delete plan;
-    delete config;
     return 0;
 }
 
@@ -264,12 +256,11 @@ int TerminalUserInterface::help () {
             // "  edit\t\tedit backup job" << endl <<
             // "  remove\tremove backup job" << endl <<
             "  backup\trun backup job" << endl <<
-            "  restore\trestore backup" << endl <<
-            // "  rollback\trollback a file to older version" << endl <<
+            "  restore\trestore backup or a single file" << endl <<
             "  diff\t\tshow difference between snapshots" << endl <<
             "  show\t\tshow files in specified snapshot" << endl <<
             "  history\tshow snapshots in a specified backup job" << endl <<
-            // "  run-cron\trun planned backups" << endl <<
+            "  run-cron\trun planned backups" << endl <<
             "  help\t\tshow this help message" << endl << endl;
 
     cout << "Options" << endl;
@@ -488,7 +479,37 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePa
     return 0;
 }
 
+int TerminalUserInterface::runCron () {
+    BackupPlan* plan = loadBackupPlan();
+    // cout << TimeUtils::PlanLastScheduledTime(TimeUtils::SAT, 68400) << endl;
+    if (!plan)
+        return 2;
+
+    BackupPlanIterator* it = new BackupPlanIterator(plan);
+    cout << TimeUtils::PlanLastScheduledTime(TimeUtils::SAT, 68400) << endl;
+
+    while (!it->End()) {
+        try {
+            BackupJob* job = it->Current();
+            if (job->ShouldStartBackup())
+                job->Backup(this);
+        } catch (runtime_error & e) {
+            cerr << "Fatal error: " << e.what() << endl;
+            delete it;
+            delete plan;
+            return 2;
+        }
+        (*it)++;
+    }
+
+    delete it;
+    delete plan;
+    return 0;
+}
+
 void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std::string status, size_t fileSize) {
+    if (!isatty(fileno(stderr)) || !ENABLE_PROGRESS)
+        return;
     stringstream oss;
     if (expected > 0)
         oss << "[" << current << "/" << expected << "] ";
@@ -633,4 +654,20 @@ BackupJob* TerminalUserInterface::findBackupJobByName (char* name) {
 
     delete config;
     return job;
+}
+
+BackupPlan* TerminalUserInterface::loadBackupPlan () {
+    ConfigProvider* config = nullptr;
+    BackupPlan* plan = nullptr;
+    try {
+        config = getConfigProvider();
+        plan = config->LoadBackupPlan();
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete config;
+        return nullptr;
+    }
+
+    delete config;
+    return plan;
 }

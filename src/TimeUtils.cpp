@@ -12,7 +12,7 @@ std::string TimeUtils::HumanDateTime (long long timestamp) {
     return std::string(buf);
 }
 
-std::string TimeUtils::PlanToString (TimeUtils::weekday_t day, int secondsSinceStart) {
+std::string TimeUtils::PlanToString (weekday_t day, int secondsSinceStart) {
     std::ostringstream out;
     switch (day) {
         case MON:
@@ -39,6 +39,14 @@ std::string TimeUtils::PlanToString (TimeUtils::weekday_t day, int secondsSinceS
     }
 
     int hrs = 0, min = 0, sec = 0;
+
+    // adjust for DST and timezone
+    time_t now = time(nullptr);
+    tm* t = localtime(& now);
+    if (t->tm_isdst)
+        secondsSinceStart += 3600;
+    secondsSinceStart -= timezone;
+
     while (secondsSinceStart >= 3600) {
         secondsSinceStart -= 3600;
         hrs++;
@@ -56,4 +64,49 @@ std::string TimeUtils::PlanToString (TimeUtils::weekday_t day, int secondsSinceS
                << std::setw(2) << min <<  ":"
                << std::setw(2) << sec;
     return out.str();
+}
+
+long long TimeUtils::PlanLastScheduledTime (weekday_t day, int secondsSinceStart) {
+    // this time library is truly trash.
+    std::time_t now = std::time(nullptr);
+    std::tm nowTm   = *std::gmtime(& now);
+    std::tm localTm = *std::localtime(& now);
+    std::tm todayTm = nowTm;
+    todayTm.tm_hour = 0;
+    todayTm.tm_min  = 0;
+    todayTm.tm_sec  = 0;
+
+    std::time_t today = std::mktime(& todayTm);
+    if (localTm.tm_isdst)
+        today += 3600;
+
+    if (nowTm.tm_wday == day && today + secondsSinceStart < now) {
+        // this day
+        return today + secondsSinceStart;
+    } else if (nowTm.tm_wday == day) {
+        // last week
+        return today + secondsSinceStart - 7 * SecondsPerDay();
+    } else {
+        return today + secondsSinceStart - (nowTm.tm_wday - day) * SecondsPerDay();
+    }
+}
+
+long long int TimeUtils::GetUTCTimestamp (time_t timestamp) {
+    std::time_t now;
+    if (timestamp > 0)
+        now = timestamp;
+    else
+        now = std::time(nullptr);
+
+    std::tm nowTm = *std::gmtime(& now);
+    std::tm localTm = *std::localtime(& now);
+    std::time_t gmt = std::mktime(& nowTm);
+    if (localTm.tm_isdst)
+        gmt += 3600;
+
+    return gmt;
+}
+
+constexpr int TimeUtils::SecondsPerDay () {
+    return 3600 * 24;
 }

@@ -1,5 +1,6 @@
 #include "TimedBackupJob.h"
 #include "TimeUtils.h"
+#include "SQLiteBackupIndexProvider.h"
 
 TimedBackupJob::TimedBackupJob (std::string source, std::string destination, std::string name, bool compressed,
                                 TimeUtils::weekday_t day, int time, int64_t id, long long lastFinished)
@@ -12,5 +13,8 @@ std::string TimedBackupJob::GetPlan () const {
 }
 
 bool TimedBackupJob::ShouldStartBackup () const {
-    return BackupJob::ShouldStartBackup();
+    BackupIndexProvider* indexProvider = new SQLiteBackupIndexProvider(const_cast<TimedBackupJob*>(this));
+    long long completed = indexProvider->LastSuccessfulCompletion();
+    delete indexProvider;
+    return completed < TimeUtils::PlanLastScheduledTime(m_PlanDayOfWeek, m_PlanSecondsSinceDayStarted);
 }
