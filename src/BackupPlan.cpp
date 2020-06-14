@@ -1,11 +1,8 @@
 #include "BackupPlan.h"
 
 BackupPlan::~BackupPlan () {
-    for (auto & it : m_Jobs) {
-        delete it;
-    }
-
-    m_Jobs.clear();
+    for (size_t i = 0; i < m_Jobs.size(); i++)
+        delete m_Jobs[i];
 }
 
 void BackupPlan::AddBackup (BackupJob* job) {
