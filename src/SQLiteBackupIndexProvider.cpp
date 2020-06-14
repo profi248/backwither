@@ -213,7 +213,7 @@ int64_t SQLiteBackupIndexProvider::SaveSnapshotFileIndex (Directory & fld) {
 }
 
 Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) {
-    Directory dir("/");
+    Directory dir;
 
     sqlite3_stmt* loadFilesStmt;
 

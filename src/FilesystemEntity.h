@@ -11,7 +11,6 @@
 class FilesystemEntity {
 protected:
     std::string m_Path;
-    std::string m_Name;
 public:
     virtual ~FilesystemEntity () = default;
 

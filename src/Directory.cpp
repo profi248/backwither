@@ -4,19 +4,12 @@
 #include "Directory.h"
 #include "File.h"
 
-Directory::Directory (std::string path) {
-    m_Path = path;
-}
-
 void Directory::AddFilesystemEntity (std::shared_ptr<FilesystemEntity> e) {
     m_Contents.insert(e);
 }
 
 Directory Directory::operator - (const Directory & dir) const {
-    if (m_Path != dir.m_Path)
-        throw std::runtime_error("Directory diff paths differ.");
-
-    Directory diff(m_Path);
+    Directory diff;
 
     std::set_difference(m_Contents.begin(), m_Contents.end(),
                         dir.m_Contents.begin(), dir.m_Contents.end(),
@@ -35,7 +28,7 @@ size_t Directory::EntityCount () {
 }
 
 Directory Directory::operator + (const Directory & dir) const {
-    Directory merged(m_Path);
+    Directory merged;
 
     std::merge(m_Contents.begin(), m_Contents.end(),
                dir.m_Contents.begin(), dir.m_Contents.end(),

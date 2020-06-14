@@ -8,7 +8,7 @@ size_t File::GetSize () {
     return m_Size;
 }
 
-size_t File::GetMtime () {
+long long File::GetMtime () {
     return m_Mtime;
 }
 

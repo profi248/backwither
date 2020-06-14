@@ -17,7 +17,7 @@ Directory FilesystemUtils::BrowseFolderRecursive (string path_str) {
     auto path = fs::path(path_str);
     auto de = fs::directory_entry(path);
 
-    Directory root("/");
+    Directory root;
 
     for (auto & item : fs::recursive_directory_iterator(path)) {
         // todo handle folder links (ignored now)

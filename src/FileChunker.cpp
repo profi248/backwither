@@ -47,8 +47,7 @@ void FileChunker::SaveFileChunks (std::string inFile, int64_t fileID, std::strin
     config->SaveFileChunks(chunks, snapshotId);
 }
 
-void FileChunker::RestoreFileFromChunks (string source, string destination, ChunkList chunks,
-                                         string filePath, bool compressed) {
+void FileChunker::RestoreFileFromChunks (string source, ChunkList chunks, string filePath, bool compressed) {
     ChunkListIterator it(& chunks);
     // string destinationFile = NormalizeDirectoryPath(destination) + filePath;
     if (fs::exists(filePath))

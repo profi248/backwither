@@ -4,7 +4,6 @@
 #include "UserInterface.h"
 #include "TimeUtils.h"
 
-
 DirectoryIterator::DirectoryIterator (Directory * dir) :
         m_Directory(dir),
         m_DirectoryIt (dir->m_Contents.begin()) {}

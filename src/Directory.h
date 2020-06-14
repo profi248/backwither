@@ -12,15 +12,33 @@
 class DirectoryIterator;
 
 class Directory : public FilesystemEntity {
-    /// list of files
+    /// List of files
     std::set<std::shared_ptr<FilesystemEntity>, FilesystemEntity::Compare> m_Contents;
 
 public:
-    Directory(std::string path);
+    Directory () = default;
     ~Directory() override;
-    void        AddFilesystemEntity(std::shared_ptr<FilesystemEntity>);
-    size_t      EntityCount();
+    /**
+     * Add a fileystem entity to the directory
+     * @param e The filesystem entity to add.
+     */
+    void AddFilesystemEntity(std::shared_ptr<FilesystemEntity> e);
+    /**
+     * Count entities in directory.
+     * @return Number of entities in directory.
+     */
+    size_t EntityCount();
+    /**
+     * Compute difference between contents of two directories.
+     * @param dir Second directory.
+     * @return Difference of directories.
+     */
     Directory   operator - (Directory const & dir) const;
+    /**
+     * Combine contents of two directories.
+     * @param dir Second directory.
+     * @return Combined directory.
+     */
     Directory   operator + (Directory const & dir) const;
 
     friend class DirectoryIterator;

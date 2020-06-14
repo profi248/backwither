@@ -101,8 +101,8 @@ int BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string fileP
         if (ui)
             ui->UpdateProgress(cnt, total, it.GetPath(), it.GetSize());
         ChunkList fileChunks = config->RetrieveFileChunks(this, snapshotId, it.GetID());
-        FileChunker::RestoreFileFromChunks(restoreFrom, restoreTo, fileChunks,
-                                               restoreTo / it.GetPath(), IsCompressed());
+        FileChunker::RestoreFileFromChunks(restoreFrom, fileChunks,
+                                           restoreTo / it.GetPath(), IsCompressed());
         it++;
         cnt++;
     }

@@ -2,7 +2,6 @@
 #define BACKWITHER_SNAPSHOT_H
 #include <cstdint>
 
-// todo save additional data like size difference / file difference
 class Snapshot {
     int64_t   m_ID;
     long long m_Created;

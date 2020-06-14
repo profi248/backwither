@@ -1,7 +1,7 @@
 #include "TimeDirectoryComparator.h"
 
 Directory TimeDirectoryComparator::CompareDirs (Directory prev, Directory curr) {
-    Directory changedFiles("/");
+    Directory changedFiles;
     Directory newFiles = curr - prev;
     Directory deletedFiles = prev - curr;
 
