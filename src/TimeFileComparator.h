@@ -7,7 +7,7 @@
  */
 class TimeFileComparator : public FileComparator {
 public:
-    TimeFileComparator();
+    TimeFileComparator() = default;
     ~TimeFileComparator() override = default;
 
     Directory CompareDirs(Directory prev, Directory curr) override;

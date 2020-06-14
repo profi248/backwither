@@ -21,18 +21,13 @@ Directory Directory::operator - (const Directory & dir) const {
     std::set_difference(m_Contents.begin(), m_Contents.end(),
                         dir.m_Contents.begin(), dir.m_Contents.end(),
                         std::inserter(diff.m_Contents, diff.m_Contents.begin()),
-                        Directory::compare);
+                        FilesystemEntity::Cmp);
 
     return diff;
 }
 
 Directory::~Directory () {
     m_Contents.clear();
-}
-
-bool Directory::compare (const std::shared_ptr <FilesystemEntity> & a,
-                         const std::shared_ptr <FilesystemEntity> & b) {
-    return a->Path() < b->Path();
 }
 
 size_t Directory::EntityCount () {
@@ -43,9 +38,9 @@ Directory Directory::operator + (const Directory & dir) const {
     Directory merged(m_Path);
 
     std::merge(m_Contents.begin(), m_Contents.end(),
-                    dir.m_Contents.begin(), dir.m_Contents.end(),
-                    std::inserter(merged.m_Contents, merged.m_Contents.begin()),
-                    Directory::compare);
+               dir.m_Contents.begin(), dir.m_Contents.end(),
+               std::inserter(merged.m_Contents, merged.m_Contents.begin()),
+               FilesystemEntity::Cmp);
 
     return merged;
 }

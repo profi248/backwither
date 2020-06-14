@@ -12,9 +12,8 @@
 class DirectoryIterator;
 
 class Directory : public FilesystemEntity {
-    // list of files and subfolders
-    // todo use custom comparator
-    std::set<std::shared_ptr<FilesystemEntity>> m_Contents;
+    /// list of files
+    std::set<std::shared_ptr<FilesystemEntity>, FilesystemEntity::Compare> m_Contents;
 
 public:
     Directory(std::string path);
@@ -25,10 +24,6 @@ public:
     Directory   operator + (Directory const & dir) const;
 
     friend class DirectoryIterator;
-
-private:
-    static bool compare(const std::shared_ptr<FilesystemEntity> & a,
-                        const std::shared_ptr<FilesystemEntity> & b);
 };
 
 #endif //BACKUP_FILE_H

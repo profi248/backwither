@@ -1,6 +1,5 @@
 #include "TimeFileComparator.h"
 
-// todo it might be broken...
 Directory TimeFileComparator::CompareDirs (Directory prev, Directory curr) {
     Directory changedFiles("/");
     Directory newFiles = curr - prev;
@@ -14,7 +13,7 @@ Directory TimeFileComparator::CompareDirs (Directory prev, Directory curr) {
     DirectoryIterator prevIt(& potentiallyChangedFilesPrevious);
     DirectoryIterator currIt(& potentiallyChangedFilesCurrent);
 
-    // std::set is guaranteed to be sorted
+    // std::set is guaranteed to be sorted by path
     while (!prevIt.End() && !currIt.End()) {
         if (currIt.GetMtime() > prevIt.GetMtime())
             changedFiles.AddFilesystemEntity(currIt.Current());
@@ -24,5 +23,3 @@ Directory TimeFileComparator::CompareDirs (Directory prev, Directory curr) {
 
     return changedFiles + newFiles;
 }
-
-TimeFileComparator::TimeFileComparator () {}

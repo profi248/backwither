@@ -2,6 +2,7 @@
 #define BACKUP_FILESYSTEMENTITY_H
 
 #include <string>
+#include <memory>
 
 /**
  * Base class for filesystem entities (file/folder/link).
@@ -22,7 +23,28 @@ public:
         return m_Path;
     }
 
-};
+    /**
+     * Compare FilesystemEntities by path.
+     * @param a First value.
+     * @param b Second value.
+     * @return bool (a < b)
+     */
 
+    static bool Cmp (const std::shared_ptr<FilesystemEntity> & a,
+                     const std::shared_ptr<FilesystemEntity> & b) {
+        return a->Path() < b->Path();
+    }
+
+    struct Compare {
+        /**
+         * Functor for set ordering by path.
+         * @return bool (a < b)
+         */
+        bool operator () (const std::shared_ptr<FilesystemEntity> & a,
+                          const std::shared_ptr<FilesystemEntity> & b) const {
+            return Cmp(a, b);
+        }
+    };
+};
 
 #endif //BACKUP_FILESYSTEMENTITY_H
