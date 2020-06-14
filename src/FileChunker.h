@@ -11,7 +11,7 @@ class FileChunker {
     static char* buf; // make it static class member to avoid memory leaks when exception is thrown
 public:
     /**
-     * @var Maximum possible chunk size (e.g. for allocation).
+     * Maximum possible chunk size (e.g. for allocation).
      */
     static constexpr int MAX_CHUNK_SIZE = CHUNK_SIZE;
     ~FileChunker ();
@@ -43,6 +43,7 @@ public:
 
     /**
      * Computes SHA-256 hash of a chunk.
+     *
      * @param data Raw data.
      * @param size Size of raw data.
      * @return Hash in hex form.

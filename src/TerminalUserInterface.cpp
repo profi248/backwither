@@ -258,7 +258,7 @@ int TerminalUserInterface::help () {
             "  diff\t\tshow difference between snapshots" << endl <<
             "  show\t\tshow files in specified snapshot" << endl <<
             "  history\tshow snapshots in a specified backup job" << endl <<
-            "  run\trun all backups" << endl <<
+            "  run\t\trun all backups" << endl <<
             "  run-cron\trun planned backups" << endl <<
             "  help\t\tshow this help message" << endl << endl;
 

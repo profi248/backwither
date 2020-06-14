@@ -8,12 +8,20 @@ class TimeUtils {
     static constexpr char FORMAT[] = "%F %T";
 public:
     /**
-     * @enum Weekdays compatible with tm::tm_wday.
+     * Weekdays compatible with tm::tm_wday.
      */
-    enum weekday_t {NONE = -1, SUN = 0, MON, TUE, WED, THU, FRI, SAT};
+    enum weekday_t { NONE = -1, /**< Invalid day */
+                     SUN = 0,   /**< Sunday */
+                     MON = 1,   /**< Monday */
+                     TUE = 2,   /**< Tuesday */
+                     WED = 3,   /**< Wednesday */
+                     THU = 4,   /**< Thursday */
+                     FRI = 5,   /**< Friday */
+                     SAT = 6    /**< Saturday */
+    };
 
     /**
-     * @var Indicator of unspecified time/plan.
+     * Indicator of unspecified time/plan.
      */
     static constexpr char ZERO[]   = "---";
 
@@ -67,6 +75,11 @@ public:
      * @return Pair {XX, YY}.
      */
     static std::pair<int64_t, int64_t> ParsePosColumnSeparatedInts (std::string nums);
+
+    /**
+     * Compute number of seconds per day.
+     * @return Number of seconds per day.
+     */
     static constexpr int SecondsPerDay ();
 
     // from https://stackoverflow.com/a/58237530/2465760
