@@ -98,11 +98,11 @@ bool FilesystemUtils::IsDirectoryEmpty (string path) {
 
 string FilesystemUtils::AbsolutePath (std::string path, bool create) {
     if (fs::exists(path))
-        return fs::absolute(path);
+        return fs::canonical(path);
     else {
         if (create) {
             fs::create_directories(path);
-            return fs::absolute(path);
+            return fs::canonical(path);
         } else
             throw runtime_error("Backup path \"" + path + "\" does not exist.");
     }
