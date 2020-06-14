@@ -481,18 +481,18 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePa
 
 int TerminalUserInterface::runCron () {
     BackupPlan* plan = loadBackupPlan();
-    // cout << TimeUtils::PlanLastScheduledTime(TimeUtils::SAT, 68400) << endl;
     if (!plan)
         return 2;
 
     BackupPlanIterator* it = new BackupPlanIterator(plan);
-    cout << TimeUtils::PlanLastScheduledTime(TimeUtils::SAT, 68400) << endl;
 
     while (!it->End()) {
         try {
             BackupJob* job = it->Current();
-            if (job->ShouldStartBackup())
+            if (job->ShouldStartBackup()) {
+                cerr << "Backing up " << job->GetName() << "..." << endl;
                 job->Backup(this);
+            }
         } catch (runtime_error & e) {
             cerr << "Fatal error: " << e.what() << endl;
             delete it;

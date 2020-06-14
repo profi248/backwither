@@ -80,6 +80,8 @@ long long TimeUtils::PlanLastScheduledTime (weekday_t day, int secondsSinceStart
     if (localTm.tm_isdst)
         today += 3600;
 
+    int dayDiff = nowTm.tm_wday - day;
+    dayDiff += 7;
     if (nowTm.tm_wday == day && today + secondsSinceStart < now) {
         // this day
         return today + secondsSinceStart;
@@ -87,7 +89,7 @@ long long TimeUtils::PlanLastScheduledTime (weekday_t day, int secondsSinceStart
         // last week
         return today + secondsSinceStart - 7 * SecondsPerDay();
     } else {
-        return today + secondsSinceStart - (nowTm.tm_wday - day) * SecondsPerDay();
+        return today + secondsSinceStart - dayDiff * SecondsPerDay();
     }
 }
 
