@@ -12,6 +12,10 @@ class BackupPlan {
     std::vector<BackupJob*> m_Jobs;
 public:
     ~BackupPlan ();
+    /**
+     * Adds a backup job to backup plan.
+     * @param job Backup job to add.
+     */
     void AddBackup (BackupJob* job);
 
     friend class BackupPlanIterator;

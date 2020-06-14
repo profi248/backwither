@@ -32,8 +32,6 @@ Directory FilesystemUtils::BrowseFolderRecursive (string path_str) {
                     item.file_size()))
             );
         }
-
-
     }
 
     return root;

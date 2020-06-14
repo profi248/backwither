@@ -4,6 +4,10 @@
 #include <memory>
 #include <vector>
 
+/**
+ * Represents a chunk (storing metadata).
+ */
+
 class Chunk {
     std::string m_Hash;
     size_t      m_Size;

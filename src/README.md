@@ -1,5 +1,6 @@
 # backwither backup
-Zálohovací progam.
+Zálohovací progam s deduplikací a rychlou inkrementální zálohou, kompresí, 
+možností navrátit se na libovolný stav souboru a plánovačem.
 
 Návod k použití:
 ```

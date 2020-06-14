@@ -21,7 +21,7 @@ BackupJob::BackupJob (std::string source, std::string destination, std::string n
         m_ID (id),
         m_LastCompleted (0) {}
 
-int BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
+void BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
     fs::path source = fs::path(GetSource());
     fs::path destination = fs::path(GetDestination());
 
@@ -67,11 +67,10 @@ int BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
     }
 
     config->FinalizeBackup(this);
-    return 0;
 }
 
 // check if backup is compressed when having identical destination folders for more backups
-int BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string filePath) {
+void BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string filePath) {
     fs::path restoreFrom = fs::path(GetDestination());
     fs::path restoreTo = fs::path(GetSource());
 
@@ -106,8 +105,6 @@ int BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string fileP
         it++;
         cnt++;
     }
-
-    return 0;
 }
 
 std::string BackupJob::GetSource () const {
