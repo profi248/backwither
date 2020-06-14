@@ -22,12 +22,12 @@ public:
     int64_t       SaveSnapshotFileIndex (Directory & fld) override;
     Directory     LoadSnapshotFileIndex (int64_t snapshotID) override;
     void          SaveFileChunks (ChunkList chunks, int64_t snapshotId) override;
-    ChunkList     RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) override;
+    ChunkList     RetrieveFileChunks (int64_t snapshotId, int64_t fileId) override;
     SnapshotList* LoadSnapshotList () override;
     Snapshot      GetSnapshot (int64_t id) override;
     long long     LastSuccessfulCompletion () override;
     bool          DoesFileExistInSnapshot (int64_t snapshotId, std::string filePath) override;
-    void          FinalizeBackup (BackupJob* job) override;
+    void          FinalizeBackup () override;
 
 private:
     int         prepareOne(const char* sql, sqlite3_stmt** stmt);

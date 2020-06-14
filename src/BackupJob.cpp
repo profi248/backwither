@@ -66,7 +66,7 @@ void BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
         cnt++;
     }
 
-    config->FinalizeBackup(this);
+    config->FinalizeBackup();
 }
 
 // check if backup is compressed when having identical destination folders for more backups
@@ -99,7 +99,7 @@ void BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string file
         }
         if (ui)
             ui->UpdateProgress(cnt, total, it.GetPath(), it.GetSize());
-        ChunkList fileChunks = config->RetrieveFileChunks(this, snapshotId, it.GetID());
+        ChunkList fileChunks = config->RetrieveFileChunks(snapshotId, it.GetID());
         FileChunker::RestoreFileFromChunks(restoreFrom, fileChunks,
                                            restoreTo / it.GetPath(), IsCompressed());
         if (!filePath.empty())

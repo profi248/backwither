@@ -335,7 +335,7 @@ void SQLiteBackupIndexProvider::SaveFileChunks (ChunkList chunks, int64_t snapsh
 
 }
 
-ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (BackupJob* job, int64_t snapshotId, int64_t fileId) {
+ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (int64_t snapshotId, int64_t fileId) {
     ChunkList chunks(fileId);
     sqlite3_stmt* retrieveChunksStmt;
 
@@ -477,7 +477,7 @@ bool SQLiteBackupIndexProvider::DoesFileExistInSnapshot (int64_t snapshotId, std
 }
 
 
-void SQLiteBackupIndexProvider::FinalizeBackup (BackupJob* job) {
+void SQLiteBackupIndexProvider::FinalizeBackup () {
     int64_t lastSnapshotId = getLastSnapshotId();
     sqlite3_stmt* completeSnapshotStmt;
 
