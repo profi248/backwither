@@ -9,7 +9,7 @@ FILES= \
 	src/bin/intermediate/SQLiteConfigProvider.o src/bin/intermediate/FilesystemUtils.o \
 	src/bin/intermediate/FilesystemChunkStorageProvider.o src/bin/intermediate/CompressedFilesystemChunkStorageProvider.o \
 	src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o \
-	src/bin/intermediate/HashFileComparator.o src/bin/intermediate/TimeFileComparator.o \
+	src/bin/intermediate/TimeDirectoryComparator.o \
 	src/bin/intermediate/BackupPlanIterator.o src/bin/intermediate/DirectoryIterator.o src/bin/intermediate/FileChunker.o \
 	src/bin/intermediate/Chunk.o src/bin/intermediate/ChunkList.o src/bin/intermediate/ChunkListIterator.o \
 	src/bin/intermediate/SQLiteBackupIndexProvider.o src/bin/intermediate/Snapshot.o \

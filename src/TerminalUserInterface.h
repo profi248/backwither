@@ -23,8 +23,8 @@ private:
     int             list ();
     int             history (char* backupName);
     int             help ();
-    int add (char* source, char* destination, char* name, bool compress, char* wday, char* time);
-    int             backup (char* name);
+    int             add (char* source, char* destination, char* name, bool compress, char* wday, char* time);
+    int             backup (char* name, bool disableTimeComparator);
     int             restore (char* name, int64_t snapshotId, char* filePath);
     int             diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB);
     int             show (char* name, int64_t snapshotId);

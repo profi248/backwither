@@ -32,7 +32,7 @@ public:
      * Start backup of this job.
      */
 
-    int Backup (UserInterface* ui);
+    int Backup (UserInterface* ui, bool disableTimeComp);
     int Restore (UserInterface* ui, int64_t snapshotId, std::string filePath);
 
     std::string                  GetSource () const;

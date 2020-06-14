@@ -5,8 +5,9 @@
 #include "FilesystemUtils.h"
 #include "FileChunker.h"
 #include "SQLiteBackupIndexProvider.h"
-#include "TimeFileComparator.h"
+#include "TimeDirectoryComparator.h"
 #include "TimeUtils.h"
+#include "BasicDirectoryComparator.h"
 
 namespace fs = std::filesystem;
 
@@ -20,7 +21,7 @@ BackupJob::BackupJob (std::string source, std::string destination, std::string n
         m_ID (id),
         m_LastCompleted (0) {}
 
-int BackupJob::Backup (UserInterface* ui) {
+int BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
     fs::path source = fs::path(GetSource());
     fs::path destination = fs::path(GetDestination());
 
@@ -42,8 +43,14 @@ int BackupJob::Backup (UserInterface* ui) {
 
     int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState);
 
-    TimeFileComparator comp;
-    Directory toBackup = comp.CompareDirs(prevState, currentState);
+    DirectoryComparator* comp = nullptr;
+    if (!disableTimeComp)
+        comp = new TimeDirectoryComparator();
+    else
+        comp = new BasicDirectoryComparator();
+
+    Directory toBackup = comp->CompareDirs(prevState, currentState);
+    delete comp;
     DirectoryIterator it(& toBackup);
 
     size_t cnt = 1;

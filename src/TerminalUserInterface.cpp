@@ -9,7 +9,7 @@
 #include "SQLiteBackupIndexProvider.h"
 #include "FilesystemUtils.h"
 #include "SnapshotListIterator.h"
-#include "TimeFileComparator.h"
+#include "TimeDirectoryComparator.h"
 #include "TimeUtils.h"
 #include "TimedBackupJob.h"
 
@@ -25,12 +25,12 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
     char *id = nullptr, *source = nullptr, *destination = nullptr, *time = nullptr, *wday = nullptr;
     char *name = nullptr, *comparePair = nullptr, *filePath = nullptr;
-    bool compress = true;
+    bool compress = true, disableTimeComparator = false;
     int  index, c;
 
     // parse arguments: options need to be parsed first, then commands
 
-    while ((c = getopt (argc, argv, "i:s:d:n:c:p:f:t:w:x")) != -1)
+    while ((c = getopt (argc, argv, "i:s:d:n:c:p:f:t:w:xm")) != -1)
         switch (c) {
             case 'i':
                 id = optarg;
@@ -61,6 +61,9 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 break;
             case 'x':
                 compress = false;
+                break;
+            case 'm':
+                disableTimeComparator = true;
                 break;
             case '?':
                 if (optopt == 'f' || optopt == 'p' || optopt == 'i' || optopt == 's' || optopt == 't' ||
@@ -103,7 +106,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 return 1;
             }
 
-            return backup(name);
+            return backup(name, disableTimeComparator);
         } else if (command == "restore") {
             if (!name) {
                 cerr << "Specifying backup name (-n) is required." << endl;
@@ -151,6 +154,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             help();
         } else {
             cerr << "Command " << command << " not recognized." << endl;
+            help();
             return 1;
         }
     }
@@ -261,6 +265,7 @@ int TerminalUserInterface::help () {
             "  -d\tspecify new backup job destination path" << endl <<
             "  -f\tspecify a path to a specific file (for restore)" << endl <<
             "  -i\tspecify snapshot ID (to restore)" << endl <<
+            "  -m\tdisable filesystem time comparision speedup of backup" << endl <<
             "  -n\tspecify backup job name" << endl <<
             "  -p\tspecify a pair of snapshot to compare in diff [format id:id]" << endl <<
             "  -s\tspecify new backup job source path" << endl <<
@@ -320,14 +325,14 @@ int TerminalUserInterface::add (char* source, char* destination, char* name, boo
     return 0;
 }
 
-int TerminalUserInterface::backup (char* name) {
+int TerminalUserInterface::backup (char* name, bool disableTimeComparator) {
     // add potential not enough space warning
     BackupJob* job = findBackupJobByName(name);
     if (!job)
         return 2;
 
     try {
-        job->Backup(this);
+        job->Backup(this, disableTimeComparator);
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
@@ -377,7 +382,7 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
             cout << endl;
         }
 
-        TimeFileComparator comp;
+        TimeDirectoryComparator comp;
         Directory modified = comp.CompareDirs(b, a) - added - removed;
         itModified = new DirectoryIterator(& modified);
         if (!itModified->Empty()) {
@@ -505,7 +510,7 @@ int TerminalUserInterface::runCron () {
             BackupJob* job = it->Current();
             if (job->ShouldStartBackup()) {
                 cerr << "Backing up " << job->GetName() << "..." << endl;
-                job->Backup(this);
+                job->Backup(this, false);
             }
         } catch (runtime_error & e) {
             cerr << "Fatal error: " << e.what() << endl;
