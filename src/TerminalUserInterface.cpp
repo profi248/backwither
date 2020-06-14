@@ -141,6 +141,8 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             snapshotId = strtoll(id, nullptr, 10);
 
             return show(name, snapshotId);
+        } else if (command == "run") {
+            return run();
         } else if (command == "run-cron") {
             return runCron();
         } else if (command == "remove") {
@@ -256,6 +258,7 @@ int TerminalUserInterface::help () {
             "  diff\t\tshow difference between snapshots" << endl <<
             "  show\t\tshow files in specified snapshot" << endl <<
             "  history\tshow snapshots in a specified backup job" << endl <<
+            "  run\trun all backups" << endl <<
             "  run-cron\trun planned backups" << endl <<
             "  help\t\tshow this help message" << endl << endl;
 
@@ -498,6 +501,31 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePa
     return 0;
 }
 
+int TerminalUserInterface::run () {
+    BackupPlan* plan = loadBackupPlan();
+    if (!plan)
+        return 2;
+
+    BackupPlanIterator* it = new BackupPlanIterator(plan);
+
+    while (!it->End()) {
+        try {
+            BackupJob* job = it->Current();
+            job->Backup(this, false);
+        } catch (runtime_error & e) {
+            cerr << "Fatal error: " << e.what() << endl;
+            delete it;
+            delete plan;
+            return 2;
+        }
+        (*it)++;
+    }
+
+    delete it;
+    delete plan;
+    return 0;
+}
+
 int TerminalUserInterface::runCron () {
     BackupPlan* plan = loadBackupPlan();
     if (!plan)
@@ -509,7 +537,6 @@ int TerminalUserInterface::runCron () {
         try {
             BackupJob* job = it->Current();
             if (job->ShouldStartBackup()) {
-                cerr << "Backing up " << job->GetName() << "..." << endl;
                 job->Backup(this, false);
             }
         } catch (runtime_error & e) {
@@ -712,4 +739,10 @@ BackupPlan* TerminalUserInterface::loadBackupPlan () {
 
     delete config;
     return plan;
+}
+
+void TerminalUserInterface::cleanRow () {
+    if (!isatty(fileno(stderr)) || !ENABLE_PROGRESS)
+        return;
+    cerr << left << setw(m_LastStatusLength) << setfill(' ') << '\r' << flush;
 }
