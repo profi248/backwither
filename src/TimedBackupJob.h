@@ -16,13 +16,29 @@ private:
     int                  m_PlanSecondsSinceDayStarted;
 public:
     virtual ~TimedBackupJob() = default;
+
     /**
      * Tells if job is due for backup.
      * @return Whether to do backup now.
      */
     bool ShouldStartBackup () const override;
+
+    /**
+     * Returns formatted string with backup plan.
+     * @return Human friendly backup plan string.
+     */
     std::string GetPlan () const override;
+
+    /**
+     * Get weekday_t of planned backup.
+     * @return Planned weekday.
+     */
     TimeUtils::weekday_t GetPlanWeekday () const override;
+
+    /**
+     * Get seconds since day started of planned backup.
+     * @return Planned backup time.
+     */
     int GetPlanSecsSinceDay () const override;
 };
 

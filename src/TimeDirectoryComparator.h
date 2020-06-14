@@ -10,6 +10,14 @@ public:
     TimeDirectoryComparator() = default;
     ~TimeDirectoryComparator() override = default;
 
+    /**
+     * Compare two directory states by modified ttmes from filesystem
+     * and return files to backup (modified since last and completely new).
+     *
+     * @param prev Previous directory state.
+     * @param curr Current directory state.
+     * @return Directory with files to backup.
+     */
     Directory CompareDirs(Directory prev, Directory curr) override;
 };
 
