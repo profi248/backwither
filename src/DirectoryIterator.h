@@ -11,8 +11,8 @@
 class Directory;
 
 class DirectoryIterator : public SimpleIterator {
-    Directory*                                            m_Directory;
-    std::set<std::shared_ptr<FilesystemEntity>>::iterator m_DirectoryIt;
+    Directory*                                                                       m_Directory;
+    std::set<std::shared_ptr<FilesystemEntity>, FilesystemEntity::Compare>::iterator m_DirectoryIt;
 public:
     explicit DirectoryIterator (Directory * dir);
     ~DirectoryIterator () override = default;

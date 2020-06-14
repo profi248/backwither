@@ -5,6 +5,7 @@
 #include <memory>
 #include "FilesystemEntity.h"
 #include "DirectoryIterator.h"
+#include "DirectoryDiffIterator.h"
 
 /**
  * Represents a folder in a filesystem tree.
@@ -42,6 +43,7 @@ public:
     Directory   operator + (Directory const & dir) const;
 
     friend class DirectoryIterator;
+    friend class DirectoryDiffIterator;
 };
 
 #endif //BACKUP_FILE_H

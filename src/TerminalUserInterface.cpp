@@ -12,6 +12,7 @@
 #include "TimeDirectoryComparator.h"
 #include "TimeUtils.h"
 #include "TimedBackupJob.h"
+#include "DirectoryDiffIterator.h"
 
 const int TERM_RED = 31;
 const int TERM_GREEN = 32;
@@ -130,7 +131,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 return 1;
             }
 
-            return diff(name, snapshotIDs.first, snapshotIDs.second);
+            return diff(name, snapshotIDs.first, snapshotIDs.second, filePath);
         } else if (command == "show") {
             if (!id | !name) {
                 cerr << "Specifying backup name (-n) and snapshot ID (-i) is required." << endl;
@@ -266,7 +267,7 @@ int TerminalUserInterface::help () {
 
     cout << "  -c\tspecify config directory" << endl <<
             "  -d\tspecify new backup job destination path" << endl <<
-            "  -f\tspecify a path to a specific file (for restore)" << endl <<
+            "  -f\tspecify a path to a specific file (for restore or diff)" << endl <<
             "  -i\tspecify snapshot ID (to restore)" << endl <<
             "  -m\tdisable filesystem time comparision speedup of backup" << endl <<
             "  -n\tspecify backup job name" << endl <<
@@ -274,7 +275,7 @@ int TerminalUserInterface::help () {
             "  -s\tspecify new backup job source path" << endl <<
             "  -t\tspecify a time to run a backup (when adding a new backup) [format 00:00-23:59]" << endl <<
             "  -w\tspecify a day of week to run a backup (when adding a new backup) [format mo-su]" << endl <<
-            "  -x\tdisable compression (when adding a new backub)" << endl;
+            "  -x\tdisable compression (when adding a new backup)" << endl;
     return 0;
 }
 
@@ -347,10 +348,15 @@ int TerminalUserInterface::backup (char* name, bool disableTimeComparator) {
 }
 
 // todo better handle incorrect input (nonexistent snapshots/internal values)
-int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB) {
+int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB, char* file) {
+    bool filter = false;
+    if (file)
+        filter = true;
+
     BackupIndexProvider* indexProvider = nullptr;
     ConfigProvider* config = getConfigProvider();
-    DirectoryIterator *itAdded = nullptr, *itRemoved = nullptr, *itModified = nullptr;
+    DirectoryIterator *itAdded = nullptr, *itRemoved = nullptr;
+    DirectoryDiffIterator *itModified = nullptr;
 
     BackupJob* job = findBackupJobByName(name);
     if (!job)
@@ -363,6 +369,7 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
             snapshotIdA = tmp;
         }
 
+        // snapshot B is always older
         indexProvider = new SQLiteBackupIndexProvider(job);
         Directory a = indexProvider->LoadSnapshotFileIndex(snapshotIdA);
         Directory b = indexProvider->LoadSnapshotFileIndex(snapshotIdB);
@@ -372,26 +379,43 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
         itRemoved = new DirectoryIterator(& removed);
         int formatChars;
 
-
-        cout << "comparing snapshots " << snapshotIdA << " and " << snapshotIdB << endl;
-        if (!itAdded->Empty()) {
-            cout << format("files added", formatChars, true, TERM_GREEN) << endl;
-            printTable(itAdded);
-            cout << endl;
-        }
-        if (!itRemoved->Empty()) {
-            cout << format("files removed", formatChars, true, TERM_RED) << endl;
-            printTable(itRemoved);
-            cout << endl;
-        }
-
         TimeDirectoryComparator comp;
         Directory modified = comp.CompareDirs(b, a) - added - removed;
-        itModified = new DirectoryIterator(& modified);
+        Directory modifiedB = b - added - removed;
+        Directory modifiedA = a - added - removed;
+        itModified = new DirectoryDiffIterator (& modifiedB, & modifiedA);
+
+        cout << "comparing snapshots " << snapshotIdA << " and " << snapshotIdB << endl;
+        if (itAdded->Empty() && itModified->Empty() && itModified->Empty())
+            cout << "no difference" << endl;
+
+        if (!itAdded->Empty()) {
+            cout << format("files added", formatChars, true, TERM_GREEN) << endl;
+            if (filter)
+                printTable(itAdded, 0, std::string(file));
+            else
+                printTable(itAdded);
+
+            cout << endl;
+        }
+
+        if (!itRemoved->Empty()) {
+            cout << format("files removed", formatChars, true, TERM_RED) << endl;
+            if (filter)
+                printTable(itRemoved, 0, std::string(file));
+            else
+                printTable(itRemoved);
+            cout << endl;
+        }
+
         if (!itModified->Empty()) {
             cout << format("files modified", formatChars, true, TERM_BLUE) << endl;
-            printTable(itModified);
+            if (filter)
+                printTable(itModified, 0, std::string(file));
+            else
+                printTable(itModified);
         }
+
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
@@ -439,6 +463,7 @@ int TerminalUserInterface::show (char* name, int64_t snapshotId) {
     return 0;
 }
 
+// fixme restore by file not working && restore file counter not working!
 int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePath) {
     string file;
 
@@ -639,7 +664,7 @@ bool TerminalUserInterface::yesNoPrompt () {
 }
 
 // setw broken in unicode
-void TerminalUserInterface::printTable (SimpleIterator* it) {
+void TerminalUserInterface::printTable (SimpleIterator* it, size_t filterCol, std::string filterStr) {
     if (!it | it->Empty())
         return;
 
@@ -661,11 +686,13 @@ void TerminalUserInterface::printTable (SimpleIterator* it) {
 
     // compute widths of columns with data
     colWidths = colHdrWidths;
-
+    // todo do not print headers if all data is filtered
     while (!it->End()) {
         size_t i = 0;
         for (auto & val : it->TableRow()) {
-            colWidths[i] = max(colWidths[i], val.length() + colPadding);
+            if (i != filterCol || (i == filterCol && filterStr == val))
+                colWidths[i] = max(colWidths[i], val.length() + colPadding);
+
             i++;
         }
         (*it)++;
@@ -682,14 +709,19 @@ void TerminalUserInterface::printTable (SimpleIterator* it) {
     }
 
     cout << endl;
-    i = 0;
-
     // print data
     while (!it->End()) {
-        for (auto & col : it->TableRow())
-            cout << left << setw(colWidths[i++]) << col;
+        bool filtered = false;
         i = 0;
-        cout << endl;
+        for (auto & col : it->TableRow()) {
+            if (i != filterCol || (i == filterCol && filterStr == col)) {
+                cout << left << setw(colWidths[i++]) << col;
+            } else {
+                filtered = true;
+            }
+        }
+        if (!filtered)
+            cout << endl;
         (*it)++;
     }
 }
