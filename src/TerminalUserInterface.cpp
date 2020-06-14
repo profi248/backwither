@@ -463,7 +463,6 @@ int TerminalUserInterface::show (char* name, int64_t snapshotId) {
     return 0;
 }
 
-// fixme restore by file not working && restore file counter not working!
 int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePath) {
     string file;
 

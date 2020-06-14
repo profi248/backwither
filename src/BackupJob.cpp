@@ -88,7 +88,7 @@ void BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string file
     DirectoryIterator it(& snapshotFiles);
     size_t cnt = 1;
     size_t total;
-    if (!filePath.empty())
+    if (filePath.empty())
         total = snapshotFiles.EntityCount();
     else
         total = 1;
@@ -102,6 +102,8 @@ void BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string file
         ChunkList fileChunks = config->RetrieveFileChunks(this, snapshotId, it.GetID());
         FileChunker::RestoreFileFromChunks(restoreFrom, fileChunks,
                                            restoreTo / it.GetPath(), IsCompressed());
+        if (!filePath.empty())
+            break;
         it++;
         cnt++;
     }
