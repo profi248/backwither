@@ -4,6 +4,7 @@
 #include "BackupPlanIterator.h"
 #include "ConfigProvider.h"
 #include "UserInterface.h"
+#include "TimeUtils.h"
 
 class BackupPlanIterator;
 class ConfigProvider;
@@ -34,13 +35,15 @@ public:
     int Backup (UserInterface* ui);
     int Restore (UserInterface* ui, int64_t snapshotId, std::string filePath);
 
-    std::string         GetSource () const;
-    std::string         GetDestination () const;
-    std::string         GetName () const;
-    virtual std::string GetPlan () const;
-    virtual bool        ShouldStartBackup () const;
-    bool                IsCompressed () const;
-    int64_t             GetID () const;
+    std::string                  GetSource () const;
+    std::string                  GetDestination () const;
+    std::string                  GetName () const;
+    virtual std::string          GetPlan () const;
+    virtual bool                 ShouldStartBackup () const;
+    virtual TimeUtils::weekday_t GetPlanWeekday () const;
+    virtual int GetPlanSecsSinceDay () const;
+    bool                         IsCompressed () const;
+    int64_t                      GetID () const;
 
     friend BackupPlanIterator;
 

@@ -17,6 +17,10 @@ SQLiteConfigProvider::SQLiteConfigProvider (std::string path) {
     m_DB   = openDB();
 }
 
+int SQLiteConfigProvider::prepareOne(const char* sql, sqlite3_stmt** stmt) {
+    return sqlite3_prepare_v2(m_DB, sql, SQLITE_NULL_TERMINATED, stmt, nullptr);
+}
+
 std::string SQLiteConfigProvider::getDefaultConfigPath () const {
     std::string path;
     // https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
@@ -139,15 +143,21 @@ std::string SQLiteConfigProvider::getDbPath () const {
 void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
      sqlite3_stmt* addJobStmt;
 
-    sqlite3_prepare_v2(m_DB,
-       "insert into backups (source, destination, name, compressed) values (?, ?, ?, ?);",
-       SQLITE_NULL_TERMINATED, & addJobStmt, nullptr);
+    prepareOne("insert into backups (source, destination, name, compressed, planday, plantime)"
+               " values (?, ?, ?, ?, ?, ?);", & addJobStmt);
 
     // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
     sqlite3_bind_text(addJobStmt, 1, job->GetSource().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
     sqlite3_bind_text(addJobStmt, 2, job->GetDestination().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
     sqlite3_bind_text(addJobStmt, 3, job->GetName().c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
     sqlite3_bind_int(addJobStmt, 4, static_cast<int>(job->IsCompressed()));
+    if (job->GetPlanWeekday() != TimeUtils::NONE && job->GetPlanSecsSinceDay() != -1) {
+        sqlite3_bind_int(addJobStmt, 5, static_cast<int>(job->GetPlanWeekday()));
+        sqlite3_bind_int(addJobStmt, 6, job->GetPlanSecsSinceDay());
+    } else {
+        sqlite3_bind_null(addJobStmt, 5);
+        sqlite3_bind_null(addJobStmt, 6);
+    }
 
     if (sqlite3_step(addJobStmt) != SQLITE_DONE) {
         sqlite3_finalize(addJobStmt);
@@ -157,12 +167,25 @@ void SQLiteConfigProvider::AddBackupJob (BackupJob* job) {
     sqlite3_finalize(addJobStmt);
 }
 
+void SQLiteConfigProvider::DeleteBackupJob (BackupJob* job) {
+    sqlite3_stmt* addJobStmt;
+    prepareOne("delete from backups where backup_id = ?;", & addJobStmt);
+
+    sqlite3_bind_int64(addJobStmt, 1, job->GetID());
+
+    if (sqlite3_step(addJobStmt) != SQLITE_DONE) {
+        sqlite3_finalize(addJobStmt);
+        throw std::runtime_error("Error when deleting a backup job.");
+    }
+
+    sqlite3_finalize(addJobStmt);
+}
+
 BackupJob* SQLiteConfigProvider::GetBackupJob (std::string name) {
     sqlite3_stmt* getBackupJobStmt;
     BackupJob* job;
-    sqlite3_prepare_v2(m_DB,
-        "select source, destination, name, compressed, backup_id, planday, plantime from backups where name = ?;",
-        SQLITE_NULL_TERMINATED, & getBackupJobStmt, nullptr);
+    prepareOne("select source, destination, name, compressed, backup_id, planday, plantime"
+               " from backups where name = ?;", & getBackupJobStmt);
 
     // SQLITE_TRANSIENT: SQLite needs to make a copy of the string
     sqlite3_bind_text(getBackupJobStmt, 1, name.c_str(), SQLITE_NULL_TERMINATED, SQLITE_TRANSIENT);
@@ -196,9 +219,8 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
     sqlite3_stmt* loadPlanStmt;
     BackupJob* job = nullptr;
 
-    sqlite3_prepare_v2(m_DB,
-       "select source, destination, name, compressed, backup_id, planday, plantime from backups order by name;",
-       SQLITE_NULL_TERMINATED, & loadPlanStmt, nullptr);
+    prepareOne("select source, destination, name, compressed, backup_id, planday, plantime"
+               " from backups order by name;", & loadPlanStmt);
     while (sqlite3_step(loadPlanStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
         std::string src  = std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadPlanStmt, 0)));
@@ -209,7 +231,8 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
         int planDay      = sqlite3_column_int(loadPlanStmt, 5);
         int planTime     = sqlite3_column_int(loadPlanStmt, 6);
 
-        if (planDay)
+        if (sqlite3_column_type(loadPlanStmt, 5) != SQLITE_NULL && planDay != TimeUtils::NONE
+            && sqlite3_column_type(loadPlanStmt, 6) != SQLITE_NULL && planTime != -1)
             job = new TimedBackupJob(src, dst, name, compressed,
                                      static_cast<TimeUtils::weekday_t>(planDay), planTime, id);
         else

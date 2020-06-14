@@ -25,10 +25,12 @@ public:
     ~SQLiteConfigProvider () override;
 
     void        AddBackupJob (BackupJob* job) override;
+    void        DeleteBackupJob (BackupJob* job) override;
     BackupJob*  GetBackupJob (std::string name) override;
     BackupPlan* LoadBackupPlan () override;
 
 private:
+    int         prepareOne(const char* sql, sqlite3_stmt** stmt);
     std::string getDefaultConfigPath () const;
     std::string getDbPath () const;
     bool        configExists ();

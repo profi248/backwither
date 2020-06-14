@@ -11,6 +11,7 @@
 #include "SnapshotListIterator.h"
 #include "TimeFileComparator.h"
 #include "TimeUtils.h"
+#include "TimedBackupJob.h"
 
 const int TERM_RED = 31;
 const int TERM_GREEN = 32;
@@ -22,14 +23,14 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
     // example from documentation (https://www.gnu.org/software/libc/manual/html_node/Using-Getopt.html#Using-Getopt)
     opterr = 0;
 
-    char *id = nullptr, *source = nullptr, *destination = nullptr;
+    char *id = nullptr, *source = nullptr, *destination = nullptr, *time = nullptr, *wday = nullptr;
     char *name = nullptr, *comparePair = nullptr, *filePath = nullptr;
     bool compress = true;
     int  index, c;
 
     // parse arguments: options need to be parsed first, then commands
 
-    while ((c = getopt (argc, argv, "i:s:d:n:c:p:f:x")) != -1)
+    while ((c = getopt (argc, argv, "i:s:d:n:c:p:f:t:w:x")) != -1)
         switch (c) {
             case 'i':
                 id = optarg;
@@ -52,12 +53,18 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             case 'c':
                 m_ConfigPath = optarg;
                 break;
+            case 'w':
+                wday = optarg;
+                break;
+            case 't':
+                time = optarg;
+                break;
             case 'x':
                 compress = false;
                 break;
             case '?':
-                if (optopt == 'f' || optopt == 'p' || optopt == 'i' || optopt == 's' ||
-                    optopt == 'd' || optopt == 'n' || optopt == 'c')
+                if (optopt == 'f' || optopt == 'p' || optopt == 'i' || optopt == 's' || optopt == 't' ||
+                    optopt == 'd' || optopt == 'n' || optopt == 'c' || optopt == 'w' )
                     cerr << "Option -" << (char) optopt << " requires an argument." << endl;
                 else
                     cerr << "Unknown option -" << (char) optopt << "." << endl;
@@ -84,7 +91,12 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 return 1;
             }
 
-            return add(source, destination, name, compress);
+            if ((wday && !time) || (!wday && time)) {
+                cerr << "For a scheduled backup, both weekday (-w) and time (-t) is required." << endl;
+                return 1;
+            }
+
+            return add(source, destination, name, compress, wday, time);
         } else if (command == "backup") {
             if (!name) {
                 cerr << "Specifying backup name (-n) is required." << endl;
@@ -107,41 +119,15 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 cerr << "Specifying backup name (-n) and snapshot comparison pair (-p) is required." << endl;
                 return 1;
             }
-            string rawSnapshotIdA, rawSnapshotIdB;
-            int64_t snapshotIdA, snapshotIdB;
-            bool second = false;
 
-            for (char ch : string(comparePair)) {
-                if (ch == ':') {
-                    second = true;
-                    continue;
-                }
+            auto snapshotIDs = TimeUtils::ParsePosColumnSeparatedInts(comparePair);
 
-                if (!second)
-                    rawSnapshotIdA += ch;
-                else
-                    rawSnapshotIdB += ch;
-            }
-
-            if (!second) {
-                cerr << "Invalid snapshot pair format supplied. Example of a correct format is 4:6." << endl;
-                return 1;
-            }
-
-            try {
-                snapshotIdA = stoll(rawSnapshotIdA);
-                snapshotIdB = stoll(rawSnapshotIdB);
-            } catch (exception &) {
-                cerr << "Supplied snapshot ID is not numeric." << endl;
-                return 1;
-            }
-
-            if (snapshotIdA == snapshotIdB) {
+            if (snapshotIDs.first == snapshotIDs.second) {
                 cerr << "Compared snapshot IDs must differ." << endl;
                 return 1;
             }
 
-            return diff(name, snapshotIdA, snapshotIdB);
+            return diff(name, snapshotIDs.first, snapshotIDs.second);
         } else if (command == "show") {
             if (!id | !name) {
                 cerr << "Specifying backup name (-n) and snapshot ID (-i) is required." << endl;
@@ -154,6 +140,13 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             return show(name, snapshotId);
         } else if (command == "run-cron") {
             return runCron();
+        } else if (command == "remove") {
+            if (!name) {
+                cerr << "Specifying backup name (-n) is required." << endl;
+                return 1;
+            }
+
+            return remove(name);
         } else if (command == "help") {
             help();
         } else {
@@ -253,8 +246,7 @@ int TerminalUserInterface::help () {
     cout << "Commands" << endl;
     cout << "  list\t\tshow backup jobs" << endl <<
             "  add\t\tadd new backup job" << endl <<
-            // "  edit\t\tedit backup job" << endl <<
-            // "  remove\tremove backup job" << endl <<
+            "  remove\tremove backup job" << endl <<
             "  backup\trun backup job" << endl <<
             "  restore\trestore backup or a single file" << endl <<
             "  diff\t\tshow difference between snapshots" << endl <<
@@ -266,12 +258,15 @@ int TerminalUserInterface::help () {
     cout << "Options" << endl;
 
     cout << "  -c\tspecify config directory" << endl <<
-            "  -i\tspecify snapshot ID (to restore)" << endl <<
-            "  -n\tspecify backup job name" << endl <<
-            "  -s\tspecify new backup job source path" << endl <<
             "  -d\tspecify new backup job destination path" << endl <<
             "  -f\tspecify a path to a specific file (for restore)" << endl <<
-            "  -x\tdisable compression (when adding a new backub job)" << endl;
+            "  -i\tspecify snapshot ID (to restore)" << endl <<
+            "  -n\tspecify backup job name" << endl <<
+            "  -p\tspecify a pair of snapshot to compare in diff [format id:id]" << endl <<
+            "  -s\tspecify new backup job source path" << endl <<
+            "  -t\tspecify a time to run a backup (when adding a new backup) [format 00:00-23:59]" << endl <<
+            "  -w\tspecify a day of week to run a backup (when adding a new backup) [format mo-su]" << endl <<
+            "  -x\tdisable compression (when adding a new backub)" << endl;
     return 0;
 }
 
@@ -279,7 +274,7 @@ string TerminalUserInterface::getVersion () {
     return "dev";
 }
 
-int TerminalUserInterface::add (char* source, char* destination, char* name, bool compress) {
+int TerminalUserInterface::add (char* source, char* destination, char* name, bool compress, char* wday, char* time) {
     ConfigProvider* config = getConfigProvider();
 
     BackupJob* job = nullptr;
@@ -288,7 +283,30 @@ int TerminalUserInterface::add (char* source, char* destination, char* name, boo
         std::string dst = FilesystemUtils::AbsolutePath(destination, true);
         if (FilesystemUtils::ArePathsEqual(src, dst))
             throw std::runtime_error("Source and destination leads to the same path.");
-        job = new BackupJob(src, dst, name, compress);
+
+        if (wday && time) {
+            TimeUtils::weekday_t weekday = TimeUtils::StringToWeekday(wday);
+            if (weekday == TimeUtils::NONE) {
+                cerr << "Invalid weekday. Type mo, tu, we, th, fr, sa or su." << endl;
+                delete job;
+                delete config;
+                return 1;
+            }
+
+            int secsSinceStart = TimeUtils::StringToUTCSecondsSinceStart(time);
+            if (secsSinceStart == -1) {
+                cerr << "Hours or minutes are out of range." << endl;
+                delete job;
+                delete config;
+                return 1;
+            }
+            job = new TimedBackupJob(src, dst, name, compress, weekday, secsSinceStart);
+
+        } else {
+            job = new BackupJob(src, dst, name, compress);
+        }
+
+
         config->AddBackupJob(job);
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
@@ -304,8 +322,6 @@ int TerminalUserInterface::add (char* source, char* destination, char* name, boo
 
 int TerminalUserInterface::backup (char* name) {
     // add potential not enough space warning
-    ConfigProvider* config = getConfigProvider();
-
     BackupJob* job = findBackupJobByName(name);
     if (!job)
         return 2;
@@ -315,12 +331,10 @@ int TerminalUserInterface::backup (char* name) {
     } catch (runtime_error & e) {
         cerr << "Fatal error: " << e.what() << endl;
         delete job;
-        delete config;
         return 2;
     }
 
     delete job;
-    delete config;
     return 0;
 }
 
@@ -506,6 +520,29 @@ int TerminalUserInterface::runCron () {
     delete plan;
     return 0;
 }
+
+int TerminalUserInterface::remove (char* name) {
+    ConfigProvider* config = getConfigProvider();
+    BackupJob* job = findBackupJobByName(name);
+    if (!job) {
+        delete config;
+        return 2;
+    }
+
+    try {
+        config->DeleteBackupJob(job);
+    } catch (runtime_error & e) {
+        cerr << "Fatal error: " << e.what() << endl;
+        delete config;
+        delete job;
+        return 2;
+    }
+
+    delete config;
+    delete job;
+    return 0;
+}
+
 
 void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std::string status, size_t fileSize) {
     if (!isatty(fileno(stderr)) || !ENABLE_PROGRESS)

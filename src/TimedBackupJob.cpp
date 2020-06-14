@@ -18,3 +18,11 @@ bool TimedBackupJob::ShouldStartBackup () const {
     delete indexProvider;
     return completed < TimeUtils::PlanLastScheduledTime(m_PlanDayOfWeek, m_PlanSecondsSinceDayStarted);
 }
+
+TimeUtils::weekday_t TimedBackupJob::GetPlanWeekday () const {
+    return m_PlanDayOfWeek;
+}
+
+int TimedBackupJob::GetPlanSecsSinceDay () const {
+    return m_PlanSecondsSinceDayStarted;
+}

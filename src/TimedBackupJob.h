@@ -22,6 +22,8 @@ public:
      */
     bool ShouldStartBackup () const override;
     std::string GetPlan () const override;
+    TimeUtils::weekday_t GetPlanWeekday () const override;
+    int GetPlanSecsSinceDay () const override;
 };
 
 

@@ -1,5 +1,6 @@
 #include <ctime>
 #include <sstream>
+#include <cctype>
 #include <iomanip>
 #include "TimeUtils.h"
 
@@ -35,6 +36,9 @@ std::string TimeUtils::PlanToString (weekday_t day, int secondsSinceStart) {
             break;
         case SUN:
             out << "Sun";
+            break;
+        case NONE:
+            out << "Invalid";
             break;
     }
 
@@ -109,6 +113,78 @@ long long int TimeUtils::GetUTCTimestamp (time_t timestamp) {
     return gmt;
 }
 
+TimeUtils::weekday_t TimeUtils::StringToWeekday (std::string wday) {
+    std::string wdayLower;
+    for (auto c : wday) {
+        wdayLower.push_back(std::tolower(c));
+    }
+
+    if (wdayLower == "mo")
+        return MON;
+    else if (wdayLower == "tu")
+        return TUE;
+    else if (wdayLower == "we")
+        return WED;
+    else if (wdayLower == "th")
+        return THU;
+    else if (wdayLower == "fr")
+        return FRI;
+    else if (wdayLower == "sa")
+        return SAT;
+    else if (wdayLower == "su")
+        return SUN;
+
+    return NONE;
+}
+
+int TimeUtils::StringToUTCSecondsSinceStart (std::string str) {
+    auto parsed = ParsePosColumnSeparatedInts(str);
+    if (parsed.first > 23 || parsed.first < 0 || parsed.second > 59 || parsed.second < 0)
+        return -1;
+    int secondsSinceStart = parsed.first * 3600 + parsed.second * 60;
+
+    // adjust for DST and timezone
+    time_t now = time(nullptr);
+    tm* t = localtime(& now);
+    if (t->tm_isdst)
+        secondsSinceStart -= 3600;
+    secondsSinceStart += timezone;
+
+    return secondsSinceStart;
+}
+
 constexpr int TimeUtils::SecondsPerDay () {
     return 3600 * 24;
 }
+
+std::pair<int64_t, int64_t> TimeUtils::ParsePosColumnSeparatedInts (std::string nums) {
+    std::string rawA, rawB;
+    int64_t a, b;
+    bool second = false;
+
+    for (char ch : nums) {
+        if (ch == ':') {
+            second = true;
+            continue;
+        }
+
+        if (!second)
+            rawA += ch;
+        else
+            rawB += ch;
+    }
+
+    if (!second) {
+        throw std::invalid_argument("Number format is incorrect (numbers need to be separated by colon).");
+    }
+
+    try {
+        a = stoll(rawA);
+        b = stoll(rawB);
+    } catch (std::exception &) {
+        throw std::invalid_argument("Supplied number is not numeric.");
+    }
+
+    return std::pair {a, b};
+}
+

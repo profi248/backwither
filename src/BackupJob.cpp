@@ -130,3 +130,11 @@ std::string BackupJob::GetPlan () const {
 bool BackupJob::ShouldStartBackup () const {
     return false;
 }
+
+TimeUtils::weekday_t BackupJob::GetPlanWeekday () const {
+    return TimeUtils::NONE;
+}
+
+int BackupJob::GetPlanSecsSinceDay () const {
+    return -1;
+}

@@ -3,20 +3,21 @@
 #include <string>
 #include <ctime>
 #include <chrono>
-#include "BackupJob.h"
-
 
 class TimeUtils {
     static constexpr char FORMAT[] = "%F %T";
 public:
     // day order for compatibility with tm::tm_wday
-    enum weekday_t {SUN = 0, MON, TUE, WED, THU, FRI, SAT};
+    enum weekday_t {NONE = -1, SUN = 0, MON, TUE, WED, THU, FRI, SAT};
     static constexpr char ZERO[]   = "---";
 
     static std::string   HumanDateTime (long long timestamp);
     static std::string   PlanToString  (weekday_t day, int secondsSinceStart);
     static long long     PlanLastScheduledTime (weekday_t day, int secondsSinceStart);
     static long long int GetUTCTimestamp (time_t timestamp = -1);
+    static TimeUtils::weekday_t StringToWeekday (std::string wday);
+    static int StringToUTCSecondsSinceStart (std::string localtime);
+    static std::pair<int64_t, int64_t> ParsePosColumnSeparatedInts (std::string nums);
     static constexpr int SecondsPerDay ();
 
     // from https://stackoverflow.com/a/58237530/2465760

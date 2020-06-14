@@ -26,6 +26,7 @@ public:
      * @param name Name of the backup job.
      * @return The backub job.
      */
+    virtual void DeleteBackupJob (BackupJob* job) = 0;
     virtual BackupJob* GetBackupJob (std::string name) = 0;
     /**
      * Retrieves a backup plan from config storage.
