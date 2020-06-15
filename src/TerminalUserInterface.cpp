@@ -375,8 +375,10 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
     DirectoryDiffIterator *itModified = nullptr;
 
     BackupJob* job = findBackupJobByName(name);
-    if (!job)
+    if (!job) {
+        delete config;
         return 2;
+    }
 
     try {
         if (snapshotIdA < snapshotIdB) {
