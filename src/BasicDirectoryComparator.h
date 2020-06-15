@@ -7,7 +7,7 @@
 class BasicDirectoryComparator : public DirectoryComparator {
     virtual ~BasicDirectoryComparator() = default;
 
-    virtual Directory CompareDirs(Directory prev, Directory curr) {
+    virtual Directory CompareDirs(__attribute__((unused)) Directory prev, Directory curr) {
         return curr;
     };
 };

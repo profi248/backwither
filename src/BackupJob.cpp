@@ -12,14 +12,13 @@
 namespace fs = std::filesystem;
 
 // todo handle multiple instances running on one folder (locking)
-BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id,
-                      long long lastFinished) :
+// todo compressed and uncompressed backup in one destination is broken
+BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id) :
         m_SourcePath (std::move(source)),
         m_DestinationPath (std::move(destination)),
         m_Name (std::move(name)),
         m_Compressed (compressed),
-        m_ID (id),
-        m_LastCompleted (0) {}
+        m_ID (id) {}
 
 void BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
     fs::path source = fs::path(GetSource());

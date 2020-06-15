@@ -21,7 +21,7 @@ class BackupJob {
     int64_t m_ID;
 public:
     // todo make private
-    long long m_LastCompleted;
+    long long m_LastCompleted = -1;
     virtual ~BackupJob() = default;
     /**
      * Construct a BackupJob object.
@@ -33,8 +33,7 @@ public:
      * @param id Backup ID if known, -1 otherwise.
      * @param lastFinished Unix timestamp of last backup run if known, -1 otherwise.
      */
-    BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id = -1,
-               long long lastFinished = -1);
+    BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id = -1);
 
     /**
      * Do backup of the job.

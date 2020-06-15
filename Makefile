@@ -1,7 +1,7 @@
 # based on makefile from proseminar
 CXX=g++
 LD=g++
-CXXFLAGS=-std=c++17 -Wall -pedantic -O3
+CXXFLAGS=-std=c++17 -Wall -pedantic -Wextra -O3
 LDFLAGS=-lsqlite3 -lcrypto -lz -lstdc++fs
 FILES= \
 	src/bin/intermediate/File.o src/bin/intermediate/Directory.o \

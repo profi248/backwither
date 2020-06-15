@@ -20,7 +20,7 @@ public:
      * @param lastFinished Unix timestamp of last backup run if known, -1 otherwise.
      */
     TimedBackupJob (std::string source, std::string destination, std::string name, bool compressed,
-                    TimeUtils::weekday_t day, int time, int64_t id = -1, long long lastFinished = -1);
+                    TimeUtils::weekday_t day, int time, int64_t id = -1);
 
 private:
     // day of week to trigger backup

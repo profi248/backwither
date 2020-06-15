@@ -381,13 +381,13 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
     }
 
     try {
+        // snapshot B should be always older
         if (snapshotIdA < snapshotIdB) {
             int64_t tmp = snapshotIdB;
             snapshotIdB = snapshotIdA;
             snapshotIdA = tmp;
         }
 
-        // snapshot B is always older
         indexProvider = new SQLiteBackupIndexProvider(job);
         Directory a = indexProvider->LoadSnapshotFileIndex(snapshotIdA);
         Directory b = indexProvider->LoadSnapshotFileIndex(snapshotIdB);
@@ -578,9 +578,8 @@ int TerminalUserInterface::runCron () {
     while (!it->End()) {
         try {
             BackupJob* job = it->Current();
-            if (job->ShouldStartBackup()) {
+            if (job->ShouldStartBackup())
                 job->Backup(this, false);
-            }
         } catch (runtime_error & e) {
             cerr << "Fatal error: " << e.what() << endl;
             delete it;
