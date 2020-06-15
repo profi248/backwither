@@ -124,14 +124,15 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
                 return 1;
             }
 
-            auto snapshotIDs = TimeUtils::ParsePosColumnSeparatedInts(comparePair);
 
-            if (snapshotIDs.first == snapshotIDs.second) {
-                cerr << "Compared snapshot IDs must differ." << endl;
+            try {
+                auto snapshotIDs = TimeUtils::ParsePosColumnSeparatedInts(comparePair);
+                return diff(name, snapshotIDs.first, snapshotIDs.second, filePath);
+            } catch (std::exception & e) {
+                cerr << e.what() << endl;
                 return 1;
             }
 
-            return diff(name, snapshotIDs.first, snapshotIDs.second, filePath);
         } else if (command == "show") {
             if (!id | !name) {
                 cerr << "Specifying backup name (-n) and snapshot ID (-i) is required." << endl;
@@ -349,6 +350,12 @@ int TerminalUserInterface::backup (char* name, bool disableTimeComparator) {
 
 // todo better handle incorrect input (nonexistent snapshots/internal values)
 int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB, char* file) {
+
+    if (snapshotIdA == snapshotIdB) {
+        cerr << "Compared snapshot IDs must differ." << endl;
+        return 1;
+    }
+
     bool filter = false;
     if (file)
         filter = true;
