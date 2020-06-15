@@ -42,8 +42,8 @@ run: prepare backwither
 	src/bin/backwither
 
 test: $(FILES) | prepare
-	$(CXX) $(CXXFLAGS) -c -o src/bin/test.o src/tests/test.cpp
-	$(LD) -o src/bin/$@ src/bin/test.o $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -c -o src/bin/intermediate/testbench.o src/tests/testbench.cpp
+	$(LD) -o src/bin/test $^ src/bin/intermediate/testbench.o $(LDFLAGS)
 	src/bin/test
 
 backwither: $(FILES) src/bin/intermediate/main.o

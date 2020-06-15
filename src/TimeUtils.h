@@ -34,7 +34,7 @@ public:
      * @param timestamp Unix timestamp.
      * @return Datetime string.
      */
-    static std::string   HumanDateTime (long long timestamp);
+    static std::string HumanDateTime (long long timestamp);
 
     /**
      * Converts backup plan to human readabale string.
@@ -42,7 +42,7 @@ public:
      * @param secondsSinceStart Planned at seconds since start of day.
      * @return Formatted string.
      */
-    static std::string   PlanToString  (weekday_t day, int secondsSinceStart);
+    static std::string PlanToString  (weekday_t day, int secondsSinceStart);
 
     /**
      * Last time when backup plan was supposed to trigger.
@@ -50,7 +50,7 @@ public:
      * @param secondsSinceStart Planned at seconds since start of day.
      * @return Unix timestamp of last planned backup trigger.
      */
-    static long long     PlanLastScheduledTime (weekday_t day, int secondsSinceStart);
+    static long long PlanLastScheduledTime (weekday_t day, int secondsSinceStart);
 
     /**
      * Retrieve current UTC Unix timestamp (or convert exisiting one to UTC).

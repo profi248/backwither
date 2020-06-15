@@ -19,3 +19,7 @@ jobs:
       run: make -j2
     - name: run binary
       run: ./kostada2
+    - name: make clean
+      run: make clean
+    - name: unit tests
+      run: make -j2 test
