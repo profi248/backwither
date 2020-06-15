@@ -128,7 +128,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             try {
                 auto snapshotIDs = TimeUtils::ParsePosColumnSeparatedInts(comparePair);
                 return diff(name, snapshotIDs.first, snapshotIDs.second, filePath);
-            } catch (std::exception & e) {
+            } catch (invalid_argument & e) {
                 cerr << e.what() << endl;
                 return 1;
             }
@@ -302,8 +302,17 @@ int TerminalUserInterface::add (char* source, char* destination, char* name, boo
                 delete config;
                 return 1;
             }
+            int secsSinceStart = -1;
 
-            int secsSinceStart = TimeUtils::StringToUTCSecondsSinceStart(time);
+            try {
+                secsSinceStart = TimeUtils::StringToUTCSecondsSinceStart(time);
+            } catch (invalid_argument & e) {
+                cerr << e.what() << endl;
+                delete job;
+                delete config;
+                return 1;
+            }
+
             if (secsSinceStart == -1) {
                 cerr << "Hours or minutes are out of range." << endl;
                 delete job;
