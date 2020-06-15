@@ -155,7 +155,7 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 
             return remove(name);
         } else if (command == "help") {
-            help();
+            return help();
         } else {
             cerr << "Command " << command << " not recognized." << endl;
             help();
