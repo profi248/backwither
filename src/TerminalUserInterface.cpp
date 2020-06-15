@@ -253,11 +253,11 @@ int TerminalUserInterface::help () {
     cout << "Help / Usage" << endl << endl;
     cout << "Commands" << endl;
     cout << "  list\t\tshow backup jobs" << endl <<
-            "  add\t\tadd new backup job" << endl <<
+            "  add\t\tadd new backup job (optionally with schedule)" << endl <<
             "  remove\tremove backup job" << endl <<
             "  backup\trun backup job" << endl <<
-            "  restore\trestore backup or a single file" << endl <<
-            "  diff\t\tshow difference between snapshots" << endl <<
+            "  restore\trestore backup or a single file (optionally specify snapshot with -i)" << endl <<
+            "  diff\t\tshow difference between snapshots (specify snapshots to compare with -p)" << endl <<
             "  show\t\tshow files in specified snapshot" << endl <<
             "  history\tshow snapshots in a specified backup job" << endl <<
             "  run-all\trun all backups" << endl <<
