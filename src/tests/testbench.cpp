@@ -29,13 +29,14 @@ public:
 
         #include "asserts.cpp"
 
-        if (ok)
+        if (ok) {
             std::cout << std::endl << "\033[1;32mALL " << tests << " TESTS OK\033[0m" << std::endl; // bold green
-        else
+            return 0;
+        } else {
             std::cout << std::endl << "\033[1;31m" << errs << " ERROR(S) IN " << tests << " TESTS\033[0m" << std::endl; // bold red
-        return 0;
+            return errs % 255;
+        }
     }
-
 };
 
 int main () {
