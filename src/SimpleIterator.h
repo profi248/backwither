@@ -2,6 +2,12 @@
 #define BACKWITHER_SIMPLEITERATOR_H
 #include <vector>
 #include <string>
+
+/**
+ * Base class for iterators used in this project.
+ * Table methods allows iterators to be printed as a table.
+ */
+
 class SimpleIterator {
 public:
     virtual ~SimpleIterator () = default;
@@ -23,6 +29,7 @@ public:
      * @return True if empty, false otherwise.
      */
     virtual bool Empty () const = 0;
+
 
     /**
      * Get header of table for printing the iterator.

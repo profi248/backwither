@@ -5,7 +5,7 @@
 #include "ChunkList.h"
 #include <string>
 /**
- * Implements ChunkStorageProvider as filesystem storage with incremental backups.
+ * Implements ChunkStorageProvider as filesystem storage.
  */
 
 class FilesystemChunkStorageProvider : public ChunkStorageProvider {

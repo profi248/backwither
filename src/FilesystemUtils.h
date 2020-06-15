@@ -6,7 +6,7 @@
 #include <string>
 
 /**
- * Class for browsing filesystem.
+ * Tools for accessing and browsing filesystem.
  */
 class FilesystemUtils {
 public:
@@ -22,20 +22,20 @@ public:
      * Check if directory path is valid and writable, and create the directory if it doesn't exist.
      * @param destination Absolute path to directory.
      */
-    static void        VerifyOrCreateDestinationDirectory (std::string destination);
+    static void VerifyOrCreateDestinationDirectory (std::string destination);
 
     /**
      * Check if directory is valid, readable and not empty.
      * @param source Absolute path to directory.
      */
-    static void        VerifySourceDirectory (std::string source);
+    static void VerifySourceDirectory (std::string source);
 
     /**
      * Check if directory is empty.
      * @param path Absolute path to directory.
      * @return True if empty, false otherwise.
      */
-    static bool        IsDirectoryEmpty (std::string path);
+    static bool IsDirectoryEmpty (std::string path);
 
     /**
      * Returns directory path with a slash at the end.

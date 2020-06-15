@@ -5,6 +5,10 @@
 #include "BackupJob.h"
 #include "ChunkList.h"
 
+/**
+ * Base class for config provider (list of backups and other settings).
+ */
+
 class BackupJob;
 class BackupPlan;
 

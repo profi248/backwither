@@ -4,6 +4,10 @@
 #include <ctime>
 #include <chrono>
 
+/**
+ * Provides various tools to compute and format time-related things.
+ */
+
 class TimeUtils {
     static constexpr char FORMAT[] = "%F %T";
 public:

@@ -7,6 +7,10 @@
 #include <zlib.h>
 #include <string>
 
+/**
+ * Implements ChunkStorageProvider as filesystem storage with zlib (deflate) compression of each chunk.
+ */
+
 class CompressedFilesystemChunkStorageProvider : public FilesystemChunkStorageProvider {
     std::string m_OutputPath;
     std::string m_ChunkDir;

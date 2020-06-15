@@ -2,6 +2,10 @@
 #define BACKWITHER_SNAPSHOT_H
 #include <cstdint>
 
+/**
+ * Represents metadata of a snapshot.
+ */
+
 class Snapshot {
     int64_t   m_ID;
     long long m_Created;

@@ -4,7 +4,7 @@
 #include "BackupIndexProvider.h"
 
 /**
- * Implements config provider as a SQLite database.
+ * Implements backup index provider (list of files in snapshots and chunks that make up data) as a SQLite database.
  */
 class SQLiteBackupIndexProvider : public BackupIndexProvider {
     const int   SQLITE_NULL_TERMINATED = -1;

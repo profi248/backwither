@@ -3,6 +3,10 @@
 #include "SnapshotList.h"
 #include "SimpleIterator.h"
 
+/**
+ * Iterate over snapshots in a backup.
+ */
+
 class SnapshotListIterator : public SimpleIterator {
     SnapshotList * m_SnapshotList;
     size_t         m_Pos;

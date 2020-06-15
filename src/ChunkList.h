@@ -4,6 +4,10 @@
 #include <vector>
 #include "Chunk.h"
 
+/**
+ * Represents a list of chunks.
+ */
+
 class ChunkList {
     int64_t            m_FileID;
     std::vector<Chunk> m_Chunks;

@@ -8,11 +8,24 @@
 
 class TimedBackupJob : public BackupJob {
 public:
+    /**
+     * Consturct timed backup job.
+     * @param source Absolute path to backup source directory.
+     * @param destination Absolute path to backup destination directory.
+     * @param name Backup name (unique).
+     * @param compressed Whether to compress backup.
+     * @param day Day of week to trigger backup.
+     * @param time Time of day to trigger backup (saved as seconds since start of the day (3600 = 01:00).
+     * @param id Backup ID if known, -1 otherwise.
+     * @param lastFinished Unix timestamp of last backup run if known, -1 otherwise.
+     */
     TimedBackupJob (std::string source, std::string destination, std::string name, bool compressed,
                     TimeUtils::weekday_t day, int time, int64_t id = -1, long long lastFinished = -1);
 
 private:
+    // day of week to trigger backup
     TimeUtils::weekday_t m_PlanDayOfWeek;
+    // time of day to trigger backup, saved as seconds since start of day (e.g. 3600 = 01:00)
     int                  m_PlanSecondsSinceDayStarted;
 public:
     virtual ~TimedBackupJob() = default;

@@ -3,6 +3,10 @@
 #include <vector>
 #include "Snapshot.h"
 
+/**
+ * Represents a list of snapshots.
+ */
+
 class SnapshotListIterator;
 
 class SnapshotList {
