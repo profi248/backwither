@@ -29,7 +29,7 @@ private:
     int             diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB, char* file);
     int             show (char* name, int64_t snapshotId);
     int             remove (char* name);
-    int             run ();
+    int             runAll ();
     int             runCron ();
     std::string     getVersion ();
     std::string     format (std::string in, int & formatChars, bool bold = true, int color = -1);

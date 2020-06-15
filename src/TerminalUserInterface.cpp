@@ -143,8 +143,8 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
             snapshotId = strtoll(id, nullptr, 10);
 
             return show(name, snapshotId);
-        } else if (command == "run") {
-            return run();
+        } else if (command == "run-all") {
+            return runAll();
         } else if (command == "run-cron") {
             return runCron();
         } else if (command == "remove") {
@@ -260,7 +260,7 @@ int TerminalUserInterface::help () {
             "  diff\t\tshow difference between snapshots" << endl <<
             "  show\t\tshow files in specified snapshot" << endl <<
             "  history\tshow snapshots in a specified backup job" << endl <<
-            "  run\t\trun all backups" << endl <<
+            "  run-all\trun all backups" << endl <<
             "  run-cron\trun planned backups due for a run" << endl <<
             "  help\t\tshow this help message" << endl << endl;
 
@@ -543,7 +543,7 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePa
     return 0;
 }
 
-int TerminalUserInterface::run () {
+int TerminalUserInterface::runAll () {
     BackupPlan* plan = loadBackupPlan();
     if (!plan)
         return 2;
