@@ -260,7 +260,7 @@ int TerminalUserInterface::help () {
             "  show\t\tshow files in specified snapshot" << endl <<
             "  history\tshow snapshots in a specified backup job" << endl <<
             "  run\t\trun all backups" << endl <<
-            "  run-cron\trun planned backups" << endl <<
+            "  run-cron\trun planned backups due for a run" << endl <<
             "  help\t\tshow this help message" << endl << endl;
 
     cout << "Options" << endl;
