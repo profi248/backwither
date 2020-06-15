@@ -65,8 +65,10 @@ std::string TimeUtils::PlanToString (weekday_t day, int secondsSinceStart) {
 
     out << " " << std::setfill('0')
                << std::setw(2) << hrs << ":"
-               << std::setw(2) << min <<  ":"
-               << std::setw(2) << sec;
+               << std::setw(2) << min;
+   if (sec > 0)
+       out << ":" << std::setw(2) << sec;
+
     return out.str();
 }
 
