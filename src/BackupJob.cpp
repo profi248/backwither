@@ -33,6 +33,9 @@ void BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
     std::unique_ptr<BackupIndexProvider> config = std::unique_ptr<SQLiteBackupIndexProvider>
             (new SQLiteBackupIndexProvider(this));
 
+    if (m_Compressed != config->GetCompressed())
+        throw std::runtime_error("Compression setting does not match with compression of destination folder.");
+
     if (ui)
         ui->UpdateProgress(0, 0, "starting backup", 0);
 
@@ -81,6 +84,9 @@ void BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string file
 
     std::unique_ptr<BackupIndexProvider> config =  std::unique_ptr<SQLiteBackupIndexProvider>
             (new SQLiteBackupIndexProvider(this));
+
+    if (m_Compressed != config->GetCompressed())
+        throw std::runtime_error("Compression setting does not match with compression of destination folder.");
 
     Directory snapshotFiles = config->LoadSnapshotFileIndex(snapshotId);
 

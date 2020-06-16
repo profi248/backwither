@@ -27,6 +27,7 @@ public:
     Snapshot      GetSnapshot (int64_t id) override;
     long long     LastSuccessfulCompletion () override;
     bool          DoesFileExistInSnapshot (int64_t snapshotId, std::string filePath) override;
+    bool          GetCompressed () override;
     void          FinalizeBackup () override;
 
 private:

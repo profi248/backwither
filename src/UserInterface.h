@@ -16,7 +16,7 @@ public:
      * @param argv Arguments.
      * @return Return code.
      */
-    virtual int  StartInterface (int argc, char** argv) = 0;
+    virtual int StartInterface (int argc, char** argv) = 0;
 
     /**
      * Update user interface while backup is ongoing.

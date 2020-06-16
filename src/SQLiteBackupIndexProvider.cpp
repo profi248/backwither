@@ -77,6 +77,7 @@ bool SQLiteBackupIndexProvider::initConfig () {
 
        nullptr, nullptr, & SQLiteError);
 
+
     if (createSuccess != SQLITE_OK) {
         std::string err(SQLiteError);
         sqlite3_free(SQLiteError);
@@ -84,11 +85,23 @@ bool SQLiteBackupIndexProvider::initConfig () {
         throw std::runtime_error("SQLite error when creating DB schema in " + getDbPath() + ": " + err + ".");
     }
 
+    int additionalResult;
+    if (m_Job->IsCompressed())
+        additionalResult = sqlite3_exec(db,"insert into settings (key, value) values ('compressed', 1)",
+                nullptr, nullptr, nullptr);
+    else
+        additionalResult = sqlite3_exec(db,"insert into settings (key, value) values ('compressed', 0)",
+                nullptr, nullptr, nullptr);
+
+    if (additionalResult != SQLITE_OK) {
+        sqlite3_close(db);
+        throw std::runtime_error("Error when initializing database in " + getDbPath() + ".");
+    }
+
     sqlite3_close(db);
     return true;
 }
 
-// refactor to separate class
 bool SQLiteBackupIndexProvider::configExists () {
     sqlite3* db;
     if (sqlite3_open(getDbPath().c_str(), & db) != SQLITE_OK) {
@@ -476,6 +489,17 @@ bool SQLiteBackupIndexProvider::DoesFileExistInSnapshot (int64_t snapshotId, std
     return false;
 }
 
+bool SQLiteBackupIndexProvider::GetCompressed () {
+    sqlite3_stmt* isCompressedStmt;
+    prepareOne("select value from settings where key = 'compressed';", & isCompressedStmt);
+    if (sqlite3_step(isCompressedStmt) != SQLITE_ROW) {
+        sqlite3_finalize(isCompressedStmt);
+        throw std::runtime_error("Error checking for compression status.");
+    }
+    bool result = sqlite3_column_int(isCompressedStmt, 0);
+    sqlite3_finalize(isCompressedStmt);
+    return result;
+}
 
 void SQLiteBackupIndexProvider::FinalizeBackup () {
     int64_t lastSnapshotId = getLastSnapshotId();

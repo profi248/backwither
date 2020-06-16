@@ -66,9 +66,15 @@ public:
      * Check if a specific file exists in a specific snapshot.
      * @param snapshotId ID of a snapshot to check.
      * @param filePath Relative path to file.
-     * @return
+     * @return True if file exists.
      */
     virtual bool DoesFileExistInSnapshot (int64_t snapshotId, std::string filePath) = 0;
+
+    /**
+     * Checks from storage if backup is compressed (to verify if it matches setting in backup list).
+     * @return True if compressed.
+     */
+    virtual bool GetCompressed () = 0;
 
     /**
      * Save snapshot completion time and possibly do some cleanup.
