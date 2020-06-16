@@ -1,7 +1,7 @@
 #ifndef BACKUP_LINK_H
 #define BACKUP_LINK_H
 #include "FilesystemEntity.h"
-
+// TODO do something with this.
 /**
  * Represents a link in a filesystem tree.
  */

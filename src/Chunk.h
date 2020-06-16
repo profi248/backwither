@@ -14,8 +14,22 @@ class Chunk {
 public:
     Chunk (std::string hash, size_t size);
 
+    /**
+     * Get chunk hash (hexadecimal ASCII).
+     * @return Hash.
+     */
     std::string GetHash ();
+
+    /**
+     * Get chunk size in bytes.
+     * @return Size.
+     */
     size_t      GetSize ();
+
+    /**
+     * Set chunk size in bytes.
+     * @param size Size.
+     */
     void        SetSize (size_t size);
 };
 
