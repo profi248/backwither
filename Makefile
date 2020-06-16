@@ -21,8 +21,8 @@ all: compile doc
 
 test: CXXFLAGS += -fsanitize=address -g
 test: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
-debug: CXXFLAGS += -fno-omit-frame-pointer -fsanitize=undefined -fsanitize=address -g
-debug: LDFLAGS := -lasan -lubsan $(LDFLAGS) # AddressSanitizer needs to be linked first
+debug: CXXFLAGS += -fsanitize=address -g
+debug: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
 
 debug-noasan:  CXXFLAGS += -g
 
