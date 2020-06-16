@@ -77,6 +77,12 @@ public:
     virtual bool GetCompressed () = 0;
 
     /**
+     * Returns last snapshot ID of backup.
+     * @return Last snapshot ID.
+     */
+    virtual int64_t GetLastSnapshotId () = 0;
+
+    /**
      * Save snapshot completion time and possibly do some cleanup.
      */
     virtual void FinalizeBackup () = 0;

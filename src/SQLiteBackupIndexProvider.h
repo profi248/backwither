@@ -28,6 +28,7 @@ public:
     long long     LastSuccessfulCompletion () override;
     bool          DoesFileExistInSnapshot (int64_t snapshotId, std::string filePath) override;
     bool          GetCompressed () override;
+    int64_t       GetLastSnapshotId () override;
     void          FinalizeBackup () override;
 
 private:
@@ -36,7 +37,6 @@ private:
     bool        configExists ();
     bool        initConfig ();
     sqlite3*    openDB ();
-    int64_t     getLastSnapshotId ();
 
 };
 

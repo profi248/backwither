@@ -380,6 +380,12 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
         return 2;
     }
 
+    if (!verifySnapshotId(snapshotIdA, job) || !verifySnapshotId(snapshotIdB, job)) {
+        delete config;
+        delete job;
+        return 1;
+    }
+
     try {
         // snapshot B should be always older
         if (snapshotIdA < snapshotIdB) {
@@ -389,6 +395,7 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
         }
 
         indexProvider = new SQLiteBackupIndexProvider(job);
+
         Directory a = indexProvider->LoadSnapshotFileIndex(snapshotIdA);
         Directory b = indexProvider->LoadSnapshotFileIndex(snapshotIdB);
         Directory added = a - b;
@@ -403,7 +410,7 @@ int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapsh
         Directory modifiedA = a - added - removed;
         itModified = new DirectoryDiffIterator (& modifiedB, & modifiedA);
 
-        cout << "comparing snapshots " << snapshotIdA << " and " << snapshotIdB << endl;
+        cout << "comparing snapshots " << snapshotIdB << " and " << snapshotIdA << endl;
         if (itAdded->Empty() && itModified->Empty() && itModified->Empty())
             cout << "no difference" << endl;
 
@@ -462,6 +469,11 @@ int TerminalUserInterface::show (char* name, int64_t snapshotId) {
     if (!job)
         return 2;
 
+    if (!verifySnapshotId(snapshotId, job)) {
+        delete job;
+        return 1;
+    }
+
     try {
         indexProvider = new SQLiteBackupIndexProvider(job);
         Directory files = indexProvider->LoadSnapshotFileIndex(snapshotId);
@@ -487,6 +499,11 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePa
     BackupJob* job = findBackupJobByName(name);
     if (!job)
         return 2;
+
+    if (snapshotId != 0 && !verifySnapshotId(snapshotId, job)) {
+        delete job;
+        return 1;
+    }
 
     BackupIndexProvider* indexProvider = nullptr;
     long long completion;
@@ -793,4 +810,15 @@ void TerminalUserInterface::cleanRow () {
     if (!isatty(fileno(stderr)) || !ENABLE_PROGRESS)
         return;
     cerr << left << setw(m_LastStatusLength) << setfill(' ') << '\r' << flush;
+}
+
+bool TerminalUserInterface::verifySnapshotId (int64_t id, BackupJob* job) {
+    BackupIndexProvider* indexProvider = new SQLiteBackupIndexProvider(job);
+    if (id < 1 || id > indexProvider->GetLastSnapshotId()) {
+        delete indexProvider;
+        cerr << "Snapshot doesn't exist." << endl;
+        return false;
+    }
+    delete indexProvider;
+    return true;
 }

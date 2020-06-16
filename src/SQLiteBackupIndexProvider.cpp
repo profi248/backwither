@@ -232,7 +232,7 @@ Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) 
 
     if (snapshotID != -1) {
         if (snapshotID == 0) {
-            snapshotID = getLastSnapshotId();
+            snapshotID = GetLastSnapshotId();
             if (snapshotID < 0)
                 return dir;
         }
@@ -263,7 +263,7 @@ Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) 
     return dir;
 }
 
-int64_t SQLiteBackupIndexProvider::getLastSnapshotId () {
+int64_t SQLiteBackupIndexProvider::GetLastSnapshotId () {
     int64_t snapshotID;
     sqlite3_stmt* getSnapshotStmt;
     sqlite3_prepare_v2(m_DB,
@@ -364,7 +364,7 @@ ChunkList SQLiteBackupIndexProvider::RetrieveFileChunks (int64_t snapshotId, int
                    "     and snapshot_id <= ? order by snapshot_id desc limit 1) "
                    "order by position;", & retrieveChunksStmt);
         if (snapshotId == 0) {
-            snapshotId = getLastSnapshotId();
+            snapshotId = GetLastSnapshotId();
             if (snapshotId < 0) {
                 sqlite3_finalize(retrieveChunksStmt);
                 throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
@@ -423,7 +423,7 @@ Snapshot SQLiteBackupIndexProvider::GetSnapshot (int64_t id) {
     prepareOne("select creation, finished from snapshots where snapshot_id = ? limit 1;", & getSnapshotsStmt);
 
     if (id == 0) {
-        id = getLastSnapshotId();
+        id = GetLastSnapshotId();
         if (id < 0) {
             sqlite3_finalize(getSnapshotsStmt);
             throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
@@ -468,7 +468,7 @@ bool SQLiteBackupIndexProvider::DoesFileExistInSnapshot (int64_t snapshotId, std
                    "where snapshot_id = ? and path = ?;", & fileExistsStmt);
 
     if (snapshotId == 0) {
-        snapshotId = getLastSnapshotId();
+        snapshotId = GetLastSnapshotId();
         if (snapshotId < 0) {
             sqlite3_finalize(fileExistsStmt);
             throw std::runtime_error("Last snapshot for backup not found. Maybe backup hasn't been run yet.");
@@ -502,7 +502,7 @@ bool SQLiteBackupIndexProvider::GetCompressed () {
 }
 
 void SQLiteBackupIndexProvider::FinalizeBackup () {
-    int64_t lastSnapshotId = getLastSnapshotId();
+    int64_t lastSnapshotId = GetLastSnapshotId();
     sqlite3_stmt* completeSnapshotStmt;
 
     prepareOne("update snapshots set finished = ? "

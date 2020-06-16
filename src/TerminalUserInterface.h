@@ -45,6 +45,7 @@ private:
     void            cleanRow ();
     size_t          countUtf8Codepoints (std::string in);
     bool            yesNoPrompt ();
+    bool            verifySnapshotId (int64_t id, BackupJob* job);
     BackupJob*      findBackupJobByName (char* name);
     BackupPlan*     loadBackupPlan ();
     ConfigProvider* getConfigProvider () const;
