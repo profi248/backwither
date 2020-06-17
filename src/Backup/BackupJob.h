@@ -18,10 +18,9 @@ class BackupJob {
     std::string m_DestinationPath;
     std::string m_Name;
     bool        m_Compressed;
-    int64_t m_ID;
+    long long   m_LastCompleted = -1;
+    int64_t     m_ID;
 public:
-    // todo make private
-    long long m_LastCompleted = -1;
     virtual ~BackupJob() = default;
     /**
      * Construct a BackupJob object.
@@ -51,18 +50,73 @@ public:
      */
     void Restore (UserInterface* ui, int64_t snapshotId, std::string filePath);
 
-    std::string                  GetSource () const;
-    std::string                  GetDestination () const;
-    std::string                  GetName () const;
-    virtual std::string          GetPlan () const;
-    virtual bool                 ShouldStartBackup () const;
+    /**
+     * Get source path.
+     * @return Path.
+     */
+    std::string GetSource () const;
+
+    /**
+     * Get destination path.
+     * @return Path.
+     */
+    std::string GetDestination () const;
+
+    /**
+     * Get backup name.
+     * @return Name.
+     */
+    std::string GetName () const;
+
+    /**
+     * Get backup completion if known, else get -1.
+     * @return Unix timestamp of last completion.
+     */
+    long long GetLastCompleted () const;
+
+    /**
+     * Set backup completion.
+     * @param timestamp Unix timestamp of last backup completion.
+     */
+    void SetLastCompleted (long long timestamp);
+
+    /**
+     * Get human-friendly description of backup plan.
+     * @return Formatted plan string.
+     */
+    virtual std::string GetPlan () const;
+
+    /**
+     * Determine whether backup should be started based on last completion and computed planned run.
+     * @return Should trigger backup.
+     */
+    virtual bool ShouldStartBackup () const;
+
+    /**
+     * Get weekday of plan.
+     * @return Weekday.
+     */
     virtual TimeUtils::weekday_t GetPlanWeekday () const;
+
+    /**
+     * Get seconds since start of day of plan start.
+     * @return Seconds.
+     */
     virtual int GetPlanSecsSinceDay () const;
-    bool                         IsCompressed () const;
-    int64_t                      GetID () const;
+
+    /**
+     * Return whether backup is compressed or not.
+     * @return Is backup compressed.
+     */
+    bool IsCompressed () const;
+
+    /**
+     * Return backup ID or -1 if unknown.
+     * @return ID.
+     */
+    int64_t GetID () const;
 
     friend BackupPlanIterator;
-
 };
 
 

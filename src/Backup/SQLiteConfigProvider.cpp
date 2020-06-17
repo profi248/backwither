@@ -243,9 +243,9 @@ BackupPlan* SQLiteConfigProvider::LoadBackupPlan () {
         try {
             indexProvider = new SQLiteBackupIndexProvider(job);
             long long completion = indexProvider->LastSuccessfulCompletion();
-            job->m_LastCompleted = completion;
+            job->SetLastCompleted(completion);
         } catch (std::runtime_error & e) {
-            job->m_LastCompleted = -2;
+            job->SetLastCompleted(-1);
         }
 
         delete indexProvider;

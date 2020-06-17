@@ -620,7 +620,6 @@ int TerminalUserInterface::remove (char* name) {
     return 0;
 }
 
-
 void TerminalUserInterface::UpdateProgress (size_t current, size_t expected, std::string status, size_t fileSize) {
     if (!isatty(fileno(stderr)) || !ENABLE_PROGRESS)
         return;
@@ -683,7 +682,6 @@ bool TerminalUserInterface::yesNoPrompt () {
     return false;
 }
 
-// setw broken in unicode
 void TerminalUserInterface::printTable (SimpleIterator* it, size_t filterCol, std::string filterStr) {
     if (!it | it->Empty())
         return;
@@ -706,7 +704,6 @@ void TerminalUserInterface::printTable (SimpleIterator* it, size_t filterCol, st
 
     // compute widths of columns with data
     colWidths = colHdrWidths;
-    // todo do not print headers if all data is filtered
     while (!it->End()) {
         size_t i = 0;
         for (auto & val : it->TableRow()) {

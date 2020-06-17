@@ -5,7 +5,7 @@
 #include "../Backup/ConfigProvider.h"
 #include "../Iterators/SimpleIterator.h"
 /**
- * Implements user interface as terminal applicatiopn.
+ * Implements user interface as terminal application.
  */
 
 class TerminalUserInterface : public UserInterface {

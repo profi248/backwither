@@ -11,7 +11,6 @@
 
 namespace fs = std::filesystem;
 
-// todo handle multiple instances running on one folder (locking)
 BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id) :
         m_SourcePath (std::move(source)),
         m_DestinationPath (std::move(destination)),
@@ -58,8 +57,6 @@ void BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
     while (!it.End()) {
         if (ui)
             ui->UpdateProgress(cnt, currentState.EntityCount(), it.GetPath(), it.GetSize());
-        // if (FilesystemUtils::ArePathsEqual(it.GetPath(), destination))
-        //    throw std::runtime_error("Link in source directory (" + it.GetPath() + ") leads to destination directory");
         FileChunker::SaveFileChunks(source / it.GetPath(), it.GetID(), destination,
                                     newSnapshotId, config, IsCompressed());
         it++;
@@ -79,7 +76,7 @@ void BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string file
     if (FilesystemUtils::ArePathsEqual(restoreFrom, restoreTo))
         throw std::runtime_error("Backup source and destination lead to the same path.");
 
-    std::unique_ptr<BackupIndexProvider> config =  std::unique_ptr<SQLiteBackupIndexProvider>
+    std::unique_ptr<BackupIndexProvider> config = std::unique_ptr<SQLiteBackupIndexProvider>
             (new SQLiteBackupIndexProvider(this));
 
     if (m_Compressed != config->GetCompressed())
@@ -145,4 +142,12 @@ TimeUtils::weekday_t BackupJob::GetPlanWeekday () const {
 
 int BackupJob::GetPlanSecsSinceDay () const {
     return -1;
+}
+
+long long BackupJob::GetLastCompleted () const {
+    return m_LastCompleted;
+}
+
+void BackupJob::SetLastCompleted (long long timestamp) {
+    m_LastCompleted = timestamp;
 }

@@ -41,7 +41,8 @@ společně se samotnými daty.
 
 (1) tabulka pravděpodobnosti kolizí: https://en.wikipedia.org/wiki/Birthday_problem#Probability_table
 
-### Návod k použití:
+### Rozhraní příkazové řádky:
+
 ```
 Commands
   list          show backup jobs
@@ -71,8 +72,7 @@ Options
 ```
 
 
-Využití polymorfismu 
---------------------
+### Využití polymorfismu 
 
 Polymorfismus je využíván například v iterátorech, které dědí ze třídy SimpleIterator.
 Tyto iterátory implementují obyčejné metody z iterátrů, jako posuv. Také implementují
