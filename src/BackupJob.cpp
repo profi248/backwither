@@ -12,7 +12,6 @@
 namespace fs = std::filesystem;
 
 // todo handle multiple instances running on one folder (locking)
-// todo compressed and uncompressed backup in one destination is broken
 BackupJob::BackupJob (std::string source, std::string destination, std::string name, bool compressed, int64_t id) :
         m_SourcePath (std::move(source)),
         m_DestinationPath (std::move(destination)),
@@ -29,7 +28,6 @@ void BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
     if (FilesystemUtils::ArePathsEqual(source, destination))
         throw std::runtime_error("Backup source and destination lead to the same path.");
 
-    // fixme with make_unique destructor gets called and I don't know why
     std::unique_ptr<BackupIndexProvider> config = std::unique_ptr<SQLiteBackupIndexProvider>
             (new SQLiteBackupIndexProvider(this));
 
@@ -76,7 +74,6 @@ void BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string file
     fs::path restoreFrom = fs::path(GetDestination());
     fs::path restoreTo = fs::path(GetSource());
 
-    // todo change the verification here, this is trash - maybe refactor
     FilesystemUtils::VerifySourceDirectory(restoreFrom);
     FilesystemUtils::VerifyOrCreateDestinationDirectory(restoreTo);
     if (FilesystemUtils::ArePathsEqual(restoreFrom, restoreTo))

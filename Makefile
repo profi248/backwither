@@ -5,7 +5,7 @@ CXXFLAGS=-std=c++17 -Wall -pedantic -Wextra -O3
 LDFLAGS=-lsqlite3 -lcrypto -lz -lstdc++fs
 FILES= \
 	src/bin/intermediate/File.o src/bin/intermediate/Directory.o \
-	src/bin/intermediate/Link.o src/bin/intermediate/BackupJob.o src/bin/intermediate/BackupPlan.o src/bin/intermediate/TimedBackupJob.o \
+	src/bin/intermediate/BackupJob.o src/bin/intermediate/BackupPlan.o src/bin/intermediate/TimedBackupJob.o \
 	src/bin/intermediate/SQLiteConfigProvider.o src/bin/intermediate/FilesystemUtils.o \
 	src/bin/intermediate/FilesystemChunkStorageProvider.o src/bin/intermediate/CompressedFilesystemChunkStorageProvider.o \
 	src/bin/intermediate/UserInterface.o src/bin/intermediate/TerminalUserInterface.o \

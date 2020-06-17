@@ -1,15 +1,11 @@
 #include <cstdlib>
 #include <stdexcept>
-#include <filesystem>
 #include <sqlite3.h>
 #include <memory>
-#include <iostream>
 #include "SQLiteBackupIndexProvider.h"
 #include "File.h"
 #include "ChunkListIterator.h"
-#include "TimeUtils.h"
 
-// todo maybe add stmt wrapper class
 SQLiteBackupIndexProvider::SQLiteBackupIndexProvider (BackupJob* job) :
     m_Job (job) {
         m_Path = job->GetDestination();

@@ -1,6 +1,4 @@
 #include <algorithm>
-#include <stdexcept>
-#include <iostream>
 #include "Directory.h"
 #include "File.h"
 

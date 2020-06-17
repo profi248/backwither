@@ -516,7 +516,7 @@ int TerminalUserInterface::restore (char* name, int64_t snapshotId, char* filePa
     try {
         if (filePath) {
             file = string(filePath);
-            BackupIndexProvider* indexProvider = new SQLiteBackupIndexProvider(job);
+            indexProvider= new SQLiteBackupIndexProvider(job);
             if (!indexProvider->DoesFileExistInSnapshot(snapshotId, file)) {
                 cerr << "The file you specified doesn't exist in selected snapshot." << endl;
                 delete indexProvider;
