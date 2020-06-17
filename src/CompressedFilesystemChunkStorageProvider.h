@@ -21,7 +21,7 @@ public:
     explicit CompressedFilesystemChunkStorageProvider (std::string outPath);
     ~CompressedFilesystemChunkStorageProvider () override = default;
 
-    size_t StoreChunk (Chunk & metadata, const char* data) override;
+    [[nodiscard]] size_t StoreChunk (Chunk & metadata, const char* data) override;
     char*  RetrieveChunk (Chunk & metadata) override;
 };
 

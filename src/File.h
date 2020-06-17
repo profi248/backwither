@@ -24,17 +24,17 @@ public:
      * Get size of file in bytes.
      * @return Size.
      */
-    size_t GetSize ();
+    size_t GetSize () const;
     /**
      * Get last modification time of file.
      * @return Unix timestamp of last file modification.
      */
-    long long GetMtime ();
+    long long GetMtime () const;
     /**
      * Get ID of file from DB.
      * @return ID of file, -1 if unknown.
      */
-    int64_t GetID ();
+    int64_t GetID () const;
     /**
      * Set ID of file.
      * @param id ID in DB.

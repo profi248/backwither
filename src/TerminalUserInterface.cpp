@@ -14,10 +14,6 @@
 #include "TimedBackupJob.h"
 #include "DirectoryDiffIterator.h"
 
-const int TERM_RED = 31;
-const int TERM_GREEN = 32;
-const int TERM_BLUE = 34;
-
 using namespace std;
 
 int TerminalUserInterface::StartInterface (int argc, char** argv) {
@@ -357,7 +353,6 @@ int TerminalUserInterface::backup (char* name, bool disableTimeComparator) {
     return 0;
 }
 
-// todo better handle incorrect input (nonexistent snapshots/internal values)
 int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB, char* file) {
 
     if (snapshotIdA == snapshotIdB) {

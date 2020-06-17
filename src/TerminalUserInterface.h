@@ -9,6 +9,11 @@
  */
 
 class TerminalUserInterface : public UserInterface {
+    // color escape codes
+    const int TERM_RED   = 31;
+    const int TERM_GREEN = 32;
+    const int TERM_BLUE  = 34;
+
     // length of last status string, so it can be cleaned up with the next one
     int         m_LastStatusLength = 0;
     // path to config if overridden

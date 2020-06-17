@@ -86,7 +86,6 @@ public:
      */
     static constexpr int SecondsPerDay ();
 
-    // from https://stackoverflow.com/a/58237530/2465760
     /**
      * Convert any td::chrono::time_point to time_t.
      * There's no real better way until C++20.

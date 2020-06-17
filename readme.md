@@ -33,6 +33,7 @@ až po zálohování stovek miliard exabytů (1). Dříve než toto může nasta
 dosáhneme na mnoho různých softwarových i hardwarových limitů.
 
 Pokud není zakázána komprese, každý chunk je také komprimován knihovnou zlib (Deflate algoritmus).
+Program ignoruje kompletně prázné složky, podobně jako Git.
 
 Seznam záloh (SQLite databáze) je ve výchozím nastavení ukládán do domovské složky uživatele. 
 Index souborů, chunků a snapshotů v záloze je uložen také v SQLite databázi v destinaci zálohy
