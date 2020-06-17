@@ -1,0 +1,2 @@
+Ukázková záloha se dvěma verzemi. Pro obnovu stačí přidat novou zálohu s destinací v adresáři backup-destination
+a zdrojem v adresáři, kam si zálohu přejete obnovit. Obnovení se spustí příkazem restore.

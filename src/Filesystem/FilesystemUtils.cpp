@@ -5,7 +5,6 @@
 #include <iostream>
 #include "FilesystemUtils.h"
 #include "File.h"
-#include "../Backup/TimeUtils.h"
 
 using namespace std;
 namespace fs = filesystem;
@@ -36,32 +35,31 @@ Directory FilesystemUtils::BrowseFolderRecursive (string path_str) {
 
 void FilesystemUtils::VerifySourceDirectory (string source) {
     if (!fs::exists(source))
-        throw runtime_error("Backup source path doesn't exist.");
+        throw runtime_error("Directory \"" + source + "\" doesn't exist.");
 
     if (!fs::is_directory(source))
-        throw runtime_error("Backup source path is not a directory.");
+        throw runtime_error("Path \"" + source + "\" is not a directory.");
 
     if (IsDirectoryEmpty(source))
-        throw runtime_error("Backup source directory is empty.");
+        throw runtime_error("Directory \"" + source + "\" is empty.");
 }
 
 void FilesystemUtils::VerifyOrCreateDestinationDirectory (string destination) {
     if (fs::exists(destination)) {
         if (!fs::is_directory(destination))
-            throw runtime_error("Backup destination path is not a directory.");
-
+            throw runtime_error("Path \"" + destination + "\" is not a directory.");
     } else {
         if (!fs::create_directories(destination))
-            throw runtime_error("Directory can't be created in backup destination path.");
+            throw runtime_error("Directory can't be created in \"" + destination + "\".");
     }
 
     auto tmpFileStream = ofstream(NormalizeDirectoryPath(destination) + ".tmp");
 
     if (!tmpFileStream.is_open() || !(tmpFileStream << "a"))
-        throw runtime_error("Backup destination path is not writable.");
+        throw runtime_error("Directory \"" + destination + "\" not writable.");
 
     if (!fs::remove(NormalizeDirectoryPath(destination) + ".tmp"))
-        throw runtime_error("Backup destination path is not writable.");
+        throw runtime_error("Directory \"" + destination + "\" not writable.");
 }
 
 string FilesystemUtils::NormalizeDirectoryPath (string path) {

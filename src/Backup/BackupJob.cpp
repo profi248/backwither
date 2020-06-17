@@ -66,7 +66,6 @@ void BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
     config->FinalizeBackup();
 }
 
-// check if backup is compressed when having identical destination folders for more backups
 void BackupJob::Restore (UserInterface* ui, int64_t snapshotId, std::string filePath) {
     fs::path restoreFrom = fs::path(GetDestination());
     fs::path restoreTo = fs::path(GetSource());
