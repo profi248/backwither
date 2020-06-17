@@ -11,6 +11,11 @@
 class FilesystemUtils {
 public:
     /**
+     * Follow folder symlinks?
+     */
+    static const bool ENABLE_FOLDER_SYMLINKS = true;
+
+    /**
      * Builds an index of a path and all subfolders.
      * @param path_str Absolute path to scan.
      * @return Directory structure.

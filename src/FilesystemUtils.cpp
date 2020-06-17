@@ -5,9 +5,6 @@
 #include <iostream>
 #include "FilesystemUtils.h"
 #include "File.h"
-#include "ChunkListIterator.h"
-#include "FilesystemChunkStorageProvider.h"
-#include "CompressedFilesystemChunkStorageProvider.h"
 #include "TimeUtils.h"
 
 using namespace std;
@@ -18,12 +15,12 @@ Directory FilesystemUtils::BrowseFolderRecursive (string path_str) {
     auto de = fs::directory_entry(path);
 
     Directory root;
+    fs::directory_options directoryOptions = {};
 
-    for (auto & item : fs::recursive_directory_iterator(path)) {
-        // todo handle folder links (ignored now)
-        // handle folder linking to destination, folder linking to source
-        // file symlinks and hardlinks work already
+    if (ENABLE_FOLDER_SYMLINKS)
+        directoryOptions |= fs::directory_options::follow_directory_symlink;
 
+    for (auto & item : fs::recursive_directory_iterator(path, directoryOptions)) {
         if (item.is_regular_file()) {
             fs::path filePath = item.path();
             root.AddFilesystemEntity(
@@ -68,7 +65,6 @@ void FilesystemUtils::VerifyOrCreateDestinationDirectory (string destination) {
 }
 
 string FilesystemUtils::NormalizeDirectoryPath (string path) {
-    // todo remake this https://en.cppreference.com/w/cpp/filesystem/path
     if (path[path.length()] != '/')
         return path += '/';
 
