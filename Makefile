@@ -58,8 +58,8 @@ backwither: $(FILES) $(OBJDIR)/main.o
 	$(LD) -o src/bin/$@ $^ $(LDFLAGS)
 
 clean:
-	rm -rf $(OBJDIR)/*
-	rm -f  $(BUILDDIR)/backwither
+	rm -rf $(BUILDDIR)
+	rm -rf src/cmake-build-debug
 	rm -f  kostada2
 	rm -rf doc
 
