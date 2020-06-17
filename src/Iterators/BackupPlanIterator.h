@@ -18,16 +18,46 @@ public:
     explicit BackupPlanIterator (BackupPlan * plan);
     ~BackupPlanIterator () = default;
 
-    void        Next ();
-    void        Rewind ();
+    void Next ();
+    void Rewind ();
+
+    /**
+     * Get backup source.
+     * @return Source path.
+     */
     std::string GetSource () const;
+
+    /**
+     * Get backup destination.
+     * @return Destination path.
+     */
     std::string GetDestination () const;
+
+    /**
+     * Get backup name.
+     * @return Backup name.
+     */
     std::string GetName () const;
+
+    /**
+     * Get formatted plan string.
+     * @return Backup plan string.
+     */
     std::string GetPlan () const;
-    BackupJob*  Current () const;
-    bool        IsCompressed () const;
-    bool        End () const;
-    bool        Empty () const;
+
+    /**
+     * Get object on current position.
+     * @return BackubJob object.
+     */
+    BackupJob* Current () const;
+
+    /**
+     * Check whether backup is compressed.
+     * @return True for compression
+     */
+    bool IsCompressed () const;
+    bool End () const;
+    bool Empty () const;
 
     std::vector<std::string> TableHeader () const override;
     std::vector<std::string> TableRow () const override;

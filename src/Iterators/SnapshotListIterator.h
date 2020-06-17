@@ -16,8 +16,23 @@ public:
 
     void      Next () override;
     void      Rewind () override;
+
+    /**
+     * Get current ID, if known, -1 otherwise.
+     * @return Snapshot ID.
+     */
     int64_t   GetID () const;
+
+    /**
+     * Get current snapshot creation.
+     * @return Unix timestamp of creation.
+     */
     long long GetCreation () const;
+
+    /**
+     * Get current snapshot creation.
+     * @return Unix timestamp of creation.
+     */
     long long GetCompletion () const;
     bool      End () const override;
     bool      Empty () const override;

@@ -16,6 +16,10 @@ class SQLiteBackupIndexProvider : public BackupIndexProvider {
 public:
     const char* INDEX_DATABASE_FILENAME = "index.db";
 
+    /**
+     * Construct index provider for a specific job.
+     * @param job The backup job.
+     */
     SQLiteBackupIndexProvider (BackupJob* job);
     ~SQLiteBackupIndexProvider () override;
 

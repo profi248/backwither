@@ -16,8 +16,23 @@ public:
     ~ChunkListIterator () = default;
 
     void        Next ();
+
+    /**
+     * Get current hash.
+     * @return Hexadecimal chunk hash.
+     */
     std::string GetHash () const;
+
+    /**
+     * Get current size.
+     * @return Current chunk size in bytes.
+     */
     size_t      GetSize () const;
+
+    /**
+     * Get current Chunk object.
+     * @return Chunk object.
+     */
     Chunk       Current () const;
     bool        End () const;
     bool        Empty () const;

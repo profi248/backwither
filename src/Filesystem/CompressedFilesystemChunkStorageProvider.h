@@ -12,12 +12,12 @@
  */
 
 class CompressedFilesystemChunkStorageProvider : public FilesystemChunkStorageProvider {
-    std::string m_OutputPath;
-    std::string m_ChunkDir;
     int         m_CompressionLevel = Z_DEFAULT_COMPRESSION;
 public:
-    const std::string CHUNK_FOLDER = "chunks/";
-
+    /**
+     * Constuct chunk storage.
+     * @param outPath Output path.
+     */
     explicit CompressedFilesystemChunkStorageProvider (std::string outPath);
     ~CompressedFilesystemChunkStorageProvider () override = default;
 

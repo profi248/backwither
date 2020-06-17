@@ -96,10 +96,6 @@ std::vector<std::string> DirectoryDiffIterator::TableRow () const {
     return { (*m_DirAIt)->Path(), sizeDiffFormatted, TimeUtils::HumanDateTime(mtimeA), TimeUtils::HumanDateTime(mtimeB) };
 }
 
-std::shared_ptr<FilesystemEntity> DirectoryDiffIterator::Current () const {
-    return *m_DirAIt;
-}
-
 void DirectoryDiffIterator::init () {
     size_t mtimeA = 0, mtimeB = 0;
 

@@ -12,8 +12,22 @@ class ChunkList {
     int64_t            m_FileID;
     std::vector<Chunk> m_Chunks;
 public:
+    /**
+     * Consruct chunk list.
+     * @param fileId ID of file that chunks belong to.
+     */
     ChunkList (int64_t fileId);
+
+    /**
+     * Append chunk to storage.
+     * @param c Chunk.
+     */
     void    AddChunk (Chunk & c);
+
+    /**
+     * Get file ID.
+     * @return File ID.
+     */
     int64_t GetFileID ();
 
     friend class ChunkListIterator;

@@ -12,6 +12,10 @@ class SnapshotListIterator;
 class SnapshotList {
     std::vector<Snapshot> m_Snapshots;
 public:
+    /**
+     * Append snapshot to list.
+     * @param s Snapshot to append.
+     */
     void AddSnapshot(Snapshot s);
     friend class SnapshotListIterator;
 };

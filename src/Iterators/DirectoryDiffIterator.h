@@ -20,11 +20,10 @@ public:
     DirectoryDiffIterator (Directory * a, Directory * b);
     ~DirectoryDiffIterator () override = default;
 
-    void                               Next () override;
-    void                               Rewind () override;
-    std::shared_ptr<FilesystemEntity>  Current () const;
-    bool                               End () const override;
-    bool                               Empty () const override;
+    void Next () override;
+    void Rewind () override;
+    bool End () const override;
+    bool Empty () const override;
 
     std::vector<std::string> TableHeader () const override;
     std::vector<std::string> TableRow () const override;
