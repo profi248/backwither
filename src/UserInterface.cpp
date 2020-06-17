@@ -48,3 +48,7 @@ std::string UserInterface::HumanFileSize (size_t bytes) {
 
         return oss.str();
 }
+
+std::string UserInterface::GetVersion () {
+    return "0.1.0";
+}

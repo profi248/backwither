@@ -13,6 +13,7 @@
 #include "TimeUtils.h"
 #include "TimedBackupJob.h"
 #include "DirectoryDiffIterator.h"
+#include "UserInterface.h"
 
 using namespace std;
 
@@ -245,7 +246,7 @@ ConfigProvider* TerminalUserInterface::getConfigProvider () const {
 }
 
 int TerminalUserInterface::help () {
-    cout << "backwither " << getVersion() << endl << endl;
+    cout << "backwither " << UserInterface::GetVersion() << endl << endl;
     cout << "Help / Usage" << endl << endl;
     cout << "Commands" << endl;
     cout << "  list\t\tshow backup jobs" << endl <<
@@ -274,10 +275,6 @@ int TerminalUserInterface::help () {
             "  -w\tspecify a day of week to run a backup (when adding a new backup) [format mo-su]" << endl <<
             "  -x\tdisable compression (when adding a new backup)" << endl;
     return 0;
-}
-
-string TerminalUserInterface::getVersion () {
-    return "dev";
 }
 
 int TerminalUserInterface::add (char* source, char* destination, char* name, bool compress, char* wday, char* time) {
@@ -754,16 +751,6 @@ void TerminalUserInterface::printTable (SimpleIterator* it, size_t filterCol, st
     }
 }
 
-// from https://stackoverflow.com/a/3586973/2465760
-size_t TerminalUserInterface::countUtf8Codepoints (std::string in) {
-    size_t count = 0;
-    for (unsigned char c : in)
-        count += ((c & 0xc0u) != 0x80);
-
-    cout << "UTF-8: " << count << " bytes: " << in.length() << endl;
-    return count;
-}
-
 BackupJob* TerminalUserInterface::findBackupJobByName (char* name) {
     ConfigProvider* config = getConfigProvider();
     BackupJob* job;
@@ -799,12 +786,6 @@ BackupPlan* TerminalUserInterface::loadBackupPlan () {
 
     delete config;
     return plan;
-}
-
-void TerminalUserInterface::cleanRow () {
-    if (!isatty(fileno(stderr)) || !ENABLE_PROGRESS)
-        return;
-    cerr << left << setw(m_LastStatusLength) << setfill(' ') << '\r' << flush;
 }
 
 bool TerminalUserInterface::verifySnapshotId (int64_t id, BackupJob* job) {

@@ -35,6 +35,13 @@ public:
      * @return String with rounded size in reasonable units.
      */
     static std::string HumanFileSize (size_t bytes);
+
+    /**
+     * Get program version.
+     * @return version string
+     */
+    static std::string GetVersion ();
+
 };
 
 
