@@ -95,6 +95,7 @@ bool SQLiteConfigProvider::configExists () {
     }
 
     sqlite3_stmt* checkTblStmt;
+    // check if table exists
     sqlite3_prepare_v2(db,
         "select 1 from sqlite_master where type = 'table' and name = 'settings';",
     SQLITE_NULL_TERMINATED, & checkTblStmt, nullptr);

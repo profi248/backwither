@@ -71,27 +71,18 @@ Options
 ```
 
 
-[TODO update] Využití polymorfismu 
+Využití polymorfismu 
 --------------------
 
-Polymorfismus používám u třídy `DirectoryComparator`, která je implementovaná třídami `HashFileComparator` a `TimeDirectoryComparator`,
-které využívají různé metody pro porovnávání, zda se soubory pozměnily. Jedna metoda je pomocí hashů (například md5).
-Druhá metoda je pomocí časů z filesystému. Ta nemusí být vždy 100% přesná, ale je rychleší. Naopak hashe reprezentují reálný
-obsah souborů, a o výsledku tedy není pochyb. Proto se hodí implementovat obě varianty.
+Polymorfismus je využíván například v iterátorech, které dědí ze třídy SimpleIterator.
+Tyto iterátory implementují obyčejné metody z iterátrů, jako posuv. Také implementují
+metody pro zobrazení tabulky s formátovanými daty (hlavička tabulky a řádky).
+Díky tomu může metoda printTable zobrazit tabulky s růzými daty v jedné funkci,
+která využívá unifikované rozhraní iterátorů.   
 
-Další příklad polymorfismu je třída `FilesytemEntity`, ze které se dědí třídy `File`, `Directory` a `Link`.
-Tyto třídy se používají na prácí s filesystémem. Složka drží seznam podřazených filesystém entit a 
-poskytuje funkce pro práci s nimi, soubor poskytuje funkce pro práci s porovnáváním a kopírováním 
-souborů a odkaz obsahuje referenci na filesystém entitu, na kterou odkazuje.
-Tento polymorfismus ale možná nebude ve finální podobě programu potřeba a proto bude odstraněn.
+Další polymorfická třída je ChunkStorageProvider, ze které vychází 
+FilesystemChunkStorageProvider, která ukláda data na lokální disk
+a CompressedFilesystemChunkStorageProvider, která je předtím ještě komprimuje (a dekomprimuje).
 
-Dále je použit u třídy `ChunkStorageProvider`, ze které se dědí implementace úložiště
-(například lokání filesystém), ale mohl by být i pro sftp apod.
-Podobným případem je třída `ConfigProvider`, která má na starosti uložení seznamu záloh a jejich konfigurací,
-a je implementovaná například třídou `SQLiteConfigProvider` jako provider, co ukládá do SQLite databáze.
-Opět podobná je třída `TerminalUserInterface`, která implementuje `UserInterface` jakož terminál. Šla by doplnit například
-třídou `NCursesUserInterface`, která využívá ncurses rozhraní.
-
-
-Další třída, která by dávala smysl implementovat polymorfismem je `TimedBackupJob`, která vychází z 
-`BackupJob` a přidává časové údaje a funkce k regulérní uložené záloze.
+Mezi další polymorfické třídy patří BackupJob ze které vychází 
+TimedBackupJob a přidává časové údaje a funkce k regulérní uložené záloze.

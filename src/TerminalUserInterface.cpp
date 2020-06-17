@@ -165,7 +165,6 @@ int TerminalUserInterface::StartInterface (int argc, char** argv) {
 }
 
 int TerminalUserInterface::list () {
-    // show that destination is inaccessible
     BackupPlan* plan = loadBackupPlan();
     if (!plan)
         return 2;
@@ -333,7 +332,6 @@ int TerminalUserInterface::add (char* source, char* destination, char* name, boo
 }
 
 int TerminalUserInterface::backup (char* name, bool disableTimeComparator) {
-    // add potential not enough space warning
     BackupJob* job = findBackupJobByName(name);
     if (!job)
         return 2;
@@ -351,7 +349,6 @@ int TerminalUserInterface::backup (char* name, bool disableTimeComparator) {
 }
 
 int TerminalUserInterface::diff (char* name, int64_t snapshotIdA, int64_t snapshotIdB, char* file) {
-
     if (snapshotIdA == snapshotIdB) {
         cerr << "Compared snapshot IDs must differ." << endl;
         return 1;

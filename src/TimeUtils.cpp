@@ -44,7 +44,7 @@ std::string TimeUtils::PlanToString (weekday_t day, int secondsSinceStart) {
 
     int hrs = 0, min = 0, sec = 0;
 
-    // adjust for DST and timezone
+    // adjust for DST and timezone (DST not included in timezone)
     time_t now = time(nullptr);
     tm* t = localtime(& now);
     if (t->tm_isdst)
@@ -73,7 +73,6 @@ std::string TimeUtils::PlanToString (weekday_t day, int secondsSinceStart) {
 }
 
 long long TimeUtils::PlanLastScheduledTime (weekday_t day, int secondsSinceStart) {
-    // this time library is truly trash.
     std::time_t now = std::time(nullptr);
     std::tm nowTm   = *std::gmtime(& now);
     std::tm localTm = *std::localtime(& now);
@@ -164,6 +163,7 @@ std::pair<int64_t, int64_t> TimeUtils::ParsePosColumnSeparatedInts (std::string 
     int64_t a, b;
     bool second = false;
 
+    // write into first number until we encounter a :, afterwards write to second number
     for (char ch : nums) {
         if (ch == ':') {
             second = true;

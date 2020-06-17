@@ -4,6 +4,10 @@
 #include "ConfigProvider.h"
 #include "BackupIndexProvider.h"
 
+/**
+ * Class for splitting and joining files into chunks.
+ */
+
 class FileChunker {
     /// constant size of chunk
     static constexpr int CHUNK_SIZE = 1024 * 1024; // 1 MiB

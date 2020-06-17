@@ -3,7 +3,6 @@
 #include "FilesystemChunkStorageProvider.h"
 #include "FilesystemUtils.h"
 
-
 using namespace std;
 namespace fs = std::filesystem;
 

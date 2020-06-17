@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include "FilesystemUtils.h"
 #include "TerminalUserInterface.h"
 
 int main (int argc, char** argv) {

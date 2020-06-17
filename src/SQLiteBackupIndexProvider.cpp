@@ -195,6 +195,7 @@ int64_t SQLiteBackupIndexProvider::SaveSnapshotFileIndex (Directory & fld) {
             }
             int64_t newPathId = sqlite3_column_int64(pathIdLookbackStmt, 0);
 
+            // sqlite3_bind column index starts from 1
             sqlite3_bind_int64(addFileStmt, 1, newPathId);
             sqlite3_bind_int64(addFileStmt, 2, it.GetSize());
             sqlite3_bind_int64(addFileStmt, 3, it.GetMtime());
@@ -244,7 +245,7 @@ Directory SQLiteBackupIndexProvider::LoadSnapshotFileIndex (int64_t snapshotID) 
 
     while (sqlite3_step(loadFilesStmt) == SQLITE_ROW) {
         // SQLite returns unsigned char * (https://stackoverflow.com/a/804131)
-
+        // sqlite3_column column index starts from 0
         auto file = std::make_shared<File> (File(
             std::string(reinterpret_cast<const char*>(sqlite3_column_text(loadFilesStmt, 0))), // path
             sqlite3_column_int64(loadFilesStmt, 2),  // mtime
@@ -513,6 +514,7 @@ void SQLiteBackupIndexProvider::FinalizeBackup () {
 
     sqlite3_finalize(completeSnapshotStmt);
 
+    // merge journal into db file and reduce size
     int ret = sqlite3_exec(m_DB, "pragma wal_checkpoint;", nullptr, nullptr, nullptr);
     if (ret != SQLITE_OK)
         throw std::runtime_error("Database error finalizing backup.");

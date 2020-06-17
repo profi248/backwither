@@ -6,6 +6,11 @@
 
 class Directory;
 
+/**
+ * Class for iterating over *modified* files between snapshots.
+ * Calculates size differences and shows file name with modification times.
+ */
+
 class DirectoryDiffIterator : public SimpleIterator {
     Directory*                                                                       m_DirA;
     Directory*                                                                       m_DirB;

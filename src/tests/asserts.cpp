@@ -1,5 +1,17 @@
 using namespace std;
 
+/* UserInterface */
+assert (UserInterface::HumanFileSize (254lu) == "254 B");
+assert (UserInterface::HumanFileSize (260096lu) == "254.0 KiB");
+assert (UserInterface::HumanFileSize (266338304lu) == "254.0 MiB");
+assert (UserInterface::HumanFileSize (272730423296lu) == "254.00 GiB");
+assert (UserInterface::HumanFileSize (279275953455104lu) == "254.00 TiB");
+assert (UserInterface::HumanFileSize (2801555627573248lu) == "2.49 PiB");
+assert (UserInterface::HumanFileSize (279275953455104lu) == "254.00 TiB");
+assert (UserInterface::HumanFileSize (11547071114903552lu) == "10.26 PiB");
+assert (UserInterface::HumanFileSize (11824200821661237248lu) == "10.26 EiB");
+
+/* TimeUtils */
 assert (TimeUtils::ParsePosColumnSeparatedInts("01:25").first == 1);
 assert (TimeUtils::ParsePosColumnSeparatedInts("01:000").second == 0);
 assert (TimeUtils::ParsePosColumnSeparatedInts("010000:0000100").second == 100);

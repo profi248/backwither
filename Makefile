@@ -36,7 +36,7 @@ compile: prepare backwither
 	cp src/bin/backwither kostada2
 
 prepare:
-	mkdir -p src/bin/intermediate > /dev/null  2>&1
+	mkdir -p src/bin/intermediate > /dev/null 2>&1
 
 run: prepare backwither
 	src/bin/backwither

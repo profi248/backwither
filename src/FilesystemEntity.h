@@ -5,7 +5,7 @@
 #include <memory>
 
 /**
- * Base class for filesystem entities (file/folder/link).
+ * Base class for filesystem entities (file/folder).
  */
 
 class FilesystemEntity {

@@ -21,6 +21,7 @@ std::string UserInterface::HumanFileSize (size_t bytes) {
 
         int precision = (divisions < 3) ? 1 : 2;
 
+        // with fixed no weird float formatting is going to happen
         oss << std::fixed << std::setprecision(precision) << size;
 
         switch (divisions) {
