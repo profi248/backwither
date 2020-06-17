@@ -1,7 +1,7 @@
 #ifndef BACKUP_CONFIGPROVIDER_H
 #define BACKUP_CONFIGPROVIDER_H
 #include "BackupPlan.h"
-#include "Directory.h"
+#include "../Filesystem/Directory.h"
 #include "BackupJob.h"
 #include "ChunkList.h"
 

@@ -2,7 +2,7 @@
 #define BACKUP_BACKUPPLAN_H
 #include <vector>
 #include "BackupJob.h"
-#include "BackupPlanIterator.h"
+#include "../Iterators/BackupPlanIterator.h"
 
 class BackupJob;
 /**

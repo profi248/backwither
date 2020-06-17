@@ -4,7 +4,7 @@
 #include <sqlite3.h>
 #include <memory>
 #include "SQLiteConfigProvider.h"
-#include "ChunkListIterator.h"
+#include "../Iterators/ChunkListIterator.h"
 #include "SQLiteBackupIndexProvider.h"
 #include "TimedBackupJob.h"
 #include "TimeUtils.h"

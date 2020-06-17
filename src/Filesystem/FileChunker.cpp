@@ -6,7 +6,7 @@
 #include "FileChunker.h"
 #include "FilesystemChunkStorageProvider.h"
 #include "CompressedFilesystemChunkStorageProvider.h"
-#include "ChunkListIterator.h"
+#include "../Iterators/ChunkListIterator.h"
 #include "FilesystemUtils.h"
 
 using namespace std;

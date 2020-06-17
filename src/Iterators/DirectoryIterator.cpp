@@ -1,8 +1,7 @@
 #include <memory>
-#include "File.h"
+#include "../Filesystem/File.h"
 #include "DirectoryIterator.h"
-#include "UserInterface.h"
-#include "TimeUtils.h"
+#include "../UI/UserInterface.h"
 
 DirectoryIterator::DirectoryIterator (Directory * dir) :
         m_Directory(dir),

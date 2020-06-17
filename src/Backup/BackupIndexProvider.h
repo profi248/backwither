@@ -1,7 +1,7 @@
 #ifndef BACKWITHER_BACKUPINDEXPROVIDER_H
 #define BACKWITHER_BACKUPINDEXPROVIDER_H
 #include <string>
-#include "Directory.h"
+#include "../Filesystem/Directory.h"
 #include "BackupJob.h"
 #include "SnapshotList.h"
 #include "ChunkList.h"

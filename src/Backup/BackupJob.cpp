@@ -2,12 +2,12 @@
 #include <fstream>
 #include <filesystem>
 #include "BackupJob.h"
-#include "FilesystemUtils.h"
-#include "FileChunker.h"
 #include "SQLiteBackupIndexProvider.h"
-#include "TimeDirectoryComparator.h"
 #include "TimeUtils.h"
-#include "BasicDirectoryComparator.h"
+#include "../Filesystem/FilesystemUtils.h"
+#include "../Filesystem/FileChunker.h"
+#include "../Filesystem/TimeDirectoryComparator.h"
+#include "../Filesystem/BasicDirectoryComparator.h"
 
 namespace fs = std::filesystem;
 

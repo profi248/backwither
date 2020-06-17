@@ -1,7 +1,7 @@
 #ifndef BACKUP_CHUNKSTORAGEPROVIDER_H
 #define BACKUP_CHUNKSTORAGEPROVIDER_H
 #include "FilesystemEntity.h"
-#include "ChunkList.h"
+#include "../Backup/ChunkList.h"
 #include <string>
 /**
  * Provides a storage to save actual data that is being backed up.

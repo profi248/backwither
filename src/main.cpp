@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "TerminalUserInterface.h"
+#include "UI/TerminalUserInterface.h"
 
 int main (int argc, char** argv) {
     TerminalUserInterface* tui = new TerminalUserInterface();

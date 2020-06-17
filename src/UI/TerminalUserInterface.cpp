@@ -5,14 +5,12 @@
 #include <unistd.h>
 
 #include "TerminalUserInterface.h"
-#include "SQLiteConfigProvider.h"
-#include "SQLiteBackupIndexProvider.h"
-#include "FilesystemUtils.h"
-#include "SnapshotListIterator.h"
-#include "TimeDirectoryComparator.h"
-#include "TimeUtils.h"
-#include "TimedBackupJob.h"
-#include "DirectoryDiffIterator.h"
+#include "../Backup/SQLiteConfigProvider.h"
+#include "../Backup/SQLiteBackupIndexProvider.h"
+#include "../Filesystem/FilesystemUtils.h"
+#include "../Iterators/SnapshotListIterator.h"
+#include "../Filesystem/TimeDirectoryComparator.h"
+#include "../Backup/TimedBackupJob.h"
 #include "UserInterface.h"
 
 using namespace std;

@@ -1,7 +1,7 @@
 #ifndef BACKWITHER_BACKUPPLANITERATOR_H
 #define BACKWITHER_BACKUPPLANITERATOR_H
-#include "BackupPlan.h"
-#include "BackupJob.h"
+#include "../Backup/BackupPlan.h"
+#include "../Backup/BackupJob.h"
 #include "SimpleIterator.h"
 
 class BackupPlan;

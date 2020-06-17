@@ -2,7 +2,7 @@
 #define BACKUP_INCREMENTALFILESYSTEMBACKUPSTORAGEPROVIDER_H
 #include "FilesystemEntity.h"
 #include "ChunkStorageProvider.h"
-#include "ChunkList.h"
+#include "../Backup/ChunkList.h"
 #include <string>
 /**
  * Implements ChunkStorageProvider as filesystem storage.

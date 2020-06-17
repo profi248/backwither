@@ -1,6 +1,6 @@
 #ifndef BACKUP_USERINTERFACE_H
 #define BACKUP_USERINTERFACE_H
-#include "BackupJob.h"
+#include "../Backup/BackupJob.h"
 
 /**
  * Provides user interface for backup management.

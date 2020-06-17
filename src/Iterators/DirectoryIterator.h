@@ -1,7 +1,7 @@
 #ifndef BACKWITHER_DIRECTORYITERATOR_H
 #define BACKWITHER_DIRECTORYITERATOR_H
 #include <set>
-#include "Directory.h"
+#include "../Filesystem/Directory.h"
 #include "SimpleIterator.h"
 
 /**

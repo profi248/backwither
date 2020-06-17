@@ -3,8 +3,8 @@
 #include <sqlite3.h>
 #include <memory>
 #include "SQLiteBackupIndexProvider.h"
-#include "File.h"
-#include "ChunkListIterator.h"
+#include "../Filesystem/File.h"
+#include "../Iterators/ChunkListIterator.h"
 
 SQLiteBackupIndexProvider::SQLiteBackupIndexProvider (BackupJob* job) :
     m_Job (job) {

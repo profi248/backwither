@@ -6,18 +6,18 @@ OBJDIR=$(BUILDDIR)/intermediate
 CXXFLAGS=-std=c++17 -Wall -pedantic -Wextra -O3
 LDFLAGS=-lsqlite3 -lcrypto -lz -lstdc++fs
 FILES= \
-	$(OBJDIR)/File.o $(OBJDIR)/Directory.o \
-	$(OBJDIR)/BackupJob.o $(OBJDIR)/BackupPlan.o $(OBJDIR)/TimedBackupJob.o \
-	$(OBJDIR)/SQLiteConfigProvider.o $(OBJDIR)/FilesystemUtils.o \
-	$(OBJDIR)/FilesystemChunkStorageProvider.o $(OBJDIR)/CompressedFilesystemChunkStorageProvider.o \
-	$(OBJDIR)/UserInterface.o $(OBJDIR)/TerminalUserInterface.o \
-	$(OBJDIR)/TimeDirectoryComparator.o $(OBJDIR)/DirectoryDiffIterator.o \
-	$(OBJDIR)/BackupPlanIterator.o $(OBJDIR)/DirectoryIterator.o $(OBJDIR)/FileChunker.o \
-	$(OBJDIR)/Chunk.o $(OBJDIR)/ChunkList.o $(OBJDIR)/ChunkListIterator.o \
-	$(OBJDIR)/SQLiteBackupIndexProvider.o $(OBJDIR)/Snapshot.o \
-	$(OBJDIR)/SnapshotList.o $(OBJDIR)/SnapshotListIterator.o $(OBJDIR)/TimeUtils.o
+	$(OBJDIR)/Filesystem/File.o $(OBJDIR)/Filesystem/Directory.o \
+	$(OBJDIR)/Backup/BackupJob.o $(OBJDIR)/Backup/BackupPlan.o $(OBJDIR)/Backup/TimedBackupJob.o \
+	$(OBJDIR)/Backup/SQLiteConfigProvider.o $(OBJDIR)/Filesystem/FilesystemUtils.o \
+	$(OBJDIR)/Filesystem/FilesystemChunkStorageProvider.o $(OBJDIR)/Filesystem/CompressedFilesystemChunkStorageProvider.o \
+	$(OBJDIR)/UI/UserInterface.o $(OBJDIR)/UI/TerminalUserInterface.o \
+	$(OBJDIR)/Filesystem/TimeDirectoryComparator.o $(OBJDIR)/Iterators/DirectoryDiffIterator.o \
+	$(OBJDIR)/Iterators/BackupPlanIterator.o $(OBJDIR)/Iterators/DirectoryIterator.o $(OBJDIR)/Filesystem/FileChunker.o \
+	$(OBJDIR)/Backup/Chunk.o $(OBJDIR)/Backup/ChunkList.o $(OBJDIR)/Iterators/ChunkListIterator.o \
+	$(OBJDIR)/Backup/SQLiteBackupIndexProvider.o $(OBJDIR)/Backup/Snapshot.o \
+	$(OBJDIR)/Backup/SnapshotList.o $(OBJDIR)/Iterators/SnapshotListIterator.o $(OBJDIR)/Backup/TimeUtils.o
 
-.PHONY: all clean run doc prepare
+.PHONY: all clean run doc prepare test debug debug-noasan backwither-testbench
 
 all: compile doc
 
@@ -26,7 +26,7 @@ test: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
 debug: CXXFLAGS += -fsanitize=address -g
 debug: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
 
-debug-noasan:  CXXFLAGS += -g
+debug-noasan: CXXFLAGS += -g
 
 doc:
 	doxygen
@@ -34,26 +34,32 @@ doc:
 debug: prepare backwither
 debug-noasan: prepare backwither
 
+
 compile: prepare backwither
 	cp src/bin/backwither kostada2
 
+# force non-parellel
 prepare:
-	mkdir -p src/bin/intermediate > /dev/null 2>&1
+	mkdir -p $(BUILDDIR) > /dev/null 2>&1; \
+	mkdir -p $(OBJDIR) > /dev/null 2>&1; \
+	mkdir -p $(OBJDIR)/Iterators > /dev/null 2>&1; \
+	mkdir -p $(OBJDIR)/UI > /dev/null 2>&1; \
+	mkdir -p $(OBJDIR)/Backup > /dev/null 2>&1; \
+	mkdir -p $(OBJDIR)/Filesystem > /dev/null 2>&1
 
-run: prepare backwither
-	src/bin/backwither
+test: prepare backwither-testbench
+	src/bin/test
 
-test: $(FILES) | prepare
+backwither-testbench: $(FILES)
 	$(CXX) $(CXXFLAGS) -c -o $(OBJDIR)/testbench.o src/tests/testbench.cpp
 	$(LD) -o src/bin/test $^ $(OBJDIR)/testbench.o $(LDFLAGS)
-	src/bin/test
 
 backwither: $(FILES) $(OBJDIR)/main.o
 	$(LD) -o src/bin/$@ $^ $(LDFLAGS)
 
 clean:
-	rm -r  $(BUILDDIR)/backwither
 	rm -rf $(OBJDIR)/*
+	rm -f  $(BUILDDIR)/backwither
 	rm -f  kostada2
 	rm -rf doc
 

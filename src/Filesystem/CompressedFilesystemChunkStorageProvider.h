@@ -2,7 +2,7 @@
 #define BACKWITHER_COMPRESSEDFILESYSTEMCHUNKSTORAGEPROVIDER_H
 #include "FilesystemEntity.h"
 #include "ChunkStorageProvider.h"
-#include "ChunkList.h"
+#include "../Backup/ChunkList.h"
 #include "FilesystemChunkStorageProvider.h"
 #include <zlib.h>
 #include <string>

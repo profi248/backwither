@@ -1,6 +1,6 @@
 #ifndef BACKWITHER_CHUNKLISTITERATOR_H
 #define BACKWITHER_CHUNKLISTITERATOR_H
-#include "ChunkList.h"
+#include "../Backup/ChunkList.h"
 
 class BackupPlan;
 

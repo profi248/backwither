@@ -1,9 +1,9 @@
 #ifndef BACKUP_BACKUPJOB_H
 #define BACKUP_BACKUPJOB_H
 #include <string>
-#include "BackupPlanIterator.h"
+#include "../Iterators/BackupPlanIterator.h"
 #include "ConfigProvider.h"
-#include "UserInterface.h"
+#include "../UI/UserInterface.h"
 #include "TimeUtils.h"
 
 class BackupPlanIterator;

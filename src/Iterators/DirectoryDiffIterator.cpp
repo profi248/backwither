@@ -1,11 +1,9 @@
 #include <memory>
 #include <limits>
 #include <iostream>
-#include "File.h"
+#include "../Filesystem/File.h"
 #include "DirectoryDiffIterator.h"
-#include "DirectoryDiffIterator.h"
-#include "UserInterface.h"
-#include "TimeUtils.h"
+#include "../UI/UserInterface.h"
 
 DirectoryDiffIterator::DirectoryDiffIterator (Directory * a, Directory * b) :
         m_DirA (a),

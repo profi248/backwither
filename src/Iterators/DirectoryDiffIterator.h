@@ -2,7 +2,7 @@
 #define BACKWITHER_DIRECTORYDIFFITERATOR_H
 
 #include "SimpleIterator.h"
-#include "Directory.h"
+#include "../Filesystem/Directory.h"
 
 class Directory;
 

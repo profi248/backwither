@@ -1,6 +1,6 @@
 #ifndef BACKWITHER_SNAPSHOTLISTITERATOR_H
 #define BACKWITHER_SNAPSHOTLISTITERATOR_H
-#include "SnapshotList.h"
+#include "../Backup/SnapshotList.h"
 #include "SimpleIterator.h"
 
 /**

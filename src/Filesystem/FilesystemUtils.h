@@ -1,8 +1,8 @@
 #ifndef BACKUP_FILESYSTEMBROWSER_H
 #define BACKUP_FILESYSTEMBROWSER_H
 #include "Directory.h"
-#include "BackupJob.h"
-#include "ConfigProvider.h"
+#include "../Backup/BackupJob.h"
+#include "../Backup/ConfigProvider.h"
 #include <string>
 
 /**

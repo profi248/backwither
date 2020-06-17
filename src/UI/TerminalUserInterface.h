@@ -1,9 +1,9 @@
 #ifndef BACKUP_TERMINALUSERINTERFACE_H
 #define BACKUP_TERMINALUSERINTERFACE_H
 #include "UserInterface.h"
-#include "BackupJob.h"
-#include "ConfigProvider.h"
-#include "SimpleIterator.h"
+#include "../Backup/BackupJob.h"
+#include "../Backup/ConfigProvider.h"
+#include "../Iterators/SimpleIterator.h"
 /**
  * Implements user interface as terminal applicatiopn.
  */

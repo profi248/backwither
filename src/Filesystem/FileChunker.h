@@ -1,8 +1,8 @@
 #ifndef BACKWITHER_FILECHUNKER_H
 #define BACKWITHER_FILECHUNKER_H
 #include <string>
-#include "ConfigProvider.h"
-#include "BackupIndexProvider.h"
+#include "../Backup/ConfigProvider.h"
+#include "../Backup/BackupIndexProvider.h"
 
 /**
  * Class for splitting and joining files into chunks.

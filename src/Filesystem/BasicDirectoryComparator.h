@@ -5,9 +5,9 @@
  * Trivial implemenation of class for comparing directories, simply return current state.
  */
 class BasicDirectoryComparator : public DirectoryComparator {
-    virtual ~BasicDirectoryComparator() = default;
+    ~BasicDirectoryComparator() override = default;
 
-    virtual Directory CompareDirs(__attribute__((unused)) Directory prev, Directory curr) {
+    Directory CompareDirs( __attribute__((unused)) Directory prev, Directory curr) override {
         return curr;
     };
 };

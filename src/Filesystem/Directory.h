@@ -4,8 +4,8 @@
 #include <string>
 #include <memory>
 #include "FilesystemEntity.h"
-#include "DirectoryIterator.h"
-#include "DirectoryDiffIterator.h"
+#include "../Iterators/DirectoryIterator.h"
+#include "../Iterators/DirectoryDiffIterator.h"
 
 /**
  * Represents a folder in a filesystem tree.
