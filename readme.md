@@ -29,17 +29,18 @@ Tato deduplikace funguje na bázi hashování jednotlivých chunků a v případ
 již uložen, není potřeba ho ukládat znovu. Tady by čistě teoreticky mohlo dojít ke kolizi hashů, ale
 backwither využívá hashovací algoritmus SHA-256, který má celkem 2^256 kombinací.
 Mizivé šance kolize 10^-18 dosáhneme (při velikosti chunku 1 MiB)
-až po zálohování stovek miliard exabytů (1). Dříve než toto může nastat,
+až po zálohování stovek miliard exabytů [1]. Dříve než toto může nastat,
 dosáhneme na mnoho různých softwarových i hardwarových limitů.
 
 Pokud není zakázána komprese, každý chunk je také komprimován knihovnou zlib (Deflate algoritmus).
-Program ignoruje kompletně prázné složky, podobně jako Git.
+Program ignoruje kompletně prázné složky, podobně jako Git. Unit testy se dají spustit
+pomocí `make test`.
 
 Seznam záloh (SQLite databáze) je ve výchozím nastavení ukládán do domovské složky uživatele. 
 Index souborů, chunků a snapshotů v záloze je uložen také v SQLite databázi v destinaci zálohy
 společně se samotnými daty. 
 
-(1) tabulka pravděpodobnosti kolizí: https://en.wikipedia.org/wiki/Birthday_problem#Probability_table
+[1] tabulka pravděpodobnosti kolizí: https://en.wikipedia.org/wiki/Birthday_problem#Probability_table
 
 ### Rozhraní příkazové řádky:
 
@@ -62,7 +63,7 @@ Options
   -d    specify new backup job destination path
   -f    specify a path to a specific file (for restore or diff)
   -i    specify snapshot ID (to restore)
-  -m    disable filesystem time comparison speedup of backup
+  -m    disable last change timestamp check (slows down the backup process)
   -n    specify backup job name
   -p    specify a pair of snapshot to compare in diff [format id:id]
   -s    specify new backup job source path

@@ -264,7 +264,7 @@ int TerminalUserInterface::help () {
             "  -d\tspecify new backup job destination path" << endl <<
             "  -f\tspecify a path to a specific file (for restore or diff)" << endl <<
             "  -i\tspecify snapshot ID (to restore)" << endl <<
-            "  -m\tdisable filesystem time comparison speedup of backup" << endl <<
+            "  -m\tdisable last change timestamp check (slows down the backup process)" << endl <<
             "  -n\tspecify backup job name" << endl <<
             "  -p\tspecify a pair of snapshot to compare in diff [format id:id]" << endl <<
             "  -s\tspecify new backup job source path" << endl <<
