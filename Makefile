@@ -21,10 +21,10 @@ FILES= \
 
 all: compile doc
 
-test: CXXFLAGS += -fsanitize=address -g
-test: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
 debug: CXXFLAGS += -fsanitize=address -g
 debug: LDFLAGS := -lasan $(LDFLAGS) # AddressSanitizer needs to be linked first
+test: CXXFLAGS += -fsanitize=address -g
+test: LDFLAGS := -lasan $(LDFLAGS)
 
 debug-noasan: CXXFLAGS += -g
 
@@ -38,7 +38,7 @@ debug-noasan: prepare backwither
 compile: prepare backwither
 	cp src/bin/backwither kostada2
 
-# force non-parellel
+# force non-parellel folder creation
 prepare:
 	mkdir -p $(BUILDDIR) > /dev/null 2>&1; \
 	mkdir -p $(OBJDIR) > /dev/null 2>&1; \

@@ -38,8 +38,6 @@ void BackupJob::Backup (UserInterface* ui, bool disableTimeComp) {
 
     Directory prevState = config->LoadSnapshotFileIndex(0);
     Directory currentState = FilesystemUtils::BrowseFolderRecursive(source);
-    // maybe implement ignores
-
     int64_t newSnapshotId = config->SaveSnapshotFileIndex(currentState);
 
     DirectoryComparator* comp = nullptr;

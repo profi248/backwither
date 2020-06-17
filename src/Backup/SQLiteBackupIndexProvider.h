@@ -32,10 +32,15 @@ public:
     void          FinalizeBackup () override;
 
 private:
+    // helper for preparing a single query
     int         prepareOne(const char* sql, sqlite3_stmt** stmt);
+    // determine DB path
     std::string getDbPath () const;
+    // check if DB already exists
     bool        configExists ();
+    // create a new DB
     bool        initConfig ();
+    // open existing DB
     sqlite3*    openDB ();
 
 };
