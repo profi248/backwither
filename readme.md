@@ -1,4 +1,13 @@
 # backwither backup
+A simple C++ backup software, made as coursework for BI-PA2 class at [FIT CTU](https://fit.cvut.cz/en). 
+
+Supports incremental file backups with snapshots, file deduplication, compression and scheduled backups.
+
+Chunk system was inspired by [restic](https://restic.net/) (you should use that if you want a actually good backup software).
+
+Full original readme in Czech below.
+
+---
 Zálohovací program s deduplikací a rychlou inkrementální zálohou, kompresí,
 možností navrátit se na libovolný stav souboru a plánovačem.
 
