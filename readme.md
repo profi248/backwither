@@ -3,7 +3,7 @@ A simple C++ backup software, made as coursework for BI-PA2 class at [FIT CTU](h
 
 Supports incremental file backups with snapshots, file deduplication, compression and scheduled backups.
 
-Chunk system was inspired by [restic](https://restic.net/) (you should use that if you want a actually good backup software).
+Chunk system was inspired by [restic](https://restic.net/) (you should use it, if you want an actually good backup software).
 
 Full original readme in Czech below.
 
